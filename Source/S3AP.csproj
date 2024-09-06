@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Version>0.0.1</Version>
   </PropertyGroup>
-
   <ItemGroup>
     <None Remove="Resources\Locations.json" />
   </ItemGroup>
