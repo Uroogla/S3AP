@@ -57,28 +57,72 @@ class Spyro3World(World):
 
 
     def generate_early(self):
-        self.enabled_location_categories.add(Spyro3LocationCategory.EGG)
-
+        self.enabled_location_categories.add(Spyro3LocationCategory.EGG),
+        self.enabled_location_categories.add(Spyro3LocationCategory.EVENT),
 
     def create_regions(self):
         # Create Regions
         regions: Dict[str, Region] = {}
         regions["Menu"] = self.create_region("Menu", [])
         regions.update({region_name: self.create_region(region_name, location_tables[region_name]) for region_name in [
-            "Eggs"
+            "Sunrise Springs","Sunny Villa","Cloud Spires","Molten Crater","Seashell Shore","Mushroom Speedway","Shiela's Alp", "Buzz", "Crawdad Farm",
+            "Midday Garden","Icy Peak","Enchanted Towers","Spooky Swamp","Bamboo Terrace","Country Speedway","Sgt. Byrd's Base","Spike","Spider Town",
+            "Evening Lake","Frozen Altars","Lost Fleet","Fireworks Factory","Charmed Ridge","Honey Speedway","Bentley's Outpost","Scorch","Starfish Reef",
+            "Midnight Mountain","Crystal Islands","Desert Ruins","Haunted Tomb","Dino Mines","Harbor Speedway","Agent 9's Lab","Sorceress","Bugbot Factory","Super Bonus Round"
         ]})
         
-
         # Connect Regions
-        def create_connection(from_region: str, to_region: str):
+        def create_connection(from_region: str, to_region: str, rule = None):
             connection = Entrance(self.player, f"{to_region}", regions[from_region])
             regions[from_region].exits.append(connection)
-            connection.connect(regions[to_region])
+            connection.connect(regions[to_region], rule)
             print(f"Connecting {from_region} to {to_region} Using entrance: " + connection.name)
             
-        regions["Menu"].exits.append(Entrance(self.player, "New Game", regions["Menu"]))        
-        self.multiworld.get_entrance("New Game", self.player).connect(regions["Eggs"])
+        create_connection("Menu", "Sunrise Springs")       
+                
+        create_connection("Sunrise Springs", "Sunny Villa")
+        create_connection("Sunrise Springs", "Cloud Spires")
+        create_connection("Sunrise Springs", "Molten Crater")
+        create_connection("Sunrise Springs", "Seashell Shore")
+        create_connection("Sunrise Springs", "Mushroom Speedway")
+        create_connection("Sunrise Springs", "Shiela's Alp")
+             
+        create_connection("Sunrise Springs", "Buzz")
+        create_connection("Sunrise Springs", "Crawdad Farm")        
+        create_connection("Sunrise Springs", "Midday Garden")     
         
+        create_connection("Midday Garden", "Icy Peak")
+        create_connection("Midday Garden", "Enchanted Towers")
+        create_connection("Midday Garden", "Spooky Swamp")
+        create_connection("Midday Garden", "Bamboo Terrace")
+        create_connection("Midday Garden", "Country Speedway")
+        create_connection("Midday Garden", "Sgt. Byrd's Base")
+
+        create_connection("Midday Garden", "Spike")
+        create_connection("Midday Garden", "Spider Town")        
+        create_connection("Midday Garden", "Evening Lake")   
+        
+        create_connection("Evening Lake", "Frozen Altars")
+        create_connection("Evening Lake", "Lost Fleet")
+        create_connection("Evening Lake", "Fireworks Factory")
+        create_connection("Evening Lake", "Charmed Ridge")
+        create_connection("Evening Lake", "Honey Speedway")
+        create_connection("Evening Lake", "Bentley's Outpost")
+
+        create_connection("Evening Lake", "Scorch")
+        create_connection("Evening Lake", "Starfish Reef")        
+        create_connection("Evening Lake", "Midnight Mountain")   
+        
+        create_connection("Midnight Mountain", "Crystal Islands")
+        create_connection("Midnight Mountain", "Desert Ruins")
+        create_connection("Midnight Mountain", "Haunted Tomb")
+        create_connection("Midnight Mountain", "Dino Mines")
+        create_connection("Midnight Mountain", "Harbor Speedway")
+        create_connection("Midnight Mountain", "Agent 9's Lab")
+
+        create_connection("Midnight Mountain", "Sorceress")
+        create_connection("Midnight Mountain", "Bugbot Factory")
+        create_connection("Midnight Mountain", "Super Bonus Round")
         
         
     # For each region, add the associated locations retrieved from the corresponding location_table
@@ -87,7 +131,7 @@ class Spyro3World(World):
         #print("location table size: " + str(len(location_table)))
         for location in location_table:
             #print("Creating location: " + location.name)
-            if location.category in self.enabled_location_categories:
+            if location.category in self.enabled_location_categories and location.category != Spyro3LocationCategory.EVENT:
                 #print("Adding location: " + location.name + " with default item " + location.default_item)
                 new_location = Spyro3Location(
                     self.player,
@@ -132,7 +176,7 @@ class Spyro3World(World):
             
                 #print("found item in category: " + str(location.category))
                 item_data = item_dictionary[location.default_item_name]
-                if item_data.category in [Spyro3ItemCategory.SKIP]:
+                if item_data.category in [Spyro3ItemCategory.SKIP] or location.category in [Spyro3LocationCategory.EVENT]:
                     #print("Adding skip item: " + location.default_item_name)
                     skip_items.append(self.create_item(location.default_item_name))
                 elif location.category in self.enabled_location_categories:
@@ -173,7 +217,7 @@ class Spyro3World(World):
         }
         data = self.item_name_to_id[name]
 
-        if name in key_item_names:
+        if name in key_item_names or item_dictionary[name].category == Spyro3ItemCategory.EGG or item_dictionary[name].category == Spyro3ItemCategory.EVENT:
             item_classification = ItemClassification.progression
         elif item_dictionary[name].category in useful_categories:
             item_classification = ItemClassification.useful
@@ -184,18 +228,107 @@ class Spyro3World(World):
 
 
     def get_filler_item_name(self) -> str:
-        return "Egg"
+        return "Egg 1"
     
-    
-    
-    def set_rules(self) -> None:        
-
-        print("Setting rules")
-        # Set rules for the Recruitment region
-        egg_region = self.multiworld.get_region("Eggs", self.player)
-        for location in egg_region.locations:
-            set_rule(location, lambda state: True)  
+    def set_rules(self) -> None:   
+        def get_egg_count(self, state):
+            egg_count = 0
+            for i in range(1, 149):          
+                has_egg = state.has(f"Egg {i}", self.player)
+                if has_egg:
+                    egg_count = egg_count + 1
+            print("Obtainable egg count: " + str(egg_count))
+            return egg_count
         
+        def is_level_completed(self, level, entrance, state):
+            print("Checking if level is completed: " + level)
+            level_table = location_tables[level]
+            print("Level table size: " + str(len(level_table)))
+            lock_location = level_table[-1].name    
+            print("Lock location: " + lock_location)   
+            reachable = state.can_reach_location(lock_location, self.player)
+            self.multiworld.register_indirect_condition(level, entrance)
+            return reachable
+        
+        def is_boss_defeated(self, boss, state):
+            level_table = location_tables[boss]
+            lock_location = level_table[0].name            
+            return state.has(lock_location + " Defeated", self.player)    
+        print("Setting rules")   
+      
+        self.multiworld.completion_condition[self.player] = lambda state:  get_egg_count(self,state) > 99
+        
+        #set_rule(self.multiworld.get_location("Sunny Villa Complete", self.player), lambda state: state.can_reach_location("Egg 6", self.player))
+        set_rule(self.multiworld.get_entrance("Molten Crater", self.player),
+                lambda state: get_egg_count(self, state) > 10)    
+        set_rule(self.multiworld.get_entrance("Seashell Shore", self.player),
+                lambda state: get_egg_count(self, state) > 14)   
+        set_rule(self.multiworld.get_entrance("Mushroom Speedway", self.player),
+                lambda state: get_egg_count(self, state) > 20) 
+                  
+        set_rule(self.multiworld.get_entrance("Buzz", self.player), lambda state: is_level_completed(self,"Sunny Villa","Buzz", state) and \
+                is_level_completed(self,"Cloud Spires","Buzz", state) and \
+                is_level_completed(self,"Molten Crater","Buzz", state) and \
+                is_level_completed(self,"Seashell Shore","Buzz", state) and \
+                is_level_completed(self,"Shiela's Alp","Buzz", state) and \
+                get_egg_count(self,state) > 15)       
+
+        set_rule(self.multiworld.get_entrance("Crawdad Farm", self.player), lambda state: is_boss_defeated(self,"Buzz", state) and get_egg_count(self,state) > 16)  
+        self.multiworld.register_indirect_condition("Buzz", self.multiworld.get_region("Crawdad Farm", self.player).entrances[0])     
+
+        set_rule(self.multiworld.get_entrance("Midday Garden", self.player), lambda state: is_boss_defeated(self,"Buzz", state))      
+                  
+        set_rule(self.multiworld.get_entrance("Icy Peak", self.player), lambda state: get_egg_count(self,state) > 16)
+        set_rule(self.multiworld.get_entrance("Enchanted Towers", self.player), lambda state: get_egg_count(self,state) > 16)
+        set_rule(self.multiworld.get_entrance("Spooky Swamp", self.player), lambda state: get_egg_count(self,state) > 25)
+        set_rule(self.multiworld.get_entrance("Bamboo Terrace", self.player), lambda state: get_egg_count(self,state) > 30)
+        set_rule(self.multiworld.get_entrance("Country Speedway", self.player), lambda state: get_egg_count(self,state) > 36)
+        set_rule(self.multiworld.get_entrance("Sgt. Byrd's Base", self.player), lambda state: get_egg_count(self,state) > 16)                   
+
+        set_rule(self.multiworld.get_entrance("Spike", self.player), lambda state: is_level_completed(self,"Icy Peak","Spike", state) and \
+                is_level_completed(self,"Enchanted Towers","Spike", state) and \
+                is_level_completed(self,"Spooky Swamp","Spike", state) and \
+                is_level_completed(self,"Bamboo Terrace","Spike", state) and \
+                is_level_completed(self,"Sgt. Byrd's Base","Spike", state) and \
+                get_egg_count(self,state) > 31)
+        
+        set_rule(self.multiworld.get_entrance("Spider Town", self.player), lambda state: is_boss_defeated(self,"Spike", state) and get_egg_count(self,state) > 32)     
+        set_rule(self.multiworld.get_entrance("Evening Lake", self.player), lambda state: is_boss_defeated(self,"Spike", state))     
+
+        set_rule(self.multiworld.get_entrance("Frozen Altars", self.player), lambda state: get_egg_count(self,state) > 32)
+        set_rule(self.multiworld.get_entrance("Lost Fleet", self.player), lambda state: get_egg_count(self,state) > 32)
+        set_rule(self.multiworld.get_entrance("Fireworks Factory", self.player), lambda state: get_egg_count(self,state) > 50)
+        set_rule(self.multiworld.get_entrance("Charmed Ridge", self.player), lambda state: get_egg_count(self,state) > 59)
+        set_rule(self.multiworld.get_entrance("Honey Speedway", self.player), lambda state: get_egg_count(self,state) > 65)
+        set_rule(self.multiworld.get_entrance("Bentley's Outpost", self.player), lambda state: get_egg_count(self,state) > 32)        
+
+        set_rule(self.multiworld.get_entrance("Scorch", self.player), lambda state: is_level_completed(self,"Frozen Altars","Scorch", state) and \
+                is_level_completed(self,"Lost Fleet","Scorch", state) and \
+                is_level_completed(self,"Fireworks Factory","Scorch", state) and \
+                is_level_completed(self,"Charmed Ridge","Scorch", state) and \
+                is_level_completed(self,"Bentley's Outpost","Scorch", state) and \
+                get_egg_count(self,state) > 60)
+        
+        set_rule(self.multiworld.get_entrance("Starfish Reef", self.player), lambda state: is_boss_defeated(self,"Scorch", state) and get_egg_count(self,state) > 61) 
+        set_rule(self.multiworld.get_entrance("Midnight Mountain", self.player), lambda state: is_boss_defeated(self,"Scorch", state))
+
+        set_rule(self.multiworld.get_entrance("Crystal Islands", self.player), lambda state: get_egg_count(self,state) > 61)
+        set_rule(self.multiworld.get_entrance("Desert Ruins", self.player), lambda state: get_egg_count(self,state) > 61)
+        set_rule(self.multiworld.get_entrance("Haunted Tomb", self.player), lambda state: get_egg_count(self,state) > 70)
+        set_rule(self.multiworld.get_entrance("Dino Mines", self.player), lambda state: get_egg_count(self,state) > 80)
+        set_rule(self.multiworld.get_entrance("Harbor Speedway", self.player), lambda state: get_egg_count(self,state) > 90)
+        set_rule(self.multiworld.get_entrance("Agent 9's Lab", self.player), lambda state: get_egg_count(self,state) > 61)
+
+        set_rule(self.multiworld.get_entrance("Sorceress", self.player), lambda state: is_level_completed(self,"Crystal Islands","Sorceress", state) and \
+                is_level_completed(self,"Desert Ruins","Sorceress", state) and \
+                is_level_completed(self,"Haunted Tomb","Sorceress", state) and \
+                is_level_completed(self,"Dino Mines","Sorceress", state) and \
+                is_level_completed(self,"Agent 9's Lab","Sorceress", state) and \
+                get_egg_count(self,state) > 99)
+
+        set_rule(self.multiworld.get_entrance("Bugbot Factory", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and get_egg_count(self,state) > 100)
+        set_rule(self.multiworld.get_entrance("Super Bonus Round", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and get_egg_count(self,state) > 100)           
+                
     def fill_slot_data(self) -> Dict[str, object]:
         slot_data: Dict[str, object] = {}
 
