@@ -1,4 +1,5 @@
 using Archipelago.Core;
+using Archipelago.Core.Models;
 using Archipelago.Core.Util;
 using Archipelago.ePSXe;
 using Newtonsoft.Json;
@@ -9,6 +10,7 @@ namespace S3AP
     public partial class Form1 : Form
     {
         public static ArchipelagoClient Client { get; set; }
+        public static List<Location> GameLocations { get; set; }
         public Form1()
         {
             InitializeComponent();
@@ -45,10 +47,10 @@ namespace S3AP
             Client.Disconnected += OnDisconnected;
 
             await Client.Connect(hostTextbox.Text, "Spyro 3");
-            var locations = Helpers.GetLocations();
+            GameLocations = Helpers.GetLocations();
             await Client.Login(slotTextbox.Text, !string.IsNullOrWhiteSpace(passwordTextbox.Text) ? passwordTextbox.Text : null);
-            Client.PopulateLocations(locations);
-
+            Client.PopulateLocations(GameLocations);
+            Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
             Client.ItemReceived += (e, args) =>
             {
                 WriteLine($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
@@ -59,6 +61,24 @@ namespace S3AP
                 }
             };
         }
+
+        private void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations)
+        {
+            foreach (var location in newCheckedLocations)
+            {
+                var locationName = Client.CurrentSession.Locations.GetLocationNameFromId(location);
+                var isLocalLocation = GameLocations.Any(x => x.Id == location);
+                if (isLocalLocation)
+                {
+                    if (locationName.StartsWith("Egg"))
+                    {
+                        var currentEggs = Memory.ReadByte(Addresses.TotalEggAddress);
+                        Memory.WriteByte(Addresses.TotalEggAddress, (byte)(currentEggs - 1));
+                    }
+                }
+            }
+        }
+
         private async void button1_Click(object sender, EventArgs e)
         {
             if (Client == null || !(Client?.IsConnected ?? false))

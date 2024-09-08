@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Version>0.0.1</Version>
+    <Version>0.0.2</Version>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\Locations.json" />
@@ -19,8 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Archipelago.Core" Version="0.0.8" />
     <PackageReference Include="Archipelago.ePSXe" Version="0.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Archipelago.Core\Archipelago.Core.csproj" />
   </ItemGroup>
 
 </Project>

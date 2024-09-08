@@ -244,19 +244,21 @@ class Spyro3World(World):
             print("Checking if level is completed: " + level)
             level_table = location_tables[level]
             print("Level table size: " + str(len(level_table)))
-            lock_location = level_table[-1].name    
+            lock_location = level_table[0].name    
             print("Lock location: " + lock_location)   
-            reachable = state.can_reach_location(lock_location, self.player)
+            reachable = state.has(lock_location, self.player)
             self.multiworld.register_indirect_condition(level, entrance)
             return reachable
         
         def is_boss_defeated(self, boss, state):
             level_table = location_tables[boss]
             lock_location = level_table[0].name            
-            return state.has(lock_location + " Defeated", self.player)    
+            return state.has(lock_location , self.player)    
         print("Setting rules")   
-      
-        self.multiworld.completion_condition[self.player] = lambda state:  get_egg_count(self,state) > 99
+        for region in self.multiworld.get_regions(self.player):
+            for location in region.locations:
+                    set_rule(location, lambda state: True)
+        self.multiworld.completion_condition[self.player] = lambda state:  is_boss_defeated(self,"Sorceress", state) and get_egg_count(self, state) > 100
         
         #set_rule(self.multiworld.get_location("Sunny Villa Complete", self.player), lambda state: state.can_reach_location("Egg 6", self.player))
         set_rule(self.multiworld.get_entrance("Molten Crater", self.player),
