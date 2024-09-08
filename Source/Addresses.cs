@@ -9,5 +9,6 @@ namespace S3AP
     public static class Addresses
     {
         public const ulong TotalEggAddress = 0x00AC40E0;
+        public const ulong EggStartAddress = 0x00AC7D80;
     }
 }

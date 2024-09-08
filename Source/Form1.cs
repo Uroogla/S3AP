@@ -47,7 +47,7 @@ namespace S3AP
             Client.Disconnected += OnDisconnected;
 
             await Client.Connect(hostTextbox.Text, "Spyro 3");
-            GameLocations = Helpers.GetLocations();
+            GameLocations = Helpers.BuildEggLocationList();
             await Client.Login(slotTextbox.Text, !string.IsNullOrWhiteSpace(passwordTextbox.Text) ? passwordTextbox.Text : null);
             Client.PopulateLocations(GameLocations);
             Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
