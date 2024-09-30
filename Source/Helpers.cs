@@ -1,5 +1,6 @@
 ﻿using Archipelago.Core.Models;
 using Newtonsoft.Json;
+using S3AP.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,61 +36,46 @@ namespace S3AP
             int processedEggs = 0;
             List<Location> locations = new List<Location>();
             var currentAddress = Addresses.EggStartAddress;
-            Dictionary<string, Tuple<int, int>> levels = GetLevelData();
-            var totalEggCount = levels.Select(x => x.Value.Item2).Sum();
-            var homeworldList = new List<string>
-            {
-                "Sunrise Springs",
-                "Midday Garden",
-                "Evening Lake",
-                "Midnight Mountain"
-            };
-            var bossList = new List<string>
-            {
-                "Buzz",
-                "Spike",
-                "Scorch",
-                "Sorceress"
-            };
+            List<LevelData> levels = GetLevelData();
+            var totalEggCount = levels.Select(x => x.EggCount).Sum();
+            var homeworldList = levels.Where(x => x.IsHomeworld).ToList();
+            var bossList = levels.Where(x => x.IsBoss).ToList();
             foreach (var level in levels)
-            {                
-                string levelName = level.Key;
-                int levelId = level.Value.Item1;
-                int levelEggCount = level.Value.Item2;
-                Console.WriteLine($"Loading eggs for level {levelId}: {levelName}. {levelEggCount} eggs found");
-                if (!homeworldList.Contains(levelName) && !bossList.Contains(levelName))
+            {
+                Console.WriteLine($"Loading eggs for level {level.LevelId}: {level.Name}. {level.EggCount} eggs found");
+                if (!level.IsHomeworld && !level.IsBoss)
                 {
                     // Level Completed (first egg)
                     Location location = new Location()
                     {
-                        Name = levelName + " Completed",
-                        Id = baseId + (levelOffset * (levelId - 1)) + levelEggCount,
+                        Name = level.Name + " Completed",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + 1,
                         AddressBit = 0,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
                     };
                     locations.Add(location);
                 }
-                if (!homeworldList.Contains(levelName) && bossList.Contains(levelName))
+                if (!level.IsHomeworld && level.IsBoss)
                 {
                     // Boss Defeated (first egg)
                     Location location = new Location()
                     {
-                        Name = levelName + " Defeated",
-                        Id = baseId + (levelOffset * (levelId - 1)) + levelEggCount,
+                        Name = level.Name + " Defeated",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + 1,
                         AddressBit = 0,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
                     };
                     locations.Add(location);
                 }
-                for (int i = 0; i < levelEggCount; i++)
+                for (int i = 0; i < level.EggCount; i++)
                 {
                     // Egg collected
                     Location location = new Location()
                     {
                         Name = $"Egg {processedEggs + 1}",
-                        Id = baseId + (levelOffset * (levelId -1)) + i,
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + i,
                         AddressBit = i,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
@@ -103,48 +89,48 @@ namespace S3AP
             return locations;
         }
 
-        private static Dictionary<string, Tuple<int, int>> GetLevelData()
+        private static List<LevelData> GetLevelData()
         {
-            Dictionary<string, Tuple<int, int>> levels = new Dictionary<string, Tuple<int, int>>()
-    {
-        { "Sunrise Springs", new Tuple<int, int>(1, 5) },
-        { "Sunny Villa", new Tuple<int, int>(2, 6) },
-        { "Cloud Spires", new Tuple<int, int>(3, 6) },
-        { "Molten Crater", new Tuple<int, int>(4, 6) },
-        { "Seashell Shore", new Tuple<int, int>(5, 6) },
-        { "Mushroom Speedway", new Tuple<int, int>(6, 3) },
-        { "Shiela's Alp", new Tuple<int, int>(7, 3) },
-        { "Buzz", new Tuple<int, int>(8, 1) },
-        { "Crawdad Farm", new Tuple<int, int>(9, 1) },
-        { "Midday Garden", new Tuple<int, int>(10, 5) },
-        { "Icy Peak", new Tuple<int, int>(11, 6) },
-        { "Enchanted Towers", new Tuple<int, int>(12, 6) },
-        { "Spooky Swamp", new Tuple<int, int>(13, 6) },
-        { "Bamboo Terrace", new Tuple<int, int>(14, 6) },
-        { "Country Speedway", new Tuple<int, int>(15, 3) },
-        { "Sgt. Byrd's Base", new Tuple<int, int>(16, 3) },
-        { "Spike", new Tuple<int, int>(17, 1) },
-        { "Spider Town", new Tuple<int, int>(18, 1) },
-        { "Evening Lake", new Tuple<int, int>(19, 5) },
-        { "Frozen Altars", new Tuple<int, int>(20, 6) },
-        { "Lost Fleet", new Tuple<int, int>(21, 6) },
-        { "Fireworks Factory", new Tuple<int, int>(22, 6) },
-        { "Charmed Ridge", new Tuple<int, int>(23, 6) },
-        { "Honey Speedway", new Tuple<int, int>(24, 3) },
-        { "Bentley's Outpost", new Tuple<int, int>(25, 3) },
-        { "Scorch", new Tuple<int, int>(26, 1) },
-        { "Starfish Reef", new Tuple<int, int>(27, 1) },
-        { "Midnight Mountain", new Tuple<int, int>(28, 5) },
-        { "Crystal Islands", new Tuple<int, int>(29, 6) },
-        { "Desert Ruins", new Tuple<int, int>(30, 6) },
-        { "Haunted Tomb", new Tuple<int, int>(31, 6) },
-        { "Dino Mines", new Tuple<int, int>(32, 6) },
-        { "Harbor Speedway", new Tuple<int, int>(33, 3) },
-        { "Agent 9's Lab", new Tuple<int, int>(34, 3) },
-        { "Sorceress", new Tuple<int, int>(35, 1) },
-        { "Bugbot Factory", new Tuple<int, int>(36, 1) },
-        { "Super Bonus Round", new Tuple<int, int>(37, 1) }
-    };
+            List<LevelData> levels = new List<LevelData>()
+            {
+                new LevelData("Sunrise Springs", 1, 5, true, false),
+                new LevelData("Sunny Villa", 2, 6, false, false),
+                new LevelData("Cloud Spires", 3, 6, false, false),
+                new LevelData("Molten Crater", 4, 6, false, false),
+                new LevelData("Seashell Shore", 5, 6, false, false),
+                new LevelData("Mushroom Speedway", 6, 3, false, false),
+                new LevelData("Shiela's Alp", 7, 3, false, false),
+                new LevelData("Buzz", 8, 1, false, true),
+                new LevelData("Crawdad Farm", 9, 1, false, false),
+                new LevelData("Midday Garden", 10, 5, true, false),
+                new LevelData("Icy Peak", 11, 6, false, false),
+                new LevelData("Enchanted Towers", 12, 6, false, false),
+                new LevelData("Spooky Swamp", 13, 6, false, false),
+                new LevelData("Bamboo Terrace", 14, 6, false, false),
+                new LevelData("Country Speedway", 15, 3, false, false),
+                new LevelData("Sgt Byrd's Base", 16, 3, false, false),
+                new LevelData("Spike", 17, 1, false, true),
+                new LevelData("Spider Town", 18, 1, false, false),
+                new LevelData("Evening Lake", 19, 5, true, false),
+                new LevelData("Frozen Altars", 20, 6, false, false),
+                new LevelData("Lost Fleet", 21, 6, false, false),
+                new LevelData("Fireworks Factory", 22, 6, false, false),
+                new LevelData("Charmed Ridge", 23, 6, false, false),
+                new LevelData("Honey Speedway", 24, 3, false, false),
+                new LevelData("Bentley's Outpost", 25, 3, false, false),
+                new LevelData("Scorch", 26, 1, false, true),
+                new LevelData("Starfish Reef", 27, 1, false, false),
+                new LevelData("Midnight Mountain", 28, 5, true, false),
+                new LevelData("Crystal Islands", 29, 6, false, false),
+                new LevelData("Desert Ruins", 30, 6, false, false),
+                new LevelData("Haunted Tomb", 31, 6, false, false),
+                new LevelData("Dino Mines", 32, 6, false, false),
+                new LevelData("Harbor Speedway", 33, 3, false, false),
+                new LevelData("Agent 9's Lab", 34, 3, false, false),
+                new LevelData("Sorceress", 35, 1, false, true),
+                new LevelData("Bugbot Factory", 36, 1, false, false),
+                new LevelData("Super Bonus Round", 37, 1, false, false),
+            };
             return levels;
         }
     }

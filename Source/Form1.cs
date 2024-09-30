@@ -54,7 +54,7 @@ namespace S3AP
             Client.ItemReceived += (e, args) =>
             {
                 WriteLine($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
-                if (args.Item.Name == "Egg")
+                if (args.Item.Name.Contains("Egg"))
                 {
                     var currentEggs = Memory.ReadByte(Addresses.TotalEggAddress);
                     Memory.WriteByte(Addresses.TotalEggAddress, (byte)(currentEggs + 1));
