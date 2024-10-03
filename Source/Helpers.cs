@@ -120,7 +120,7 @@ namespace S3AP
                 new LevelData("Bentley's Outpost", 25, 3, false, false),
                 new LevelData("Scorch", 26, 1, false, true),
                 new LevelData("Starfish Reef", 27, 1, false, false),
-                new LevelData("Midnight Mountain", 28, 5, true, false),
+                new LevelData("Midnight Mountain", 28, 6, true, false),
                 new LevelData("Crystal Islands", 29, 6, false, false),
                 new LevelData("Desert Ruins", 30, 6, false, false),
                 new LevelData("Haunted Tomb", 31, 6, false, false),
