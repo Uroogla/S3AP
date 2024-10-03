@@ -49,7 +49,7 @@ namespace S3AP
                     Location location = new Location()
                     {
                         Name = level.Name + " Completed",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + 1,
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
                         AddressBit = 0,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
@@ -62,7 +62,7 @@ namespace S3AP
                     Location location = new Location()
                     {
                         Name = level.Name + " Defeated",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + 1,
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
                         AddressBit = 0,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
