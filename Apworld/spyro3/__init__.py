@@ -228,15 +228,18 @@ class Spyro3World(World):
 
 
     def get_filler_item_name(self) -> str:
-        return "Egg 1"
+        return "Egg"
     
     def set_rules(self) -> None:   
         def get_egg_count(self, state):
             egg_count = 0
-            for i in range(1, 149):          
-                has_egg = state.has(f"Egg {i}", self.player)
-                if has_egg:
-                    egg_count = egg_count + 1
+            eggLocations = self.multiworld.get_locations(self.player)
+            
+            for location in eggLocations: 
+                if location.category == Spyro3LocationCategory.EGG:
+                    has_egg = state.has(location.default_item, self.player)
+                    if has_egg:
+                        egg_count = egg_count + 1
             print("Obtainable egg count: " + str(egg_count))
             return egg_count
         
@@ -246,90 +249,89 @@ class Spyro3World(World):
             print("Level table size: " + str(len(level_table)))
             lock_location = level_table[0].name    
             print("Lock location: " + lock_location)   
-            reachable = state.has(lock_location, self.player)
-            self.multiworld.register_indirect_condition(level, entrance)
+            reachable = state.can_reach_location(lock_location, self.player)
             return reachable
         
         def is_boss_defeated(self, boss, state):
             level_table = location_tables[boss]
             lock_location = level_table[0].name            
-            return state.has(lock_location , self.player)    
+            return state.can_reach_location(lock_location , self.player)    
         print("Setting rules")   
         for region in self.multiworld.get_regions(self.player):
             for location in region.locations:
                     set_rule(location, lambda state: True)
-        self.multiworld.completion_condition[self.player] = lambda state:  is_boss_defeated(self,"Sorceress", state) and get_egg_count(self, state) > 100
+        self.multiworld.completion_condition[self.player] = lambda state:  is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player, 100)
         
         #set_rule(self.multiworld.get_location("Sunny Villa Complete", self.player), lambda state: state.can_reach_location("Egg 6", self.player))
         set_rule(self.multiworld.get_entrance("Molten Crater", self.player),
-                lambda state: get_egg_count(self, state) > 10)    
+                lambda state: state.has("Egg", self.player, 10))    
         set_rule(self.multiworld.get_entrance("Seashell Shore", self.player),
-                lambda state: get_egg_count(self, state) > 14)   
+                lambda state: state.has("Egg", self.player, 14))   
         set_rule(self.multiworld.get_entrance("Mushroom Speedway", self.player),
-                lambda state: get_egg_count(self, state) > 20) 
+                lambda state: state.has("Egg", self.player, 20)) 
                   
         set_rule(self.multiworld.get_entrance("Buzz", self.player), lambda state: is_level_completed(self,"Sunny Villa","Buzz", state) and \
                 is_level_completed(self,"Cloud Spires","Buzz", state) and \
                 is_level_completed(self,"Molten Crater","Buzz", state) and \
                 is_level_completed(self,"Seashell Shore","Buzz", state) and \
                 is_level_completed(self,"Shiela's Alp","Buzz", state) and \
-                get_egg_count(self,state) > 15)       
+                state.has("Egg", self.player, 15))       
 
-        set_rule(self.multiworld.get_entrance("Crawdad Farm", self.player), lambda state: is_boss_defeated(self,"Buzz", state) and get_egg_count(self,state) > 16)  
+        set_rule(self.multiworld.get_entrance("Crawdad Farm", self.player), lambda state: is_boss_defeated(self,"Buzz", state) and state.has("Egg", self.player, 16))  
         self.multiworld.register_indirect_condition("Buzz", self.multiworld.get_region("Crawdad Farm", self.player).entrances[0])     
 
         set_rule(self.multiworld.get_entrance("Midday Garden", self.player), lambda state: is_boss_defeated(self,"Buzz", state))      
                   
-        set_rule(self.multiworld.get_entrance("Icy Peak", self.player), lambda state: get_egg_count(self,state) > 16)
-        set_rule(self.multiworld.get_entrance("Enchanted Towers", self.player), lambda state: get_egg_count(self,state) > 16)
-        set_rule(self.multiworld.get_entrance("Spooky Swamp", self.player), lambda state: get_egg_count(self,state) > 25)
-        set_rule(self.multiworld.get_entrance("Bamboo Terrace", self.player), lambda state: get_egg_count(self,state) > 30)
-        set_rule(self.multiworld.get_entrance("Country Speedway", self.player), lambda state: get_egg_count(self,state) > 36)
-        set_rule(self.multiworld.get_entrance("Sgt. Byrd's Base", self.player), lambda state: get_egg_count(self,state) > 16)                   
+        set_rule(self.multiworld.get_entrance("Icy Peak", self.player), lambda state: state.has("Egg", self.player,16))
+        set_rule(self.multiworld.get_entrance("Enchanted Towers", self.player), lambda state: state.has("Egg", self.player,16))
+        set_rule(self.multiworld.get_entrance("Spooky Swamp", self.player), lambda state: state.has("Egg", self.player,25))
+        set_rule(self.multiworld.get_entrance("Bamboo Terrace", self.player), lambda state: state.has("Egg", self.player,30))
+        set_rule(self.multiworld.get_entrance("Country Speedway", self.player), lambda state: state.has("Egg", self.player,36))
+        set_rule(self.multiworld.get_entrance("Sgt. Byrd's Base", self.player), lambda state: state.has("Egg", self.player,16)    )               
 
         set_rule(self.multiworld.get_entrance("Spike", self.player), lambda state: is_level_completed(self,"Icy Peak","Spike", state) and \
                 is_level_completed(self,"Enchanted Towers","Spike", state) and \
                 is_level_completed(self,"Spooky Swamp","Spike", state) and \
                 is_level_completed(self,"Bamboo Terrace","Spike", state) and \
                 is_level_completed(self,"Sgt. Byrd's Base","Spike", state) and \
-                get_egg_count(self,state) > 31)
+                state.has("Egg", self.player,31))
         
-        set_rule(self.multiworld.get_entrance("Spider Town", self.player), lambda state: is_boss_defeated(self,"Spike", state) and get_egg_count(self,state) > 32)     
+        set_rule(self.multiworld.get_entrance("Spider Town", self.player), lambda state: is_boss_defeated(self,"Spike", state) and state.has("Egg", self.player,32))
         set_rule(self.multiworld.get_entrance("Evening Lake", self.player), lambda state: is_boss_defeated(self,"Spike", state))     
 
-        set_rule(self.multiworld.get_entrance("Frozen Altars", self.player), lambda state: get_egg_count(self,state) > 32)
-        set_rule(self.multiworld.get_entrance("Lost Fleet", self.player), lambda state: get_egg_count(self,state) > 32)
-        set_rule(self.multiworld.get_entrance("Fireworks Factory", self.player), lambda state: get_egg_count(self,state) > 50)
-        set_rule(self.multiworld.get_entrance("Charmed Ridge", self.player), lambda state: get_egg_count(self,state) > 59)
-        set_rule(self.multiworld.get_entrance("Honey Speedway", self.player), lambda state: get_egg_count(self,state) > 65)
-        set_rule(self.multiworld.get_entrance("Bentley's Outpost", self.player), lambda state: get_egg_count(self,state) > 32)        
+        set_rule(self.multiworld.get_entrance("Frozen Altars", self.player), lambda state: state.has("Egg", self.player,32))
+        set_rule(self.multiworld.get_entrance("Lost Fleet", self.player), lambda state: state.has("Egg", self.player,32))
+        set_rule(self.multiworld.get_entrance("Fireworks Factory", self.player), lambda state: state.has("Egg", self.player,50))
+        set_rule(self.multiworld.get_entrance("Charmed Ridge", self.player), lambda state: state.has("Egg", self.player,59))
+        set_rule(self.multiworld.get_entrance("Honey Speedway", self.player), lambda state: state.has("Egg", self.player,65))
+        set_rule(self.multiworld.get_entrance("Bentley's Outpost", self.player), lambda state: state.has("Egg", self.player,32))
 
         set_rule(self.multiworld.get_entrance("Scorch", self.player), lambda state: is_level_completed(self,"Frozen Altars","Scorch", state) and \
                 is_level_completed(self,"Lost Fleet","Scorch", state) and \
                 is_level_completed(self,"Fireworks Factory","Scorch", state) and \
                 is_level_completed(self,"Charmed Ridge","Scorch", state) and \
                 is_level_completed(self,"Bentley's Outpost","Scorch", state) and \
-                get_egg_count(self,state) > 60)
+                state.has("Egg", self.player,60))
         
-        set_rule(self.multiworld.get_entrance("Starfish Reef", self.player), lambda state: is_boss_defeated(self,"Scorch", state) and get_egg_count(self,state) > 61) 
+        set_rule(self.multiworld.get_entrance("Starfish Reef", self.player), lambda state: is_boss_defeated(self,"Scorch", state) and state.has("Egg", self.player,61)) 
         set_rule(self.multiworld.get_entrance("Midnight Mountain", self.player), lambda state: is_boss_defeated(self,"Scorch", state))
 
-        set_rule(self.multiworld.get_entrance("Crystal Islands", self.player), lambda state: get_egg_count(self,state) > 61)
-        set_rule(self.multiworld.get_entrance("Desert Ruins", self.player), lambda state: get_egg_count(self,state) > 61)
-        set_rule(self.multiworld.get_entrance("Haunted Tomb", self.player), lambda state: get_egg_count(self,state) > 70)
-        set_rule(self.multiworld.get_entrance("Dino Mines", self.player), lambda state: get_egg_count(self,state) > 80)
-        set_rule(self.multiworld.get_entrance("Harbor Speedway", self.player), lambda state: get_egg_count(self,state) > 90)
-        set_rule(self.multiworld.get_entrance("Agent 9's Lab", self.player), lambda state: get_egg_count(self,state) > 61)
+        set_rule(self.multiworld.get_entrance("Crystal Islands", self.player), lambda state: state.has("Egg", self.player,61))
+        set_rule(self.multiworld.get_entrance("Desert Ruins", self.player), lambda state: state.has("Egg", self.player,61))
+        set_rule(self.multiworld.get_entrance("Haunted Tomb", self.player), lambda state: state.has("Egg", self.player,70))
+        set_rule(self.multiworld.get_entrance("Dino Mines", self.player), lambda state: state.has("Egg", self.player,80))
+        set_rule(self.multiworld.get_entrance("Harbor Speedway", self.player), lambda state: state.has("Egg", self.player,90))
+        set_rule(self.multiworld.get_entrance("Agent 9's Lab", self.player), lambda state: state.has("Egg", self.player,61))
 
         set_rule(self.multiworld.get_entrance("Sorceress", self.player), lambda state: is_level_completed(self,"Crystal Islands","Sorceress", state) and \
                 is_level_completed(self,"Desert Ruins","Sorceress", state) and \
                 is_level_completed(self,"Haunted Tomb","Sorceress", state) and \
                 is_level_completed(self,"Dino Mines","Sorceress", state) and \
                 is_level_completed(self,"Agent 9's Lab","Sorceress", state) and \
-                get_egg_count(self,state) > 99)
+                state.has("Egg", self.player,99))
 
-        set_rule(self.multiworld.get_entrance("Bugbot Factory", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and get_egg_count(self,state) > 100)
-        set_rule(self.multiworld.get_entrance("Super Bonus Round", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and get_egg_count(self,state) > 100)           
+        set_rule(self.multiworld.get_entrance("Bugbot Factory", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player,100))
+        set_rule(self.multiworld.get_entrance("Super Bonus Round", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player,100))           
                 
     def fill_slot_data(self) -> Dict[str, object]:
         slot_data: Dict[str, object] = {}

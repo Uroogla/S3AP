@@ -63,8 +63,11 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Bugbot Factory Complete", 2027, Spyro3ItemCategory.EVENT),
     ("Super Bonus Round Complete", 2028, Spyro3ItemCategory.EVENT),
     
+    
+    ("Egg", 1000, Spyro3ItemCategory.EGG),
+    
 ]]
-_all_items.extend([Spyro3ItemData(f"Egg {i+1}", 1000 + i, Spyro3ItemCategory.EGG) for i in range(149)])
+#_all_items.extend([Spyro3ItemData(f"Egg {i+1}", 1000 + i, Spyro3ItemCategory.EGG) for i in range(149)])
 
 item_descriptions = {
 }

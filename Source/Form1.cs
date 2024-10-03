@@ -5,6 +5,7 @@ using Archipelago.ePSXe;
 using Newtonsoft.Json;
 using System.Text;
 using System.Threading;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 namespace S3AP
 {
     public partial class Form1 : Form
@@ -70,10 +71,26 @@ namespace S3AP
                 var isLocalLocation = GameLocations.Any(x => x.Id == location);
                 if (isLocalLocation)
                 {
+                    var currentEggs = Memory.ReadByte(Addresses.TotalEggAddress);
                     if (locationName.StartsWith("Egg"))
-                    {
-                        var currentEggs = Memory.ReadByte(Addresses.TotalEggAddress);
+                    {                       
                         Memory.WriteByte(Addresses.TotalEggAddress, (byte)(currentEggs - 1));
+                        if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
+                        {
+                            var status =  Client.CurrentSession.DataStorage.GetClientStatus(Client.CurrentSession.ConnectionInfo.Slot);
+                            if (!status.HasFlag(Archipelago.MultiClient.Net.Enums.ArchipelagoClientState.ClientGoal))
+                            {
+                                Client.SendGoalCompletion();
+                            }
+                        }
+                    }
+                    if(locationName == "Sorceress Defeated" && currentEggs >= 100)
+                    {
+                        var status = Client.CurrentSession.DataStorage.GetClientStatus(Client.CurrentSession.ConnectionInfo.Slot);
+                        if (!status.HasFlag(Archipelago.MultiClient.Net.Enums.ArchipelagoClientState.ClientGoal))
+                        {
+                            Client.SendGoalCompletion();
+                        }
                     }
                 }
             }

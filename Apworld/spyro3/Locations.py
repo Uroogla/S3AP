@@ -62,258 +62,259 @@ class Spyro3Location(Location):
 location_tables = {
 #Homeworld 1
 "Sunrise Springs": [
-    Spyro3LocationData(f"Egg 1", f"Egg 1", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 2", f"Egg 2", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 3", f"Egg 3", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 4", f"Egg 4", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 5", f"Egg 5", Spyro3LocationCategory.EGG)    
+    Spyro3LocationData(f"Sunrise Spring Home: Learn gliding. (Coltrane)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunrise Spring Home: Egg by the stream. (Isabelle)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunrise Spring Home: Fly through the cave. (Ami)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunrise Spring Home: Bottom of the lake. (Bruce)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunrise Spring Home: Head bash the rock. (Liam)",f"Egg",Spyro3LocationCategory.EGG),
 ],
 "Sunny Villa": [
-    Spyro3LocationData(f"Egg 6", f"Egg 6", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 7", f"Egg 7", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 8", f"Egg 8", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 9", f"Egg 9", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 10", f"Egg 10", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 11", f"Egg 11", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunny Villa: Rescue the mayor. (Sanders)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunny Villa: Hop to Rapunzel. (Lucy)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunny Villa: Lizard skating I. (Emily)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunny Villa: Lizard skating II. (Daisy)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunny Villa: Egg by the building. (Vanessa)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunny Villa: Glide to the spring. (Miles)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Sunny Villa Complete", "Sunny Villa Complete", Spyro3LocationCategory.EVENT)
 ],
 "Cloud Spires": [
-    Spyro3LocationData(f"Egg 12", f"Egg 12", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 13", f"Egg 13", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 14", f"Egg 14", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 15", f"Egg 15", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 16", f"Egg 16", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 17", f"Egg 17", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Cloud Spires: Turn on the cloud generator. (Henry)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Cloud Spires: Plant the sun seeds. (LuLu)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Cloud Spires: Bell tower spirits. (Jake)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Cloud Spires: Bell tower thief. (Bryan)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Cloud Spires: Run along the wall. (Stephanie)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Cloud Spires: Glide to the island. (Clare)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Cloud Spires Complete", "Cloud Spires Complete", Spyro3LocationCategory.EVENT)
 ],
 "Molten Crater": [
-    Spyro3LocationData(f"Egg 18", f"Egg 18", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 19", f"Egg 19", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 20", f"Egg 20", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 21", f"Egg 21", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 22", f"Egg 22", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 23", f"Egg 23", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Molten Crater: Get to the tiki lodge. (Curlie)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Molten Crater: Replace idol heads. (Ryan)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Molten Crater: Catch the thief. (Moira)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Molten Crater: Supercharge after the thief. (Kermitt)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Molten Crater: Sgt. Byrd blows up a wall. (Luna)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Molten Crater: Egg by lava river. (Rikki)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Molten Crater Complete", "Molten Crater Complete", Spyro3LocationCategory.EVENT)
 ],
 "Seashell Shore": [
-    Spyro3LocationData(f"Egg 24", f"Egg 24", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 25", f"Egg 25", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 26", f"Egg 26", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 27", f"Egg 27", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 28", f"Egg 28", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 29", f"Egg 29", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Seashell Shore: Free the seals. (Dizzy)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Seashell Shore: Under the docks. (Jason)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Seashell Shore: Destroy the sand castle. (Mollie)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Seashell Shore: Defeat the shark sub. (Jackie)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Seashell Shore: Clear out the pipe. (Duke)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Seashell Shore: Hop to the secret cave. (Jared)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Seashell Shore Complete", "Seashell Shore Complete", Spyro3LocationCategory.EVENT)
 ],
 "Mushroom Speedway": [
-    Spyro3LocationData(f"Egg 30", f"Egg 30", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 31", f"Egg 31", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 32", f"Egg 32", Spyro3LocationCategory.EGG)
+    Spyro3LocationData(f"Mushroom Speedway: Time attack. (Sabina)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Mushroom Speedway: Race the butterflies. (John)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Mushroom Speedway: Hunter's dogfight. (Tater)",f"Egg",Spyro3LocationCategory.EGG),
 ],
 "Shiela's Alp": [
-    Spyro3LocationData(f"Egg 33", f"Egg 33", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 34", f"Egg 34", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 35", f"Egg 35", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sheila's Alp: Help Bobby get home. (Nan)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sheila's Alp: Help Pete get home. (Jenny)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sheila's Alp: Help Billy get home. (Ruby)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Shiela's Alp Complete", "Shiela's Alp Complete", Spyro3LocationCategory.EVENT)
 ],
 "Buzz": [
-    Spyro3LocationData(f"Egg 36", f"Egg 36", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Buzz's Dungeon: Defeat Buzz. (Grayson)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Buzz Defeated", "Buzz Defeated", Spyro3LocationCategory.EVENT)
 ],
 "Crawdad Farm": [
-    Spyro3LocationData(f"Egg 37", f"Egg 37", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Crawdad Farm: Take Sparx to the farm. (Nora)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Crawdad Farm Complete", "Crawdad Farm Complete", Spyro3LocationCategory.EVENT)
 ],
 #Homeworld 2
 "Midday Garden": [
-    Spyro3LocationData(f"Egg 38", f"Egg 38", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 39", f"Egg 39", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 40", f"Egg 40", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 41", f"Egg 41", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 42", f"Egg 42", Spyro3LocationCategory.EGG)
+    Spyro3LocationData(f"Midday Gardens Home: Underwater egg. (Dave)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midday Gardens Home: Secret ice cave. (Mingus)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midday Gardens Home: Catch the thief. (Trixie)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midday Gardens Home: Superflame the flowerpots. (Matt)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midday Gardens Home: Climb to the ledge. (Modesty)",f"Egg",Spyro3LocationCategory.EGG),
 ],
 "Icy Peak": [
-    Spyro3LocationData(f"Egg 43", f"Egg 43", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 44", f"Egg 44", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 45", f"Egg 45", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 46", f"Egg 46", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 47", f"Egg 47", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 48", f"Egg 48", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Icy Peak: Find Doug the polar bear. (Chet)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Icy Peak: Protect Nancy the skater. (Cerny)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Icy Peak: Speedy thieves I. (Betty)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Icy Peak: Speedy thieves II. (Scout)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Icy Peak: On top of a ledge. (Maynard)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Icy Peak: Glide to the sky island. (Reez)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Icy Peak Complete", "Icy Peak Complete", Spyro3LocationCategory.EVENT)
 ],
 "Enchanted Towers": [
-    Spyro3LocationData(f"Egg 49", f"Egg 49", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 50", f"Egg 50", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 51", f"Egg 51", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 52", f"Egg 52", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 53", f"Egg 53", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 54", f"Egg 54", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Enchanted Towers: Destroy the sorceress statue. (Peanut)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Enchanted Towers: Rescue the lost wolf. (Lys)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Enchanted Towers: Collect the bones. (Ralph)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Enchanted Towers: Trick skater I. (Caroline)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Enchanted Towers: Trick skater II. (Alex)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Enchanted Towers: Glide to the small island. (Gladys)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Enchanted Towers Complete", "Enchanted Towers Complete", Spyro3LocationCategory.EVENT)
 ],
 "Spooky Swamp": [
-    Spyro3LocationData(f"Egg 55", f"Egg 55", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 56", f"Egg 56", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 57", f"Egg 57", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 58", f"Egg 58", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 59", f"Egg 59", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 60", f"Egg 60", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Spooky Swamp: Find Shiny the firefly. (Thelonious)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Spooky Swamp: Jump to the island. (Michael)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Spooky Swamp: Across the treetops. (Frank)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Spooky Swamp: Escort the twins I. (Peggy)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Spooky Swamp: Escort the twins II. (Michele)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Spooky Swamp: Defeat sleepy head. (Herbi)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Spooky Swamp Complete", "Spooky Swamp Complete", Spyro3LocationCategory.EVENT)
 ],
 "Bamboo Terrace": [
-    Spyro3LocationData(f"Egg 61", f"Egg 61", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 62", f"Egg 62", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 63", f"Egg 63", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 64", f"Egg 64", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 65", f"Egg 65", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 66", f"Egg 66", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bamboo Terrace: Clear the pandas' path. (Tom)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bamboo Terrace: Shoot from the boat. (Rusty)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bamboo Terrace: Smash to the mountain top. (Brubeck)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bamboo Terrace: Glide to the hidden cave. (Madison)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bamboo Terrace: Glide to the small island. (Dwight)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bamboo Terrace: Catch the thief. (Pee-wee)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Bamboo Terrace Complete", "Bamboo Terrace Complete", Spyro3LocationCategory.EVENT)
 ],
 "Country Speedway": [
-    Spyro3LocationData(f"Egg 67", f"Egg 67", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 68", f"Egg 68", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 69", f"Egg 69", Spyro3LocationCategory.EGG)
+    Spyro3LocationData(f"Country Speedway: Time attack. (Gavin)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Country Speedway: Race the pigs. (Shemp)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Country Speedway: Hunter's rescue mission. (Roberto)",f"Egg",Spyro3LocationCategory.EGG),
 ],
 "Sgt. Byrd's Base": [
-    Spyro3LocationData(f"Egg 70", f"Egg 70", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 71", f"Egg 71", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 72", f"Egg 72", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sgt. Byrd's Base: Clear the building. (RyanLee)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sgt. Byrd's Base: Clear the caves. (Sigfried)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sgt. Byrd's Base: Rescue 5 hummingbirds. (Roy)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Sgt. Byrd's Base Complete", "Sgt. Byrd's Base Complete", Spyro3LocationCategory.EVENT)
 ],
 "Spike": [
-    Spyro3LocationData(f"Egg 73", f"Egg 73", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Spike's Arena: Defeat Spike. (Monique)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Spike Defeated", "Spike Defeated", Spyro3LocationCategory.EVENT)
 ],
 "Spider Town": [
-    Spyro3LocationData(f"Egg 74", f"Egg 74", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Spider Town: Go to town. (Tootie)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Spider Town Complete", "Spider Town Complete", Spyro3LocationCategory.EVENT)
 ],
 #Homeworld 3
 "Evening Lake": [
-    Spyro3LocationData(f"Egg 75", f"Egg 75", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 76", f"Egg 76", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 77", f"Egg 77", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 78", f"Egg 78", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 79", f"Egg 79", Spyro3LocationCategory.EGG)
+    Spyro3LocationData(f"Evening Lake Home: On the bridge (Ted)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Evening Lake Home: Glide to the tower. (Hannah)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Evening Lake Home: Break the tower wall. (Stooby)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Evening Lake Home: Belly of the whale. (Jonah)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Evening Lake Home: I'm invincible! (Stuart)",f"Egg",Spyro3LocationCategory.EGG),
 ],
 "Frozen Altars": [
-    Spyro3LocationData(f"Egg 80", f"Egg 80", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 81", f"Egg 81", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 82", f"Egg 82", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 83", f"Egg 83", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 84", f"Egg 84", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 85", f"Egg 85", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Frozen Altars: Melt the snowmen. (Jana)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Frozen Altars: Box the yeti. (Aly)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Frozen Altars: Box the yeti again! (Ricco)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Frozen Altars: Catch the ice cats. (Ba'ah)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Frozen Altars: Glide from the temple roof. (Cecil)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Frozen Altars: Across the rooftops. (Jasper)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Frozen Altars Complete", "Frozen Altars Complete", Spyro3LocationCategory.EVENT)
 ],
 "Lost Fleet": [
-    Spyro3LocationData(f"Egg 86", f"Egg 86", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 87", f"Egg 87", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 88", f"Egg 88", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 89", f"Egg 89", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 90", f"Egg 90", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 91", f"Egg 91", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Lost Fleet: Find Crazy Ed's treasure. (Craig)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Lost Fleet: Sink the subs I. (Ethel)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Lost Fleet: Sink the subs II. (Dolores)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Lost Fleet: Swim through acid. (Chad)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Lost Fleet: Skate race the rhynocs. (Oliver)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Lost Fleet: Skate race Hunter. (Aiden)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Lost Fleet Complete", "Lost Fleet Complete", Spyro3LocationCategory.EVENT)
 ],
 "Fireworks Factory": [
-    Spyro3LocationData(f"Egg 92", f"Egg 92", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 93", f"Egg 93", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 94", f"Egg 94", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 95", f"Egg 95", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 96", f"Egg 96", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 97", f"Egg 97", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Fireworks Factory: Destwoy the wocket! (Grady)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Fireworks Factory: You're doomed! (Patty)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Fireworks Factory: You're still doomed! (Donovan)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Fireworks Factory: Ninja HQ (Sam)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Fireworks Factory: Bad dragon! (Evan)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Fireworks Factory: Hidden in an alcove. (Noodles)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Fireworks Factory Complete", "Fireworks Factory Complete", Spyro3LocationCategory.EVENT)
 ],
 "Charmed Ridge": [
-    Spyro3LocationData(f"Egg 98", f"Egg 98", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 99", f"Egg 99", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 100", f"Egg 100", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 101", f"Egg 101", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 102", f"Egg 102", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 103", f"Egg 103", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Charmed Ridge: Rescue the Fairy Princess. (Sakura)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Charmed Ridge: Glide to the tower. (Moe)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Charmed Ridge: Egg in the cave. (Benjamin)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Charmed Ridge: Cat witch chaos. (Abby)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Charmed Ridge: Jack and the beanstalk I. (Shelley)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Charmed Ridge: Jack and the beanstalk II. (Chuck)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Charmed Ridge Complete", "Charmed Ridge Complete", Spyro3LocationCategory.EVENT)
 ],
 "Honey Speedway": [
-    Spyro3LocationData(f"Egg 104", f"Egg 104", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 105", f"Egg 105", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 106", f"Egg 106", Spyro3LocationCategory.EGG)
+    Spyro3LocationData(f"Honey Speedway: Time attack. (Chris)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Honey Speedway: Race the bees (Henri)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Honey Speedway: Hunter's narrow escape. (Nori)",f"Egg",Spyro3LocationCategory.EGG),
 ],
 "Bentley's Outpost": [
-    Spyro3LocationData(f"Egg 107", f"Egg 107", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 108", f"Egg 108", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 109", f"Egg 109", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bentley's Outpost: Help Bartholomew home. (Eric)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bentley's Outpost: The Gong Show (Brian)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bentley's Outpost: Snowball's chance. (Charlie)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Bentley's Outpost Complete", "Bentley's Outpost Complete", Spyro3LocationCategory.EVENT)
 ],
 "Scorch": [
-    Spyro3LocationData(f"Egg 110", f"Egg 110", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Scorch's Pit: Defeat Scorch. (James)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Scorch Defeated", "Scorch Defeated", Spyro3LocationCategory.EVENT)
 ],
 "Starfish Reef": [
-    Spyro3LocationData(f"Egg 111", f"Egg 111", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Starfish Reef: Beach party! (Ahnashawn)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Starfish Reef Complete", "Starfish Reef Complete", Spyro3LocationCategory.EVENT)
 ],
 #Homeworld 4
 "Midnight Mountain": [
-    Spyro3LocationData(f"Egg 112", f"Egg 112", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 113", f"Egg 113", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 114", f"Egg 114", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 115", f"Egg 115", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 116", f"Egg 116", Spyro3LocationCategory.EGG)
+    Spyro3LocationData(f"Midnight Mountain Home: Shhh, it's a secret (Billy)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midnight Mountain Home: At the top of the waterfall. (Evie)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midnight Mountain Home: Catch the thief. (Maiken)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midnight Mountain Home: Glide to the island. (Saki)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midnight Mountain Home: Stomp the floor. (Buddy)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midnight Mountain Home: Egg for sale. (Al)",f"Egg",Spyro3LocationCategory.EGG),
 ],
 "Crystal Islands": [
-    Spyro3LocationData(f"Egg 117", f"Egg 117", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 118", f"Egg 118", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 119", f"Egg 119", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 120", f"Egg 120", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 121", f"Egg 121", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 122", f"Egg 122", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Crystal Islands: Reach the crystal tower. (Lloyd)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Crystal Islands: Ride the slide. (Elloise)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Crystal Islands: Whack a mole. (Hank)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Crystal Islands: Fly to the hidden egg. (Grace)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Crystal Islands: Glide to the island. (Manie)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Crystal Islands: Catch the flying thief. (Max)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Crystal Islands Complete", "Crystal Islands Complete", Spyro3LocationCategory.EVENT)
 ],
 "Desert Ruins": [
-    Spyro3LocationData(f"Egg 123", f"Egg 123", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 124", f"Egg 124", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 125", f"Egg 125", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 126", f"Egg 126", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 127", f"Egg 127", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 128", f"Egg 128", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Desert Ruins: Raid the tomb. (Marty)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Desert Ruins: Shark shootin'. (Sadie)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Desert Ruins: Krash Kangaroo I. (Lester)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Desert Ruins: Krash Kangaroo II. (Pete)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Desert Ruins: Sink or singe. (Nelly)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Desert Ruins: Give me a hand (Andy)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Desert Ruins Complete", "Desert Ruins Complete", Spyro3LocationCategory.EVENT)
 ],
 "Haunted Tomb": [
-    Spyro3LocationData(f"Egg 129", f"Egg 129", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 130", f"Egg 130", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 131", f"Egg 131", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 132", f"Egg 132", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 133", f"Egg 133", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 134", f"Egg 134", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Haunted Tomb: Release the temple dweller. (Will)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Haunted Tomb: Snake slide. (Malcom)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Haunted Tomb: Tank blast I. (MJ)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Haunted Tomb: Tank blast II. (TJ)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Haunted Tomb: Clear the caves. (Roxy)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Haunted Tomb: Climb the wall. (Christine)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Haunted Tomb Complete", "Haunted Tomb Complete", Spyro3LocationCategory.EVENT)
 ],
 "Dino Mines": [
-    Spyro3LocationData(f"Egg 135", f"Egg 135", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 136", f"Egg 136", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 137", f"Egg 137", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 138", f"Egg 138", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 139", f"Egg 139", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 140", f"Egg 140", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Dino Mines: Jail break! (Kiki)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Dino Mines: Shafted! (Elliot)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Dino Mines: Swim through the wall. (Romey)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Dino Mines: Gunfight at the Jurassic Corral. (Sharon)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Dino Mines: Leap of faith. (Dan)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Dino Mines: Take it to the bank. (Sergio)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Dino Mines Complete", "Dino Mines Complete", Spyro3LocationCategory.EVENT)
 ],
 "Harbor Speedway": [
-    Spyro3LocationData(f"Egg 141", f"Egg 141", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 142", f"Egg 142", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 143", f"Egg 143", Spyro3LocationCategory.EGG)
+    Spyro3LocationData(f"Harbor Speedway: Time attack. (Kobe)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Harbor Speedway: Race the blue footed boobies. (Jessie)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Harbor Speedway: Hunter's pursuit. (Sara)",f"Egg",Spyro3LocationCategory.EGG),
 ],
 "Agent 9's Lab": [
-    Spyro3LocationData(f"Egg 144", f"Egg 144", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 145", f"Egg 145", Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Egg 146", f"Egg 146", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Agent 9's Lab: Blast and bomb the rhynocs. (Rowan)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Agent 9's Lab: Snipe the boats (Tony)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Agent 9's Lab: This place has gone to the birds. (Beulah)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Agent 9's Lab Complete", "Agent 9's Lab Complete", Spyro3LocationCategory.EVENT)
 ],
 "Sorceress": [
-    Spyro3LocationData(f"Egg 147", f"Egg 147", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sorceress's Lair: Defeat the Sorceress? (George)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Sorceress Defeated", "Sorceress Defeated", Spyro3LocationCategory.EVENT)
 ],
 "Bugbot Factory": [
-    Spyro3LocationData(f"Egg 148", f"Egg 148", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Bugbot Factory: Shut down the factory. (Anabelle)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Bugbot Factory Complete", "Bugbot Factory Complete", Spyro3LocationCategory.EVENT)
 ],
 "Super Bonus Round": [
-    Spyro3LocationData(f"Egg 149", f"Egg 149", Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Super Bonus Round: Woo, a secret egg. (Yin Yang)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Super Bonus Round Complete", "Super Bonus Round Complete", Spyro3LocationCategory.EVENT)
 ]
 
