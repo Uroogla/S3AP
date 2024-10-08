@@ -244,11 +244,11 @@ class Spyro3World(World):
             return egg_count
         
         def is_level_completed(self, level, entrance, state):
-            print("Checking if level is completed: " + level)
+            #print("Checking if level is completed: " + level)
             level_table = location_tables[level]
-            print("Level table size: " + str(len(level_table)))
+            #print("Level table size: " + str(len(level_table)))
             lock_location = level_table[0].name    
-            print("Lock location: " + lock_location)   
+            #print("Lock location: " + lock_location)   
             reachable = state.can_reach_location(lock_location, self.player)
             return reachable
         

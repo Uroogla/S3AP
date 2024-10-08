@@ -53,6 +53,7 @@ namespace S3AP
                         AddressBit = 0,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
+                        Category = "Event"
                     };
                     locations.Add(location);
                 }
@@ -66,6 +67,7 @@ namespace S3AP
                         AddressBit = 0,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
+                        Category = "Boss"
                     };
                     locations.Add(location);
                 }
@@ -79,6 +81,7 @@ namespace S3AP
                         AddressBit = i,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
+                        Category = "Egg"
                     };
                     locations.Add(location);
                     processedEggs++;

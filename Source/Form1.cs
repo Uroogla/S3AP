@@ -55,7 +55,7 @@ namespace S3AP
             Client.ItemReceived += (e, args) =>
             {
                 WriteLine($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
-                if (args.Item.Name.Contains("Egg"))
+                if (args.Item.Name == "Egg")
                 {
                     var currentEggs = Memory.ReadByte(Addresses.TotalEggAddress);
                     Memory.WriteByte(Addresses.TotalEggAddress, (byte)(currentEggs + 1));
@@ -65,14 +65,15 @@ namespace S3AP
 
         private void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations)
         {
-            foreach (var location in newCheckedLocations)
+            foreach (var locationId in newCheckedLocations)
             {
-                var locationName = Client.CurrentSession.Locations.GetLocationNameFromId(location);
-                var isLocalLocation = GameLocations.Any(x => x.Id == location);
+                var locationName = Client.CurrentSession.Locations.GetLocationNameFromId(locationId);
+                var isLocalLocation = GameLocations.Any(x => x.Id == locationId);
                 if (isLocalLocation)
                 {
+                    var location = GameLocations.First(x => x.Id == locationId);
                     var currentEggs = Memory.ReadByte(Addresses.TotalEggAddress);
-                    if (locationName.StartsWith("Egg"))
+                    if (location.Category == "Egg")
                     {                       
                         Memory.WriteByte(Addresses.TotalEggAddress, (byte)(currentEggs - 1));
                         if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))

@@ -4,1042 +4,1191 @@
     "Id": 1230000,
     "Address": "0x00AC7D80",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 2",
     "Id": 1230001,
     "Address": "0x00AC7D80",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 3",
     "Id": 1230002,
     "Address": "0x00AC7D80",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 4",
     "Id": 1230003,
     "Address": "0x00AC7D80",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 5",
     "Id": 1230004,
     "Address": "0x00AC7D80",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 6",
     "Id": 1230005,
     "Address": "0x00AC7D81",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 7",
     "Id": 1230006,
     "Address": "0x00AC7D81",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 8",
     "Id": 1230007,
     "Address": "0x00AC7D81",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 9",
     "Id": 1230008,
     "Address": "0x00AC7D81",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 10",
     "Id": 1230009,
     "Address": "0x00AC7D81",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 11",
     "Id": 1230010,
     "Address": "0x00AC7D81",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 12",
     "Id": 1230011,
     "Address": "0x00AC7D82",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 13",
     "Id": 1230012,
     "Address": "0x00AC7D82",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 14",
     "Id": 1230013,
     "Address": "0x00AC7D82",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 15",
     "Id": 1230014,
     "Address": "0x00AC7D82",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 16",
     "Id": 1230015,
     "Address": "0x00AC7D82",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 17",
     "Id": 1230016,
     "Address": "0x00AC7D82",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 18",
     "Id": 1230017,
     "Address": "0x00AC7D83",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 19",
     "Id": 1230018,
     "Address": "0x00AC7D83",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 20",
     "Id": 1230019,
     "Address": "0x00AC7D83",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 21",
     "Id": 1230020,
     "Address": "0x00AC7D83",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 22",
     "Id": 1230021,
     "Address": "0x00AC7D83",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 23",
     "Id": 1230022,
     "Address": "0x00AC7D83",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 24",
     "Id": 1230023,
     "Address": "0x00AC7D84",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 25",
     "Id": 1230024,
     "Address": "0x00AC7D84",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 26",
     "Id": 1230025,
     "Address": "0x00AC7D84",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 27",
     "Id": 1230026,
     "Address": "0x00AC7D84",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 28",
     "Id": 1230027,
     "Address": "0x00AC7D84",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 29",
     "Id": 1230028,
     "Address": "0x00AC7D84",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 30",
     "Id": 1230029,
     "Address": "0x00AC7D85",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 31",
     "Id": 1230030,
     "Address": "0x00AC7D85",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 32",
     "Id": 1230031,
     "Address": "0x00AC7D85",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 33",
     "Id": 1230032,
     "Address": "0x00AC7D86",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 34",
     "Id": 1230033,
     "Address": "0x00AC7D86",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 35",
     "Id": 1230034,
     "Address": "0x00AC7D86",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 36",
     "Id": 1230035,
     "Address": "0x00AC7D87",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 37",
     "Id": 1230036,
     "Address": "0x00AC7D88",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 38",
     "Id": 1230037,
     "Address": "0x00AC7D89",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 39",
     "Id": 1230038,
     "Address": "0x00AC7D89",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 40",
     "Id": 1230039,
     "Address": "0x00AC7D89",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 41",
     "Id": 1230040,
     "Address": "0x00AC7D89",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 42",
     "Id": 1230041,
     "Address": "0x00AC7D89",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 43",
     "Id": 1230042,
     "Address": "0x00AC7D8A",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 44",
     "Id": 1230043,
     "Address": "0x00AC7D8A",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 45",
     "Id": 1230044,
     "Address": "0x00AC7D8A",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 46",
     "Id": 1230045,
     "Address": "0x00AC7D8A",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 47",
     "Id": 1230046,
     "Address": "0x00AC7D8A",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 48",
     "Id": 1230047,
     "Address": "0x00AC7D8A",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 49",
     "Id": 1230048,
     "Address": "0x00AC7D8B",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 50",
     "Id": 1230049,
     "Address": "0x00AC7D8B",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 51",
     "Id": 1230050,
     "Address": "0x00AC7D8B",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 52",
     "Id": 1230051,
     "Address": "0x00AC7D8B",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 53",
     "Id": 1230052,
     "Address": "0x00AC7D8B",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 54",
     "Id": 1230053,
     "Address": "0x00AC7D8B",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 55",
     "Id": 1230054,
     "Address": "0x00AC7D8C",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 56",
     "Id": 1230055,
     "Address": "0x00AC7D8C",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 57",
     "Id": 1230056,
     "Address": "0x00AC7D8C",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 58",
     "Id": 1230057,
     "Address": "0x00AC7D8C",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 59",
     "Id": 1230058,
     "Address": "0x00AC7D8C",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 60",
     "Id": 1230059,
     "Address": "0x00AC7D8C",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 61",
     "Id": 1230060,
     "Address": "0x00AC7D8D",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 62",
     "Id": 1230061,
     "Address": "0x00AC7D8D",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 63",
     "Id": 1230062,
     "Address": "0x00AC7D8D",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 64",
     "Id": 1230063,
     "Address": "0x00AC7D8D",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 65",
     "Id": 1230064,
     "Address": "0x00AC7D8D",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 66",
     "Id": 1230065,
     "Address": "0x00AC7D8D",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 67",
     "Id": 1230066,
     "Address": "0x00AC7D8E",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 68",
     "Id": 1230067,
     "Address": "0x00AC7D8E",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 69",
     "Id": 1230068,
     "Address": "0x00AC7D8E",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 70",
     "Id": 1230069,
     "Address": "0x00AC7D8F",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 71",
     "Id": 1230070,
     "Address": "0x00AC7D8F",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 72",
     "Id": 1230071,
     "Address": "0x00AC7D8F",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 73",
     "Id": 1230072,
     "Address": "0x00AC7D90",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 74",
     "Id": 1230073,
     "Address": "0x00AC7D91",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 75",
     "Id": 1230074,
     "Address": "0x00AC7D92",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 76",
     "Id": 1230075,
     "Address": "0x00AC7D92",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 77",
     "Id": 1230076,
     "Address": "0x00AC7D92",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 78",
     "Id": 1230077,
     "Address": "0x00AC7D92",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 79",
     "Id": 1230078,
     "Address": "0x00AC7D92",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 80",
     "Id": 1230079,
     "Address": "0x00AC7D93",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 81",
     "Id": 1230080,
     "Address": "0x00AC7D93",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 82",
     "Id": 1230081,
     "Address": "0x00AC7D93",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 83",
     "Id": 1230082,
     "Address": "0x00AC7D93",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 84",
     "Id": 1230083,
     "Address": "0x00AC7D93",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 85",
     "Id": 1230084,
     "Address": "0x00AC7D93",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 86",
     "Id": 1230085,
     "Address": "0x00AC7D94",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 87",
     "Id": 1230086,
     "Address": "0x00AC7D94",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 88",
     "Id": 1230087,
     "Address": "0x00AC7D94",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 89",
     "Id": 1230088,
     "Address": "0x00AC7D94",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 90",
     "Id": 1230089,
     "Address": "0x00AC7D94",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 91",
     "Id": 1230090,
     "Address": "0x00AC7D94",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 92",
     "Id": 1230091,
     "Address": "0x00AC7D95",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 93",
     "Id": 1230092,
     "Address": "0x00AC7D95",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 94",
     "Id": 1230093,
     "Address": "0x00AC7D95",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 95",
     "Id": 1230094,
     "Address": "0x00AC7D95",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 96",
     "Id": 1230095,
     "Address": "0x00AC7D95",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 97",
     "Id": 1230096,
     "Address": "0x00AC7D95",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 98",
     "Id": 1230097,
     "Address": "0x00AC7D96",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 99",
     "Id": 1230098,
     "Address": "0x00AC7D96",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 100",
     "Id": 1230099,
     "Address": "0x00AC7D96",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 101",
     "Id": 1230100,
     "Address": "0x00AC7D96",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 102",
     "Id": 1230101,
     "Address": "0x00AC7D96",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 103",
     "Id": 1230102,
     "Address": "0x00AC7D96",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 104",
     "Id": 1230103,
     "Address": "0x00AC7D97",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 105",
     "Id": 1230104,
     "Address": "0x00AC7D97",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 106",
     "Id": 1230105,
     "Address": "0x00AC7D97",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 107",
     "Id": 1230106,
     "Address": "0x00AC7D98",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 108",
     "Id": 1230107,
     "Address": "0x00AC7D98",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 109",
     "Id": 1230108,
     "Address": "0x00AC7D98",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 110",
     "Id": 1230109,
     "Address": "0x00AC7D99",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 111",
     "Id": 1230110,
     "Address": "0x00AC7D9A",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 112",
     "Id": 1230111,
     "Address": "0x00AC7D9B",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 113",
     "Id": 1230112,
     "Address": "0x00AC7D9B",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 114",
     "Id": 1230113,
     "Address": "0x00AC7D9B",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 115",
     "Id": 1230114,
     "Address": "0x00AC7D9B",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 116",
     "Id": 1230115,
     "Address": "0x00AC7D9B",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 117",
     "Id": 1230116,
     "Address": "0x00AC7D9C",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 118",
     "Id": 1230117,
     "Address": "0x00AC7D9C",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 119",
     "Id": 1230118,
     "Address": "0x00AC7D9C",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 120",
     "Id": 1230119,
     "Address": "0x00AC7D9C",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 121",
     "Id": 1230120,
     "Address": "0x00AC7D9C",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 122",
     "Id": 1230121,
     "Address": "0x00AC7D9C",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 123",
     "Id": 1230122,
     "Address": "0x00AC7D9D",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 124",
     "Id": 1230123,
     "Address": "0x00AC7D9D",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 125",
     "Id": 1230124,
     "Address": "0x00AC7D9D",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 126",
     "Id": 1230125,
     "Address": "0x00AC7D9D",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 127",
     "Id": 1230126,
     "Address": "0x00AC7D9D",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 128",
     "Id": 1230127,
     "Address": "0x00AC7D9D",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 129",
     "Id": 1230128,
     "Address": "0x00AC7D9E",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 130",
     "Id": 1230129,
     "Address": "0x00AC7D9E",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 131",
     "Id": 1230130,
     "Address": "0x00AC7D9E",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 132",
     "Id": 1230131,
     "Address": "0x00AC7D9E",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 133",
     "Id": 1230132,
     "Address": "0x00AC7D9E",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 134",
     "Id": 1230133,
     "Address": "0x00AC7D9E",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 135",
     "Id": 1230134,
     "Address": "0x00AC7D9F",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 136",
     "Id": 1230135,
     "Address": "0x00AC7D9F",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 137",
     "Id": 1230136,
     "Address": "0x00AC7D9F",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 138",
     "Id": 1230137,
     "Address": "0x00AC7D9F",
     "CheckType": "Bit",
-    "AddressBit": 3
+    "AddressBit": 3,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 139",
     "Id": 1230138,
     "Address": "0x00AC7D9F",
     "CheckType": "Bit",
-    "AddressBit": 4
+    "AddressBit": 4,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 140",
     "Id": 1230139,
     "Address": "0x00AC7D9F",
     "CheckType": "Bit",
-    "AddressBit": 5
+    "AddressBit": 5,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 141",
     "Id": 1230140,
     "Address": "0x00AC7DA0",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 142",
     "Id": 1230141,
     "Address": "0x00AC7DA0",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 143",
     "Id": 1230142,
     "Address": "0x00AC7DA0",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 144",
     "Id": 1230143,
     "Address": "0x00AC7DA1",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 145",
     "Id": 1230144,
     "Address": "0x00AC7DA1",
     "CheckType": "Bit",
-    "AddressBit": 1
+    "AddressBit": 1,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 146",
     "Id": 1230145,
     "Address": "0x00AC7DA1",
     "CheckType": "Bit",
-    "AddressBit": 2
+    "AddressBit": 2,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 147",
     "Id": 1230146,
     "Address": "0x00AC7DA2",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 148",
     "Id": 1230147,
     "Address": "0x00AC7DA3",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   },
   {
     "Name": "Egg 149",
     "Id": 1230148,
     "Address": "0x00AC7DA4",
     "CheckType": "Bit",
-    "AddressBit": 0
+    "AddressBit": 0,
+    "Category": "Egg"
   }
 ]
