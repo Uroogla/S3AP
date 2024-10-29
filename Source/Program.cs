@@ -33,6 +33,13 @@ namespace S3AP
             MainForm.ConnectClicked += MainForm_ConnectClicked;
             Application.Run(MainForm);
         }
+        private static int CalculateCurrentEggs() 
+        {
+            var eggList = Helpers.BuildEggLocationList();
+            var count = eggList.Count(x => Client.CurrentSession.Items.AllItemsReceived.Any(y => y.LocationId == x.Id));
+            Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));
+            return count;
+        }
 
         private static async void MainForm_ConnectClicked(object? sender, ConnectClickedEventArgs e)
         {
@@ -63,8 +70,7 @@ namespace S3AP
                 Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
                 if (args.Item.Name == "Egg")
                 {
-                    var currentEggs = Memory.ReadByte(Addresses.TotalEggAddress);
-                    Memory.WriteByte(Addresses.TotalEggAddress, (byte)(currentEggs + 1));
+                    CalculateCurrentEggs();
                 }
             };
         }
@@ -89,10 +95,9 @@ namespace S3AP
                 if (isLocalLocation)
                 {
                     var location = GameLocations.First(x => x.Id == locationId);
-                    var currentEggs = Memory.ReadByte(Addresses.TotalEggAddress);
+                    var currentEggs = CalculateCurrentEggs();
                     if (location.Category == "Egg")
                     {
-                        Memory.WriteByte(Addresses.TotalEggAddress, (byte)(currentEggs - 1));
                         if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
                         {
                             var status = Client.CurrentSession.DataStorage.GetClientStatus(Client.CurrentSession.ConnectionInfo.Slot);
