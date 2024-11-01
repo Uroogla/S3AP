@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-
+using Location = Archipelago.Core.Models.Location;
 namespace S3AP
 {
     public class Helpers

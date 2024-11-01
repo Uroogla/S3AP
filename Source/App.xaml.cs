@@ -1,47 +1,39 @@
-using Archipelago.Core;
-using Archipelago.Core.GUI;
-using Archipelago.Core.Models;
+﻿using Archipelago.Core;
+using Archipelago.Core.MauiGUI;
+using Archipelago.Core.MauiGUI.Models;
+using Archipelago.Core.MauiGUI.ViewModels;
 using Archipelago.Core.Util;
 using Archipelago.ePSXe;
 using Newtonsoft.Json;
 using Serilog;
+using Color = Microsoft.Maui.Graphics.Color;
+using Location = Archipelago.Core.Models.Location;
 
 namespace S3AP
 {
-    internal static class Program
+    public partial class App : Application
     {
-        public static MainForm MainForm;
+        public MainPageViewModel Context;
         public static ArchipelagoClient Client { get; set; }
         public static List<Location> GameLocations { get; set; }
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main()
+        public App()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
+            InitializeComponent();
             var options = new GuiDesignOptions
             {
-                BackgroundColor = Color.Purple,
-                ButtonColor = Color.DarkSlateBlue,
-                ButtonTextColor = Color.FromArgb(192, 192, 0),
-                TextColor = Color.FromArgb(192, 192, 0),
+                BackgroundColor = Color.FromArgb("FF800080"),
+                ButtonColor = Color.FromArgb("FF483D8B"),
+                ButtonTextColor = Color.FromRgb(192, 192, 0),
+                TextColor = Color.FromRgb(192, 192, 0),
+                Title = "S3AP - Spyro 3 Archipelago Client",
             };
-            MainForm = new MainForm(options);
-            MainForm.ConnectClicked += MainForm_ConnectClicked;
-            Application.Run(MainForm);
-        }
-        private static int CalculateCurrentEggs() 
-        {
-            var eggList = Helpers.BuildEggLocationList();
-            var count = eggList.Count(x => Client.CurrentSession.Items.AllItemsReceived.Any(y => y.LocationId == x.Id));
-            Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));
-            return count;
+            Context = new MainPageViewModel(options);
+            Context.ConnectClicked += Context_ConnectClicked;
+            MainPage = new MainPage(Context);
+            MainPage = MainPage;
         }
 
-        private static async void MainForm_ConnectClicked(object? sender, ConnectClickedEventArgs e)
+        private async void Context_ConnectClicked(object? sender, ConnectClickedEventArgs e)
         {
             if (Client != null)
             {
@@ -65,6 +57,7 @@ namespace S3AP
             await Client.Login(e.Slot, !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
             Client.PopulateLocations(GameLocations);
             Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
+            Client.MessageReceived += Client_MessageReceived;
             Client.ItemReceived += (e, args) =>
             {
                 Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
@@ -74,20 +67,14 @@ namespace S3AP
                 }
             };
         }
-
-        private static void OnConnected(object sender, EventArgs args)
+        private void Client_MessageReceived(object? sender, Archipelago.Core.Models.MessageReceivedEventArgs e)
         {
-            Log.Logger.Information("Connected to Archipelago");
-            Log.Logger.Information($"Playing {Client.CurrentSession.ConnectionInfo.Game} as {Client.CurrentSession.Players.GetPlayerName(Client.CurrentSession.ConnectionInfo.Slot)}");
-        }
 
-        private static void OnDisconnected(object sender, EventArgs args)
-        {
-            Log.Logger.Information("Disconnected from Archipelago");
+            Log.Logger.Information(JsonConvert.SerializeObject(e.Message));
         }
-
         private static void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations)
         {
+            var currentEggs = CalculateCurrentEggs();
             foreach (var locationId in newCheckedLocations)
             {
                 var locationName = Client.CurrentSession.Locations.GetLocationNameFromId(locationId);
@@ -95,7 +82,7 @@ namespace S3AP
                 if (isLocalLocation)
                 {
                     var location = GameLocations.First(x => x.Id == locationId);
-                    var currentEggs = CalculateCurrentEggs();
+                    currentEggs = CalculateCurrentEggs();
                     if (location.Category == "Egg")
                     {
                         if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
@@ -118,5 +105,26 @@ namespace S3AP
                 }
             }
         }
+        private static int CalculateCurrentEggs()
+        {
+            var eggList = Helpers.BuildEggLocationList();
+            Log.Logger.Information($"Known egg count: {eggList.Count}");
+            Log.Logger.Information($"Received item count: {Client.CurrentSession.Items.AllItemsReceived.Count}");
+            var count = eggList.Count(x => Client.CurrentSession.Items.AllItemsReceived.Any(y => y.LocationId == x.Id) && x.Category == "Egg");
+            Log.Logger.Information($"Received Egg count: {count}");
+            Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));
+            return count;
+        }
+        private static void OnConnected(object sender, EventArgs args)
+        {
+            Log.Logger.Information("Connected to Archipelago");
+            Log.Logger.Information($"Playing {Client.CurrentSession.ConnectionInfo.Game} as {Client.CurrentSession.Players.GetPlayerName(Client.CurrentSession.ConnectionInfo.Slot)}");
+        }
+
+        private static void OnDisconnected(object sender, EventArgs args)
+        {
+            Log.Logger.Information("Disconnected from Archipelago");
+        }
     }
+
 }
