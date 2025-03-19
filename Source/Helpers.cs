@@ -1,6 +1,8 @@
 ﻿using Archipelago.Core.Models;
+using Archipelago.Core.Util;
 using Newtonsoft.Json;
 using S3AP.Models;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,12 +14,6 @@ namespace S3AP
 {
     public class Helpers
     {
-        public static List<Location> GetLocations()
-        {
-            var json = OpenEmbeddedResource("S3AP.Resources.Locations.json");
-            var list = JsonConvert.DeserializeObject<List<Location>>(json);
-            return list;
-        }
         public static string OpenEmbeddedResource(string resourceName)
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -28,7 +24,12 @@ namespace S3AP
                 return jsonFile;
             }
         }
-
+        public static ulong GetDuckstationOffset()
+        {
+            var baseAddress = Memory.GetBaseAddress("duckstation-qt-x64-ReleaseLTCG");
+            var offset = Memory.ReadULong(baseAddress + 0x008A93D8);
+            return offset;
+        }
         public static List<Location> BuildEggLocationList()
         {
             int baseId = 1230000;
@@ -42,7 +43,7 @@ namespace S3AP
             var bossList = levels.Where(x => x.IsBoss).ToList();
             foreach (var level in levels)
             {
-                Console.WriteLine($"Loading eggs for level {level.LevelId}: {level.Name}. {level.EggCount} eggs found");
+                Log.Debug($"Loading eggs for level {level.LevelId}: {level.Name}. {level.EggCount} eggs found");
                 if (!level.IsHomeworld && !level.IsBoss)
                 {
                     // Level Completed (first egg)
@@ -88,7 +89,7 @@ namespace S3AP
                 }
                 currentAddress++;
             }
-            Console.WriteLine($"{totalEggCount} eggs loaded");
+            Log.Debug($"{totalEggCount} eggs loaded");
             return locations;
         }
 
