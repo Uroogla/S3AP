@@ -11,6 +11,5 @@ namespace S3AP
         public const uint TotalEggAddress = 0x0006C740;
         public const uint EggStartAddress = 0x000703E0;
 
-        public static ulong DuckstationOffset;
     }
 }

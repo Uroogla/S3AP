@@ -72,10 +72,10 @@ class Spyro3World(World):
         ]})
         
         # Connect Regions
-        def create_connection(from_region: str, to_region: str, rule = None):
+        def create_connection(from_region: str, to_region: str):
             connection = Entrance(self.player, f"{to_region}", regions[from_region])
             regions[from_region].exits.append(connection)
-            connection.connect(regions[to_region], rule)
+            connection.connect(regions[to_region])
             print(f"Connecting {from_region} to {to_region} Using entrance: " + connection.name)
             
         create_connection("Menu", "Sunrise Springs")       
@@ -302,7 +302,7 @@ class Spyro3World(World):
         set_rule(self.multiworld.get_entrance("Frozen Altars", self.player), lambda state: state.has("Egg", self.player,32))
         set_rule(self.multiworld.get_entrance("Lost Fleet", self.player), lambda state: state.has("Egg", self.player,32))
         set_rule(self.multiworld.get_entrance("Fireworks Factory", self.player), lambda state: state.has("Egg", self.player,50))
-        set_rule(self.multiworld.get_entrance("Charmed Ridge", self.player), lambda state: state.has("Egg", self.player,59))
+        set_rule(self.multiworld.get_entrance("Charmed Ridge", self.player), lambda state: state.has("Egg", self.player,58))
         set_rule(self.multiworld.get_entrance("Honey Speedway", self.player), lambda state: state.has("Egg", self.player,65))
         set_rule(self.multiworld.get_entrance("Bentley's Outpost", self.player), lambda state: state.has("Egg", self.player,32))
 
@@ -328,7 +328,7 @@ class Spyro3World(World):
                 is_level_completed(self,"Haunted Tomb","Sorceress", state) and \
                 is_level_completed(self,"Dino Mines","Sorceress", state) and \
                 is_level_completed(self,"Agent 9's Lab","Sorceress", state) and \
-                state.has("Egg", self.player,99))
+                state.has("Egg", self.player,100))
 
         set_rule(self.multiworld.get_entrance("Bugbot Factory", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player,100))
         set_rule(self.multiworld.get_entrance("Super Bonus Round", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player,100))           

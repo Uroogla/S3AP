@@ -6,6 +6,7 @@ using Archipelago.Core.MauiGUI.ViewModels;
 using Archipelago.Core.Models;
 using Archipelago.Core.Util;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
+using Microsoft.Maui.Devices.Sensors;
 using Newtonsoft.Json;
 using Serilog;
 using Color = Microsoft.Maui.Graphics.Color;
@@ -36,38 +37,77 @@ namespace S3AP
         {
             if (Client != null)
             {
+                Client.CancelMonitors();
                 Client.Connected -= OnConnected;
                 Client.Disconnected -= OnDisconnected;
+                Client.ItemReceived -= ItemReceived;
+                Client.MessageReceived -= Client_MessageReceived;
+                Client.LocationCompleted -= Client_LocationCompleted;
+                //Client.CurrentSession.Locations.CheckedLocationsUpdated -= Locations_CheckedLocationsUpdated;
             }
             DuckstationClient client = new DuckstationClient();
-            var ePSXeConnected = client.Connect();
-            if (!ePSXeConnected)
+            var DuckstationConnected = client.Connect();
+            if (!DuckstationConnected)
             {
                 Log.Logger.Warning("duckstation not running, open duckstation and launch the game before connecting!");
                 return;
             }
             Client = new ArchipelagoClient(client);
 
-            Addresses.DuckstationOffset = Helpers.GetDuckstationOffset();
-            Memory.GlobalOffset = Addresses.DuckstationOffset;
+            Memory.GlobalOffset = Memory.GetDuckstationOffset();
 
             Client.Connected += OnConnected;
             Client.Disconnected += OnDisconnected;
 
             await Client.Connect(e.Host, "Spyro 3");
-            GameLocations = Helpers.BuildEggLocationList();
-            await Client.Login(e.Slot, !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
-            Client.PopulateLocations(GameLocations);
-            Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
+            GameLocations = Helpers.BuildLocationList();
+            Client.LocationCompleted += Client_LocationCompleted;
+            //Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
             Client.MessageReceived += Client_MessageReceived;
-            Client.ItemReceived += (e, args) =>
+            Client.ItemReceived += ItemReceived;
+            await Client.Login(e.Slot, !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
+            Client.MonitorLocations(GameLocations);
+        }
+
+        private void Client_LocationCompleted(object? sender, LocationCompletedEventArgs e)
+        {
+            if (Client.GameState == null) return;
+            var currentEggs = CalculateCurrentEggs();
+            var locationId = e.CompletedLocation.Id;
+            var locationName = e.CompletedLocation.Name;
+            var isLocalLocation = GameLocations.Any(x => x.Id == locationId);
+            if (isLocalLocation)
             {
-                Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
-                if (args.Item.Name == "Egg")
+                var location = GameLocations.First(x => x.Id == locationId);
+                currentEggs = CalculateCurrentEggs();
+                if (location.Category == "Egg")
                 {
-                    CalculateCurrentEggs();
+                    if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
+                    {
+                        Client.SendGoalCompletion();
+                    }
                 }
-            };
+                if (locationName == "Sorceress Defeated" && currentEggs >= 100)
+                {
+                    Client.SendGoalCompletion();
+                }
+            }
+
+        }
+
+        private async void ItemReceived(object? o, ItemReceivedEventArgs args)
+        {
+            Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
+            if (args.Item.Name == "Egg")
+            {
+                var currentEggs = CalculateCurrentEggs();
+
+                if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
+                {
+                    Client.SendGoalCompletion();
+                }
+
+            }
         }
         private static void LogItem(Item item)
         {
@@ -117,6 +157,7 @@ namespace S3AP
         }
         private static void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations)
         {
+            if (Client.GameState == null) return;
             var currentEggs = CalculateCurrentEggs();
             foreach (var locationId in newCheckedLocations)
             {
@@ -142,10 +183,10 @@ namespace S3AP
         }
         private static int CalculateCurrentEggs()
         {
-            var eggList = Helpers.BuildEggLocationList();
-            Log.Logger.Debug($"Known egg count: {eggList.Count}");
+            var eggList = Helpers.BuildLocationList();
+            Log.Logger.Debug($"Known egg count: {eggList.Count(x => x.Category == "Egg")}");
             Log.Logger.Debug($"Received item count: {Client.CurrentSession.Items.AllItemsReceived.Count}");
-            var count = eggList.Count(x => Client.CurrentSession.Items.AllItemsReceived.Any(y => y.LocationId == x.Id) && x.Category == "Egg");
+            var count = Client.GameState?.ReceivedItems.Where(x => eggList.Any(y => y.Id == x.Id && y.Category == "Egg")).Sum(x => x.Quantity) ?? 0;
             Log.Logger.Debug($"Received Egg count: {count}");
             Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));
             return count;

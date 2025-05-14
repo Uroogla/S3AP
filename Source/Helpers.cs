@@ -27,10 +27,10 @@ namespace S3AP
         public static ulong GetDuckstationOffset()
         {
             var baseAddress = Memory.GetBaseAddress("duckstation-qt-x64-ReleaseLTCG");
-            var offset = Memory.ReadULong(baseAddress + 0x008A93D8);
+            var offset = Memory.ReadULong(baseAddress + 0x008C4FA8);
             return offset;
         }
-        public static List<Location> BuildEggLocationList()
+        public static List<Location> BuildLocationList()
         {
             int baseId = 1230000;
             int levelOffset = 1000;

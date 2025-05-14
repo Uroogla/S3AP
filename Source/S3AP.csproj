@@ -27,7 +27,7 @@
 		<ApplicationId>com.arsonassassin.s3ap</ApplicationId>
 
 		<!-- Versions -->
-		<ApplicationDisplayVersion>0.2.0</ApplicationDisplayVersion>
+		<ApplicationDisplayVersion>0.2.2</ApplicationDisplayVersion>
 		<ApplicationVersion>1</ApplicationVersion>
 
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
@@ -67,7 +67,7 @@
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows10.0.19041.0'">
 	  <PackageReference Include="Archipelago.Core.MauiGUI">
-	    <Version>0.0.25</Version>
+	    <Version>0.0.43</Version>
 	  </PackageReference>
 	</ItemGroup>
 
