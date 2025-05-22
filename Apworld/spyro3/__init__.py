@@ -331,7 +331,7 @@ class Spyro3World(World):
                 state.has("Egg", self.player,100))
 
         set_rule(self.multiworld.get_entrance("Bugbot Factory", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player,100))
-        set_rule(self.multiworld.get_entrance("Super Bonus Round", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player,100))           
+        set_rule(self.multiworld.get_entrance("Super Bonus Round", self.player), lambda state: is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player,149))           
                 
     def fill_slot_data(self) -> Dict[str, object]:
         slot_data: Dict[str, object] = {}
