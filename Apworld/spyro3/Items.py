@@ -1,6 +1,5 @@
 from enum import IntEnum
 from typing import NamedTuple
-import random
 from BaseClasses import Item
 
 
@@ -74,7 +73,7 @@ item_descriptions = {
 
 item_dictionary = {item_data.name: item_data for item_data in _all_items}
 
-def BuildItemPool(count, options):
+def BuildItemPool(multiworld, count, options):
     item_pool = []
     included_itemcount = 0
 
@@ -87,8 +86,8 @@ def BuildItemPool(count, options):
     
     for i in range(remaining_count):
         itemList = [item for item in _all_items]
-        item = random.choice(itemList)
+        item = multiworld.random.choice(itemList)
         item_pool.append(item)
     
-    random.shuffle(item_pool)
+    multiworld.random.shuffle(item_pool)
     return item_pool
