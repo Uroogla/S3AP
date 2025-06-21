@@ -4,6 +4,7 @@ using Archipelago.Core.MauiGUI;
 using Archipelago.Core.MauiGUI.Models;
 using Archipelago.Core.MauiGUI.ViewModels;
 using Archipelago.Core.Models;
+using Archipelago.Core.Traps;
 using Archipelago.Core.Util;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Microsoft.Maui.Devices.Sensors;
@@ -23,7 +24,7 @@ namespace S3AP
         public App()
         {
             InitializeComponent();
-            Context = new MainPageViewModel();
+            Context = new MainPageViewModel("0.6.1");
             Context.ConnectClicked += Context_ConnectClicked;
             Context.CommandReceived += (e, a) =>
             {
@@ -43,7 +44,7 @@ namespace S3AP
                 Client.ItemReceived -= ItemReceived;
                 Client.MessageReceived -= Client_MessageReceived;
                 Client.LocationCompleted -= Client_LocationCompleted;
-                //Client.CurrentSession.Locations.CheckedLocationsUpdated -= Locations_CheckedLocationsUpdated;
+                Client.CurrentSession.Locations.CheckedLocationsUpdated -= Locations_CheckedLocationsUpdated;
             }
             DuckstationClient client = new DuckstationClient();
             var DuckstationConnected = client.Connect();
@@ -62,11 +63,13 @@ namespace S3AP
             await Client.Connect(e.Host, "Spyro 3");
             GameLocations = Helpers.BuildLocationList();
             Client.LocationCompleted += Client_LocationCompleted;
-            //Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
+            Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
             Client.MessageReceived += Client_MessageReceived;
             Client.ItemReceived += ItemReceived;
+            Client.EnableLocationsCondition = () => Helpers.IsInGame();
             await Client.Login(e.Slot, !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
             Client.MonitorLocations(GameLocations);
+
         }
 
         private void Client_LocationCompleted(object? sender, LocationCompletedEventArgs e)
@@ -106,7 +109,22 @@ namespace S3AP
                 {
                     Client.SendGoalCompletion();
                 }
+            }
+            else if(args.Item.Name == "Extra Life")
+            {
 
+            }
+            else if(args.Item.Name == "Lag Trap")
+            {
+                RunLagTrap();
+            }
+        }
+        private static async void RunLagTrap()
+        {
+            using (var lagTrap = new LagTrap(TimeSpan.FromSeconds(20)))
+            {
+                lagTrap.Start();
+                await lagTrap.WaitForCompletionAsync();
             }
         }
         private static void LogItem(Item item)

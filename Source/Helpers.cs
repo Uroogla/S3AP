@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using static S3AP.Models.Enums;
 using Location = Archipelago.Core.Models.Location;
 namespace S3AP
 {
@@ -29,6 +30,63 @@ namespace S3AP
             var baseAddress = Memory.GetBaseAddress("duckstation-qt-x64-ReleaseLTCG");
             var offset = Memory.ReadULong(baseAddress + 0x008C4FA8);
             return offset;
+        }
+        public static Dictionary<string, int> GetLevelGemCounts()
+        {
+            return new Dictionary<string, int>
+            {
+                {"Sunrise Spring", Memory.ReadInt(Addresses.SunriseSpringGems)},
+                {"Sunny Villa", Memory.ReadInt(Addresses.SunnyVillaGems)},
+                {"Cloud Spire", Memory.ReadInt(Addresses.CloudSpireLevelGems)},
+                {"Molten Crater", Memory.ReadInt(Addresses.MoltenCraterGems)},
+                {"Seashell Shore", Memory.ReadInt(Addresses.SeashellShoreGems)},
+                {"Mushroom Speedway", Memory.ReadInt(Addresses.MushroomSpeedwayGems)},
+                {"Sheila's Alp", Memory.ReadInt(Addresses.SheilaAlpGems)},
+                {"Buzz's Dungeon", Memory.ReadInt(Addresses.BuzzDungeonGems)},
+                {"Crawdad Farm", Memory.ReadInt(Addresses.CrawdadFarmGems)},
+                {"Midday Garden", Memory.ReadInt(Addresses.MiddayGardenGems)},
+                {"Icy Peak", Memory.ReadInt(Addresses.IcyPeakGems)},
+                {"Enchanted Towers", Memory.ReadInt(Addresses.EnchantedTowersGems)},
+                {"Spooky Swamp", Memory.ReadInt(Addresses.SpookySwampGems)},
+                {"Bamboo Terrace", Memory.ReadInt(Addresses.BambooTerraceGems)},
+                {"Country Speedway", Memory.ReadInt(Addresses.CountrySpeedwayGems)},
+                {"Sgt. Byrd's Base", Memory.ReadInt(Addresses.SgtByrdBaseGems)},
+                {"Spike's Arena", Memory.ReadInt(Addresses.SpikesArenaGems)},
+                {"Spider Town", Memory.ReadInt(Addresses.SpiderTownGems)},
+                {"Evening Lake", Memory.ReadInt(Addresses.EveningLakeGems)},
+                {"Frozen Altars", Memory.ReadInt(Addresses.FrozenAltarsGems)},
+                {"Lost Fleet", Memory.ReadInt(Addresses.LostFleetGems)},
+                {"Fireworks Factory", Memory.ReadInt(Addresses.FireworksFactoryGems)},
+                {"Charmed Ridge", Memory.ReadInt(Addresses.CharmedRidgeGems)},
+                {"Honey Speedway", Memory.ReadInt(Addresses.HoneySpeedwayGems)},
+                {"Bentley's Outpost", Memory.ReadInt(Addresses.BentleyOutpostGems)},
+                {"Scorch's Pit", Memory.ReadInt(Addresses.ScorchPitGems)},
+                {"Starfish Reef", Memory.ReadInt(Addresses.StarfishReefGems)},
+                {"Midnight Mountain", Memory.ReadInt(Addresses.MidnightMountainGems)},
+                {"Crystal Islands", Memory.ReadInt(Addresses.CrystalIslandsGems)},
+                {"Desert Ruins", Memory.ReadInt(Addresses.DesertRuinsGems)},
+                {"Haunted Tomb", Memory.ReadInt(Addresses.HauntedTombGems)},
+                {"Dino Mines", Memory.ReadInt(Addresses.DinoMinesGems)},
+                {"Harbor Speedway", Memory.ReadInt(Addresses.HarborSpeedwayGems)},
+                {"Agent 9's Lab", Memory.ReadInt(Addresses.AgentNineLabGems)},
+                {"Sorcerer's Lair", Memory.ReadInt(Addresses.SorcererLairGems)},
+                {"Bugbot Factory", Memory.ReadInt(Addresses.BugbotFactoryGems)},
+                {"Super Bonus Round", Memory.ReadInt(Addresses.SuperBonusRoundGems)}
+            };
+        }
+        public static bool IsInDemoMode()
+        {
+            return Memory.ReadByte(Addresses.IsInDemoMode) == 1;
+        }
+        public static bool IsInGame()
+        {
+            return !IsInDemoMode() && GetGameStatus() != GameStatus.TitleScreen;
+        }
+        public static GameStatus GetGameStatus()
+        {
+            var status = Memory.ReadByte(Addresses.GameStatus);
+            var result = (GameStatus)status;
+            return result;
         }
         public static List<Location> BuildLocationList()
         {
