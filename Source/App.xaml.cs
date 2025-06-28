@@ -76,26 +76,7 @@ namespace S3AP
         {
             if (Client.GameState == null) return;
             var currentEggs = CalculateCurrentEggs();
-            var locationId = e.CompletedLocation.Id;
-            var locationName = e.CompletedLocation.Name;
-            var isLocalLocation = GameLocations.Any(x => x.Id == locationId);
-            if (isLocalLocation)
-            {
-                var location = GameLocations.First(x => x.Id == locationId);
-                currentEggs = CalculateCurrentEggs();
-                if (location.Category == "Egg")
-                {
-                    if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
-                    {
-                        Client.SendGoalCompletion();
-                    }
-                }
-                if (locationName == "Sorceress Defeated" && currentEggs >= 100)
-                {
-                    Client.SendGoalCompletion();
-                }
-            }
-
+            CheckGoalCondition();
         }
 
         private async void ItemReceived(object? o, ItemReceivedEventArgs args)
@@ -105,18 +86,24 @@ namespace S3AP
             {
                 var currentEggs = CalculateCurrentEggs();
 
-                if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
-                {
-                    Client.SendGoalCompletion();
-                }
+                CheckGoalCondition();
             }
-            else if(args.Item.Name == "Extra Life")
+            else if (args.Item.Name == "Extra Life")
             {
-
+                var currentLives = Memory.ReadShort(Addresses.PlayerLives);
+                Memory.Write(Addresses.PlayerLives, (short)(currentLives + 1));
             }
-            else if(args.Item.Name == "Lag Trap")
+            else if (args.Item.Name == "Lag Trap")
             {
                 RunLagTrap();
+            }
+        }
+        private static void CheckGoalCondition()
+        {
+            var currentEggs = CalculateCurrentEggs();
+            if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
+            {
+                Client.SendGoalCompletion();
             }
         }
         private static async void RunLagTrap()
@@ -177,35 +164,12 @@ namespace S3AP
         {
             if (Client.GameState == null) return;
             var currentEggs = CalculateCurrentEggs();
-            foreach (var locationId in newCheckedLocations)
-            {
-                var locationName = Client.CurrentSession.Locations.GetLocationNameFromId(locationId);
-                var isLocalLocation = GameLocations.Any(x => x.Id == locationId);
-                if (isLocalLocation)
-                {
-                    var location = GameLocations.First(x => x.Id == locationId);
-                    currentEggs = CalculateCurrentEggs();
-                    if (location.Category == "Egg")
-                    {
-                        if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
-                        {
-                            Client.SendGoalCompletion();
-                        }
-                    }
-                    if (locationName == "Sorceress Defeated" && currentEggs >= 100)
-                    {
-                        Client.SendGoalCompletion();
-                    }
-                }
-            }
+            CheckGoalCondition();
+
         }
         private static int CalculateCurrentEggs()
         {
-            var eggList = Helpers.BuildLocationList();
-            Log.Logger.Debug($"Known egg count: {eggList.Count(x => x.Category == "Egg")}");
-            Log.Logger.Debug($"Received item count: {Client.CurrentSession.Items.AllItemsReceived.Count}");
-            var count = Client.GameState?.ReceivedItems.Where(x => eggList.Any(y => y.Id == x.Id && y.Category == "Egg")).Sum(x => x.Quantity) ?? 0;
-            Log.Logger.Debug($"Received Egg count: {count}");
+            var count = Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Sum(x => x.Quantity) ?? 0;
             Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));
             return count;
         }

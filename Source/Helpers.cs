@@ -31,47 +31,48 @@ namespace S3AP
             var offset = Memory.ReadULong(baseAddress + 0x008C4FA8);
             return offset;
         }
-        public static Dictionary<string, int> GetLevelGemCounts()
+
+        public static Dictionary<string, Tuple<int, uint>> GetLevelGemCounts()
         {
-            return new Dictionary<string, int>
+            return new Dictionary<string, Tuple<int, uint>>
             {
-                {"Sunrise Spring", Memory.ReadInt(Addresses.SunriseSpringGems)},
-                {"Sunny Villa", Memory.ReadInt(Addresses.SunnyVillaGems)},
-                {"Cloud Spire", Memory.ReadInt(Addresses.CloudSpireLevelGems)},
-                {"Molten Crater", Memory.ReadInt(Addresses.MoltenCraterGems)},
-                {"Seashell Shore", Memory.ReadInt(Addresses.SeashellShoreGems)},
-                {"Mushroom Speedway", Memory.ReadInt(Addresses.MushroomSpeedwayGems)},
-                {"Sheila's Alp", Memory.ReadInt(Addresses.SheilaAlpGems)},
-                {"Buzz's Dungeon", Memory.ReadInt(Addresses.BuzzDungeonGems)},
-                {"Crawdad Farm", Memory.ReadInt(Addresses.CrawdadFarmGems)},
-                {"Midday Garden", Memory.ReadInt(Addresses.MiddayGardenGems)},
-                {"Icy Peak", Memory.ReadInt(Addresses.IcyPeakGems)},
-                {"Enchanted Towers", Memory.ReadInt(Addresses.EnchantedTowersGems)},
-                {"Spooky Swamp", Memory.ReadInt(Addresses.SpookySwampGems)},
-                {"Bamboo Terrace", Memory.ReadInt(Addresses.BambooTerraceGems)},
-                {"Country Speedway", Memory.ReadInt(Addresses.CountrySpeedwayGems)},
-                {"Sgt. Byrd's Base", Memory.ReadInt(Addresses.SgtByrdBaseGems)},
-                {"Spike's Arena", Memory.ReadInt(Addresses.SpikesArenaGems)},
-                {"Spider Town", Memory.ReadInt(Addresses.SpiderTownGems)},
-                {"Evening Lake", Memory.ReadInt(Addresses.EveningLakeGems)},
-                {"Frozen Altars", Memory.ReadInt(Addresses.FrozenAltarsGems)},
-                {"Lost Fleet", Memory.ReadInt(Addresses.LostFleetGems)},
-                {"Fireworks Factory", Memory.ReadInt(Addresses.FireworksFactoryGems)},
-                {"Charmed Ridge", Memory.ReadInt(Addresses.CharmedRidgeGems)},
-                {"Honey Speedway", Memory.ReadInt(Addresses.HoneySpeedwayGems)},
-                {"Bentley's Outpost", Memory.ReadInt(Addresses.BentleyOutpostGems)},
-                {"Scorch's Pit", Memory.ReadInt(Addresses.ScorchPitGems)},
-                {"Starfish Reef", Memory.ReadInt(Addresses.StarfishReefGems)},
-                {"Midnight Mountain", Memory.ReadInt(Addresses.MidnightMountainGems)},
-                {"Crystal Islands", Memory.ReadInt(Addresses.CrystalIslandsGems)},
-                {"Desert Ruins", Memory.ReadInt(Addresses.DesertRuinsGems)},
-                {"Haunted Tomb", Memory.ReadInt(Addresses.HauntedTombGems)},
-                {"Dino Mines", Memory.ReadInt(Addresses.DinoMinesGems)},
-                {"Harbor Speedway", Memory.ReadInt(Addresses.HarborSpeedwayGems)},
-                {"Agent 9's Lab", Memory.ReadInt(Addresses.AgentNineLabGems)},
-                {"Sorcerer's Lair", Memory.ReadInt(Addresses.SorcererLairGems)},
-                {"Bugbot Factory", Memory.ReadInt(Addresses.BugbotFactoryGems)},
-                {"Super Bonus Round", Memory.ReadInt(Addresses.SuperBonusRoundGems)}
+                {"Sunrise Spring", new Tuple<int, uint>(Memory.ReadInt(Addresses.SunriseSpringGems), Addresses.SunriseSpringGems)},
+                {"Sunny Villa", new Tuple<int, uint>(Memory.ReadInt(Addresses.SunnyVillaGems), Addresses.SunnyVillaGems)},
+                {"Cloud Spires", new Tuple<int, uint>(Memory.ReadInt(Addresses.CloudSpireLevelGems), Addresses.CloudSpireLevelGems)},
+                {"Molten Crater", new Tuple<int, uint>(Memory.ReadInt(Addresses.MoltenCraterGems), Addresses.MoltenCraterGems)},
+                {"Seashell Shore", new Tuple<int, uint>(Memory.ReadInt(Addresses.SeashellShoreGems), Addresses.SeashellShoreGems)},
+                {"Mushroom Speedway", new Tuple<int, uint>(Memory.ReadInt(Addresses.MushroomSpeedwayGems), Addresses.MushroomSpeedwayGems)},
+                {"Sheila's Alp", new Tuple<int, uint>(Memory.ReadInt(Addresses.SheilaAlpGems), Addresses.SheilaAlpGems)},
+                {"Buzz's Dungeon", new Tuple<int, uint>(Memory.ReadInt(Addresses.BuzzDungeonGems), Addresses.BuzzDungeonGems)},
+                {"Crawdad Farm", new Tuple<int, uint>(Memory.ReadInt(Addresses.CrawdadFarmGems), Addresses.CrawdadFarmGems)},
+                {"Midday Garden", new Tuple<int, uint>(Memory.ReadInt(Addresses.MiddayGardenGems), Addresses.MiddayGardenGems)},
+                {"Icy Peak", new Tuple<int, uint>(Memory.ReadInt(Addresses.IcyPeakGems), Addresses.IcyPeakGems)},
+                {"Enchanted Towers", new Tuple<int, uint>(Memory.ReadInt(Addresses.EnchantedTowersGems), Addresses.EnchantedTowersGems)},
+                {"Spooky Swamp", new Tuple<int, uint>(Memory.ReadInt(Addresses.SpookySwampGems), Addresses.SpookySwampGems)},
+                {"Bamboo Terrace", new Tuple<int, uint>(Memory.ReadInt(Addresses.BambooTerraceGems), Addresses.BambooTerraceGems)},
+                {"Country Speedway", new Tuple<int, uint>(Memory.ReadInt(Addresses.CountrySpeedwayGems), Addresses.CountrySpeedwayGems)},
+                {"Sgt. Byrd's Base", new Tuple<int, uint>(Memory.ReadInt(Addresses.SgtByrdBaseGems), Addresses.SgtByrdBaseGems)},
+                {"Spike's Arena", new Tuple<int, uint>(Memory.ReadInt(Addresses.SpikesArenaGems), Addresses.SpikesArenaGems)},
+                {"Spider Town", new Tuple<int, uint>(Memory.ReadInt(Addresses.SpiderTownGems), Addresses.SpiderTownGems)},
+                {"Evening Lake", new Tuple<int, uint>(Memory.ReadInt(Addresses.EveningLakeGems), Addresses.EveningLakeGems)},
+                {"Frozen Altars", new Tuple<int, uint>(Memory.ReadInt(Addresses.FrozenAltarsGems), Addresses.FrozenAltarsGems)},
+                {"Lost Fleet", new Tuple<int, uint>(Memory.ReadInt(Addresses.LostFleetGems), Addresses.LostFleetGems)},
+                {"Fireworks Factory", new Tuple<int, uint>(Memory.ReadInt(Addresses.FireworksFactoryGems), Addresses.FireworksFactoryGems)},
+                {"Charmed Ridge", new Tuple<int, uint>(Memory.ReadInt(Addresses.CharmedRidgeGems), Addresses.CharmedRidgeGems)},
+                {"Honey Speedway", new Tuple<int, uint>(Memory.ReadInt(Addresses.HoneySpeedwayGems), Addresses.HoneySpeedwayGems)},
+                {"Bentley's Outpost", new Tuple<int, uint>(Memory.ReadInt(Addresses.BentleyOutpostGems), Addresses.BentleyOutpostGems)},
+                {"Scorch's Pit", new Tuple<int, uint>(Memory.ReadInt(Addresses.ScorchPitGems), Addresses.ScorchPitGems)},
+                {"Starfish Reef", new Tuple<int, uint>(Memory.ReadInt(Addresses.StarfishReefGems), Addresses.StarfishReefGems)},
+                {"Midnight Mountain", new Tuple<int, uint>(Memory.ReadInt(Addresses.MidnightMountainGems), Addresses.MidnightMountainGems)},
+                {"Crystal Islands", new Tuple<int, uint>(Memory.ReadInt(Addresses.CrystalIslandsGems), Addresses.CrystalIslandsGems)},
+                {"Desert Ruins", new Tuple<int, uint>(Memory.ReadInt(Addresses.DesertRuinsGems), Addresses.DesertRuinsGems)},
+                {"Haunted Tomb", new Tuple<int, uint>(Memory.ReadInt(Addresses.HauntedTombGems), Addresses.HauntedTombGems)},
+                {"Dino Mines", new Tuple<int, uint>(Memory.ReadInt(Addresses.DinoMinesGems), Addresses.DinoMinesGems)},
+                {"Harbor Speedway", new Tuple<int, uint>(Memory.ReadInt(Addresses.HarborSpeedwayGems), Addresses.HarborSpeedwayGems)},
+                {"Agent 9's Lab", new Tuple<int, uint>(Memory.ReadInt(Addresses.AgentNineLabGems), Addresses.AgentNineLabGems)},
+                {"Sorcerer's Lair", new Tuple<int, uint>(Memory.ReadInt(Addresses.SorcererLairGems), Addresses.SorcererLairGems)},
+                {"Bugbot Factory", new Tuple<int, uint>(Memory.ReadInt(Addresses.BugbotFactoryGems), Addresses.BugbotFactoryGems)},
+                {"Super Bonus Round", new Tuple<int, uint>(Memory.ReadInt(Addresses.SuperBonusRoundGems), Addresses.SuperBonusRoundGems)}
             };
         }
         public static bool IsInDemoMode()
@@ -88,7 +89,7 @@ namespace S3AP
             var result = (GameStatus)status;
             return result;
         }
-        public static List<Location> BuildLocationList()
+        public static List<Location> BuildLocationList(bool includeGems = true)
         {
             int baseId = 1230000;
             int levelOffset = 1000;
@@ -99,9 +100,9 @@ namespace S3AP
             var totalEggCount = levels.Select(x => x.EggCount).Sum();
             var homeworldList = levels.Where(x => x.IsHomeworld).ToList();
             var bossList = levels.Where(x => x.IsBoss).ToList();
+            var gemDict = GetLevelGemCounts();
             foreach (var level in levels)
             {
-                Log.Debug($"Loading eggs for level {level.LevelId}: {level.Name}. {level.EggCount} eggs found");
                 if (!level.IsHomeworld && !level.IsBoss)
                 {
                     // Level Completed (first egg)
@@ -145,9 +146,23 @@ namespace S3AP
                     locations.Add(location);
                     processedEggs++;
                 }
+                if (includeGems && !level.IsBoss)
+                {
+                    var gemCheckOffset = level.IsHomeworld ? 0 : 1;
+                    Location gemLocation = new Location()
+                    {
+                        Name = $"{level.Name}: All Gems",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount + gemCheckOffset,
+                        Address = gemDict[level.Name].Item2,
+                        CheckType = LocationCheckType.Int,
+                        CompareType = LocationCheckCompareType.GreaterThan,
+                        CheckValue = $"{level.GemCount - 1}",
+                        Category = "Gem"
+                    };
+                    locations.Add(gemLocation);
+                }
                 currentAddress++;
             }
-            Log.Debug($"{totalEggCount} eggs loaded");
             return locations;
         }
 
@@ -155,43 +170,43 @@ namespace S3AP
         {
             List<LevelData> levels = new List<LevelData>()
             {
-                new LevelData("Sunrise Springs", 1, 5, true, false),
-                new LevelData("Sunny Villa", 2, 6, false, false),
-                new LevelData("Cloud Spires", 3, 6, false, false),
-                new LevelData("Molten Crater", 4, 6, false, false),
-                new LevelData("Seashell Shore", 5, 6, false, false),
-                new LevelData("Mushroom Speedway", 6, 3, false, false),
-                new LevelData("Shiela's Alp", 7, 3, false, false),
-                new LevelData("Buzz", 8, 1, false, true),
-                new LevelData("Crawdad Farm", 9, 1, false, false),
-                new LevelData("Midday Garden", 10, 5, true, false),
-                new LevelData("Icy Peak", 11, 6, false, false),
-                new LevelData("Enchanted Towers", 12, 6, false, false),
-                new LevelData("Spooky Swamp", 13, 6, false, false),
-                new LevelData("Bamboo Terrace", 14, 6, false, false),
-                new LevelData("Country Speedway", 15, 3, false, false),
-                new LevelData("Sgt Byrd's Base", 16, 3, false, false),
-                new LevelData("Spike", 17, 1, false, true),
-                new LevelData("Spider Town", 18, 1, false, false),
-                new LevelData("Evening Lake", 19, 5, true, false),
-                new LevelData("Frozen Altars", 20, 6, false, false),
-                new LevelData("Lost Fleet", 21, 6, false, false),
-                new LevelData("Fireworks Factory", 22, 6, false, false),
-                new LevelData("Charmed Ridge", 23, 6, false, false),
-                new LevelData("Honey Speedway", 24, 3, false, false),
-                new LevelData("Bentley's Outpost", 25, 3, false, false),
-                new LevelData("Scorch", 26, 1, false, true),
-                new LevelData("Starfish Reef", 27, 1, false, false),
-                new LevelData("Midnight Mountain", 28, 6, true, false),
-                new LevelData("Crystal Islands", 29, 6, false, false),
-                new LevelData("Desert Ruins", 30, 6, false, false),
-                new LevelData("Haunted Tomb", 31, 6, false, false),
-                new LevelData("Dino Mines", 32, 6, false, false),
-                new LevelData("Harbor Speedway", 33, 3, false, false),
-                new LevelData("Agent 9's Lab", 34, 3, false, false),
-                new LevelData("Sorceress", 35, 1, false, true),
-                new LevelData("Bugbot Factory", 36, 1, false, false),
-                new LevelData("Super Bonus Round", 37, 1, false, false),
+                new LevelData("Sunrise Spring", 1, 5, true, false, 400),
+                new LevelData("Sunny Villa", 2, 6, false, false, 400),
+                new LevelData("Cloud Spires", 3, 6, false, false, 400),
+                new LevelData("Molten Crater", 4, 6, false, false, 400),
+                new LevelData("Seashell Shore", 5, 6, false, false, 400),
+                new LevelData("Mushroom Speedway", 6, 3, false, false, 400),
+                new LevelData("Sheila's Alp", 7, 3, false, false, 400),
+                new LevelData("Buzz", 8, 1, false, true, 0),
+                new LevelData("Crawdad Farm", 9, 1, false, false, 200),
+                new LevelData("Midday Garden", 10, 5, true, false, 400),
+                new LevelData("Icy Peak", 11, 6, false, false, 500),
+                new LevelData("Enchanted Towers", 12, 6, false, false, 500),
+                new LevelData("Spooky Swamp", 13, 6, false, false, 500),
+                new LevelData("Bamboo Terrace", 14, 6, false, false, 500),
+                new LevelData("Country Speedway", 15, 3, false, false, 400),
+                new LevelData("Sgt. Byrd's Base", 16, 3, false, false, 500),
+                new LevelData("Spike", 17, 1, false, true, 0),
+                new LevelData("Spider Town", 18, 1, false, false, 200),
+                new LevelData("Evening Lake", 19, 5, true, false, 400),
+                new LevelData("Frozen Altars", 20, 6, false, false, 600),
+                new LevelData("Lost Fleet", 21, 6, false, false, 600),
+                new LevelData("Fireworks Factory", 22, 6, false, false, 600),
+                new LevelData("Charmed Ridge", 23, 6, false, false, 600),
+                new LevelData("Honey Speedway", 24, 3, false, false, 400),
+                new LevelData("Bentley's Outpost", 25, 3, false, false, 600),
+                new LevelData("Scorch", 26, 1, false, true, 0),
+                new LevelData("Starfish Reef", 27, 1, false, false, 200),
+                new LevelData("Midnight Mountain", 28, 6, true, false, 400),
+                new LevelData("Crystal Islands", 29, 6, false, false, 700),
+                new LevelData("Desert Ruins", 30, 6, false, false, 700),
+                new LevelData("Haunted Tomb", 31, 6, false, false, 700),
+                new LevelData("Dino Mines", 32, 6, false, false, 700),
+                new LevelData("Harbor Speedway", 33, 3, false, false, 400),
+                new LevelData("Agent 9's Lab", 34, 3, false, false, 700),
+                new LevelData("Sorceress", 35, 1, false, true, 0),
+                new LevelData("Bugbot Factory", 36, 1, false, false, 200),
+                new LevelData("Super Bonus Round", 37, 1, false, false, 5000),
             };
             return levels;
         }

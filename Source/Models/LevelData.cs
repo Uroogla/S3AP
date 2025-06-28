@@ -13,13 +13,15 @@ namespace S3AP.Models
         public int LevelId { get; set; }
         public bool IsHomeworld { get; set; }
         public bool IsBoss { get; set; }
-        public LevelData(string name, int levelId, int eggCount, bool isHomeworld, bool isBoss)
+        public int GemCount { get; set; }
+        public LevelData(string name, int levelId, int eggCount, bool isHomeworld, bool isBoss, int gemCount)
         {
             Name = name;
             EggCount = eggCount;
             LevelId = levelId;
             IsHomeworld = isHomeworld;
             IsBoss = isBoss;
+            GemCount = gemCount;
         }
     }
 }

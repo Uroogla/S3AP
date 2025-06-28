@@ -12,6 +12,7 @@ namespace S3AP
         public const uint EggStartAddress = 0x000703E0;
         public const uint IsInDemoMode = 0x0006c758;
         public const uint GameStatus = 0x0006e424;
+        public const uint PlayerLives = 0x0006c864;
 
         public const uint SunriseSpringGems = 0x071af0;
         public const uint SunnyVillaGems = 0x071af4;

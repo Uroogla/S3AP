@@ -36,7 +36,7 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Cloud Spires Complete", 2001, Spyro3ItemCategory.EVENT),
     ("Molten Crater Complete", 2002, Spyro3ItemCategory.EVENT),
     ("Seashell Shore Complete", 2003, Spyro3ItemCategory.EVENT),
-    ("Shiela's Alp Complete", 2004, Spyro3ItemCategory.EVENT),
+    ("Sheila's Alp Complete", 2004, Spyro3ItemCategory.EVENT),
     ("Buzz Defeated", 2005, Spyro3ItemCategory.EVENT),
     ("Crawdad Farm Complete", 2006, Spyro3ItemCategory.EVENT),
     
@@ -71,7 +71,6 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Lag Trap", 1002, Spyro3ItemCategory.TRAP),
     
 ]]
-#_all_items.extend([Spyro3ItemData(f"Egg {i+1}", 1000 + i, Spyro3ItemCategory.EGG) for i in range(149)])
 
 item_descriptions = {
 }
@@ -88,8 +87,11 @@ def BuildItemPool(multiworld, count, options):
             item_pool.append(item)
             included_itemcount = included_itemcount + 1
     remaining_count = count - included_itemcount
+    for i in range(150):
+        item_pool.append(item_dictionary["Egg"])
+    remaining_count = remaining_count - 150
     
-    allowed_items = [item for item in _all_items if item.category not in [Spyro3ItemCategory.EVENT, Spyro3ItemCategory.MISC, Spyro3ItemCategory.TRAP]]
+    allowed_items = [item for item in _all_items if item.category not in [Spyro3ItemCategory.EVENT, Spyro3ItemCategory.TRAP, Spyro3ItemCategory.EGG]]
       
     for i in range(remaining_count):
         itemList = [item for item in allowed_items]
