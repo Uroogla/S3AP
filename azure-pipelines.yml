@@ -1,0 +1,282 @@
+trigger: none
+
+pool:
+  vmImage: 'windows-2022'
+
+parameters:
+  - name: versionIncrement
+    type: string
+    default: 'none'
+    values:
+    - 'none'
+    - 'patch'
+    - 'minor'
+    - 'major'
+    
+  - name: releaseToGithub
+    type: boolean
+    default: false
+
+variables:
+  solution: '**/source/S3AP/S3AP.sln'
+  project: '**/source/S3AP/S3AP.csproj'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+stages:
+- stage: Build_And_Package
+  jobs:
+  - job: Build_Package_And_Release
+    steps:
+    - checkout: self
+      persistCredentials: true
+      
+    # Create ApWorld Package
+    - task: PowerShell@2
+      name: FindSourceDirectory
+      inputs:
+        targetType: 'inline'
+        script: |
+          $sourceDir = Get-ChildItem -Path "$(Build.SourcesDirectory)/apworld" -Directory | Select-Object -First 1
+          if ($sourceDir) {
+            $folderName = $sourceDir.Name
+            Write-Host "Found source directory: $folderName"
+            Write-Host "##vso[task.setvariable variable=folderName;isOutput=true]$folderName"
+            Write-Host "##vso[task.setvariable variable=sourcePath]$($sourceDir.FullName)"
+          } else {
+            Write-Error "No directory found in apworld folder"
+            exit 1
+          }
+
+    - task: PowerShell@2
+      name: CleanAndPackage
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Remove __pycache__ directories
+          Get-ChildItem -Path "$(sourcePath)/$projectName" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
+          
+          # Create zip file
+          $projectName = "$(FindSourceDirectory.folderName)"
+          $tempZipPath = "$(Build.ArtifactStagingDirectory)/$projectName.zip"
+          $finalPath = "$(Build.ArtifactStagingDirectory)/$projectName.apworld"
+          
+          # Create the zip file first
+          #DO NOT USE powershell adds incorrect slashes for linux filesystems
+          ##Compress-Archive -Path "$(sourcePath)" -DestinationPath $tempZipPath
+          Write-Host "TempZipPath: $tempZipPath"
+          Write-Host "projectName: $projectName"
+          Write-Host "sourcePath: $(sourcePath)"
+
+          tar -v -a -c -f $tempZipPath -C "$(Build.SourcesDirectory)/apworld" "$projectName"
+          Write-Host "##vso[task.setvariable variable=projectName]$projectName"
+          # Rename to .apworld
+          Move-Item -Path $tempZipPath -Destination $finalPath -Force
+          
+          # List contents of the artifact staging directory for debugging
+          Write-Host "Files in Artifact Staging Directory after creating .apworld:"
+          Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Recurse | ForEach-Object { Write-Host $_.FullName }
+
+    # Build and Package Application
+    - task: NuGetToolInstaller@1
+
+    - task: NuGetCommand@2
+      inputs:
+        command: 'restore'
+        restoreSolution: '$(solution)'
+
+    - task: PowerShell@2
+      name: IncrementVersion
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Searching in: $(Build.SourcesDirectory)\source\S3AP"
+          $csprojPath = Get-ChildItem -Path "$(Build.SourcesDirectory)\source\S3AP" -Filter "*.csproj" -Recurse | Select-Object -First 1
+          
+          if ($null -eq $csprojPath) {
+              Write-Error "Could not find .csproj file in source directory"
+              exit 1
+          }
+          
+          Write-Host "Found project file at: $($csprojPath.FullName)"
+          
+          # Read current version
+          [xml]$csproj = Get-Content $csprojPath.FullName
+          $currentVersion = $csproj.Project.PropertyGroup.ApplicationDisplayVersion
+          
+          if ([string]::IsNullOrEmpty($currentVersion)) {
+              Write-Error "Could not find ApplicationDisplayVersion in csproj file"
+              exit 1
+          }
+          
+          Write-Host "Current version: $currentVersion"
+          
+          # Parse version
+          $versionParts = $currentVersion.Split('.')
+          $major = [int]$versionParts[0]
+          $minor = [int]$versionParts[1]
+          $patch = [int]$versionParts[2]
+          
+          # Increment version
+          switch ("${{ parameters.versionIncrement }}") {
+            "major" {
+              $major++
+              $minor = 0
+              $patch = 0
+            }
+            "minor" {
+              $minor++
+              $patch = 0
+            }
+            "patch" {
+              $patch++
+            }
+          }
+          
+          $newVersion = "$major.$minor.$patch"
+          Write-Host "New version: $newVersion"
+          
+          # Update both version properties
+          #$csproj.Project.PropertyGroup.ApplicationVersion = $newVersion
+          $csproj.Project.PropertyGroup.ApplicationDisplayVersion = $newVersion
+          $csproj.Save($csprojPath.FullName)
+          
+          # Set version for later tasks
+          Write-Host "##vso[task.setvariable variable=newVersion;isOutput=true]$newVersion"
+
+    - task: VSBuild@1
+      inputs:
+        solution: '$(solution)'
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+        msbuildArgs: "/t:S3AP;Rebuild"
+
+    - task: PowerShell@2
+      name: CommitVersionUpdate
+      condition: ne('${{ parameters.versionIncrement }}', 'none')
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Host "Starting Git configuration..."
+          Write-Host "Current directory: $(Get-Location)"
+          
+          # Basic git config
+          Write-Host "Setting up Git user info..."
+          git config --global user.email "azure-pipeline@your-domain.com"
+          git config --global user.name "Azure Pipeline"
+          
+          # Debug: Show current git config
+          Write-Host "Current Git config:"
+          git config --list
+          
+          # Get and verify PAT
+          Write-Host "Retrieving PAT..."
+          $token = $env:SYSTEM_ACCESSTOKEN
+          if ([string]::IsNullOrEmpty($token)) {
+              Write-Error "PAT token is empty. Check the service connection configuration."
+              exit 1
+          }
+          Write-Host "PAT token length: $($token.Length) characters"
+          
+          # Setup authentication
+          Write-Host "Setting up Git authentication..."
+          $encodedPat = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes(":$token"))
+          Write-Host "Encoded PAT length: $($encodedPat.Length) characters"
+          
+          # Verify remote
+          Write-Host "Configured remote URLs:"
+          git remote -v
+          
+          # Test git access
+          Write-Host "Testing Git connection..."
+          try {
+              $output = git ls-remote --heads origin 2>&1
+              Write-Host "Git connection test successful"
+          }
+          catch {
+              Write-Error "Git connection test failed: $_"
+              exit 1
+          }
+          
+          Write-Host "Git setup completed"
+
+          git config --global core.autocrlf true
+          git add **/**.csproj
+          git commit -m "Bump version to $(IncrementVersion.newVersion) [skip ci]"
+          git push origin HEAD:$(Build.SourceBranch) --follow-tags
+      env:
+        GITHUB_PAT: $(github_connection.token)
+        GIT_TERMINAL_PROMPT: "0"
+        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+    - task: PowerShell@2
+      name: GetProjectName
+      inputs:
+        targetType: 'inline'
+        script: |
+          $slnFile = Get-ChildItem -Path "$(Build.SourcesDirectory)/source" -Filter "*.sln" -Recurse | Select-Object -First 1
+          $projectName = [System.IO.Path]::GetFileNameWithoutExtension($slnFile.Name)
+          Write-Host "Project name: $projectName"
+          Write-Host "##vso[task.setvariable variable=projectName]$projectName"
+
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: '$(project)'
+        arguments: '-f net8.0-windows10.0.19041.0 -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:EnableCompressionInSingleFile=true /p:PublishAppxPackage=false'
+        zipAfterPublish: false
+
+    - task: PowerShell@2
+      name: PackageApplication
+      inputs:
+        targetType: 'inline'
+        script: |
+          $publishDir = "DWAP/bin/release/net8.0-windows10.0.19041.0/win-x64/publish"
+          Write-Host "Enumerating files in $(Build.SourcesDirectory)/source/$publishDir"
+          Get-Childitem -Path "$(Build.SourcesDirectory)/source" -Recurse | ForEach-Object { Write-Host $_.FullName }
+          $files = Get-ChildItem -Path "$(Build.SourcesDirectory)/source/$publishDir" -Include "*.exe", "*.pdb" -Recurse
+          if (-not $files) {
+              Write-Error "No files found in $publishDir"
+              exit 1
+          }
+          # Create directory for files
+          New-Item -ItemType Directory -Path "$(Build.ArtifactStagingDirectory)/app" -Force
+          $files | ForEach-Object {
+            # Copy files to staging directory
+            Write-Host "Copying $($_.FullName) to $(Build.ArtifactStagingDirectory)/app"
+            Copy-Item -Path $_.FullName -Destination "$(Build.ArtifactStagingDirectory)/app"
+          }
+          Write-Host "Zipping $(Build.ArtifactStagingDirectory)/app/* to $(Build.ArtifactStagingDirectory)/$(projectName).zip"
+          # Create zip file
+          Compress-Archive -Path "$(Build.ArtifactStagingDirectory)/app/*" -DestinationPath "$(Build.ArtifactStagingDirectory)/$(projectName).zip"
+          
+          # List all files in the artifact staging directory for debugging
+          Write-Host "Files in Artifact Staging Directory before GitHub Release:"
+          Get-ChildItem -Path "$(Build.ArtifactStagingDirectory)" -Recurse | ForEach-Object { Write-Host $_.FullName }
+
+    # Publish both artifacts for the pipeline
+    - publish: $(Build.ArtifactStagingDirectory)
+      artifact: AllReleaseFiles
+      displayName: 'Publish All Release Files'
+
+    # Create GitHub Release with all artifacts
+    - task: GitHubRelease@1
+      displayName: 'Create GitHub Release'
+      condition: eq(${{ parameters.releaseToGithub }}, true)
+      inputs:
+        gitHubConnection: 'ArsonAssassin'
+        repositoryName: '$(Build.Repository.Name)'
+        action: 'create'
+        target: '$(Build.SourceVersion)'
+        tagSource: 'userSpecifiedTag'
+        tag: '$(IncrementVersion.newVersion)'
+        title: 'V$(IncrementVersion.newVersion)'
+        assets: |
+          $(Build.ArtifactStagingDirectory)/*.zip
+          $(Build.ArtifactStagingDirectory)/*.apworld
+        isDraft: false
+        isPreRelease: true
+        releaseNotesSource: 'inline'
+        releaseNotesInline: |
+          Release version $(IncrementVersion.newVersion)
