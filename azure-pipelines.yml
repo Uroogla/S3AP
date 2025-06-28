@@ -18,8 +18,8 @@ parameters:
     default: false
 
 variables:
-  solution: '**/source/S3AP/S3AP.sln'
-  project: '**/source/S3AP/S3AP.csproj'
+  solution: '**/source/S3AP.sln'
+  project: '**/source/S3AP.csproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -90,8 +90,8 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          Write-Host "Searching in: $(Build.SourcesDirectory)\source\S3AP"
-          $csprojPath = Get-ChildItem -Path "$(Build.SourcesDirectory)\source\S3AP" -Filter "*.csproj" -Recurse | Select-Object -First 1
+          Write-Host "Searching in: $(Build.SourcesDirectory)\source"
+          $csprojPath = Get-ChildItem -Path "$(Build.SourcesDirectory)\source" -Filter "*.csproj" -Recurse | Select-Object -First 1
           
           if ($null -eq $csprojPath) {
               Write-Error "Could not find .csproj file in source directory"
