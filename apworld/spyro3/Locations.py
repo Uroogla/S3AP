@@ -33,6 +33,7 @@ class Spyro3Location(Location):
         super().__init__(player, name, address, parent)
         self.default_item_name = default_item_name
         self.category = category
+        self.name = name
 
     @staticmethod
     def get_name_to_id() -> dict:

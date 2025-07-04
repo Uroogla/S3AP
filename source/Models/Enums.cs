@@ -22,5 +22,12 @@ namespace S3AP.Models
             GettingEgg = 15
 
         }
+
+        public enum CompletionGoal
+        {
+            Sorceress1 = 0,
+            SunnyVilla = 1,
+            Sorceress2 = 2
+        }
     }
 }

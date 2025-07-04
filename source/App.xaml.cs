@@ -10,6 +10,7 @@ using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Microsoft.Maui.Devices.Sensors;
 using Newtonsoft.Json;
 using Serilog;
+using static S3AP.Models.Enums;
 using Color = Microsoft.Maui.Graphics.Color;
 using Location = Archipelago.Core.Models.Location;
 
@@ -101,10 +102,29 @@ namespace S3AP
         private static void CheckGoalCondition()
         {
             var currentEggs = CalculateCurrentEggs();
-            if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
+            int goal = int.Parse(Client.Options.GetValueOrDefault("goal").ToString());
+            if ((CompletionGoal)goal == CompletionGoal.Sorceress1)
             {
-                Client.SendGoalCompletion();
+                if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1264000))
+                {
+                    Client.SendGoalCompletion();
+                }
             }
+            else if ((CompletionGoal)goal == CompletionGoal.SunnyVilla)
+            {
+                if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1231000))
+                {
+                    Client.SendGoalCompletion();
+                }
+            }
+            else if ((CompletionGoal)goal == CompletionGoal.Sorceress2)
+            {
+                if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1266000))
+                {
+                    Client.SendGoalCompletion();
+                }
+            }
+
         }
         private static async void RunLagTrap()
         {

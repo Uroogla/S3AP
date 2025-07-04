@@ -108,7 +108,7 @@ namespace S3AP
                     // Level Completed (first egg)
                     Location location = new Location()
                     {
-                        Name = level.Name + " Completed",
+                        Name = level.Name + " Complete",
                         Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
                         AddressBit = 0,
                         CheckType = LocationCheckType.Bit,
