@@ -69,7 +69,8 @@ location_tables = {
     Spyro3LocationData(f"Sunrise Spring Home: Fly through the cave. (Ami)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunrise Spring Home: Bottom of the lake. (Bruce)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunrise Spring Home: Head bash the rock. (Liam)",f"Egg",Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Sunrise Spring: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    # TODO: Change to Junk and handle in Items.BuildItemPool instead
+    Spyro3LocationData(f"Sunrise Spring: All Gems", f"Turn Spyro Yellow", Spyro3LocationCategory.GEM)
 ],
 "Sunny Villa": [
     Spyro3LocationData(f"Sunny Villa: Rescue the mayor. (Sanders)",f"Egg",Spyro3LocationCategory.EGG),
@@ -283,6 +284,7 @@ location_tables = {
     Spyro3LocationData(f"Midnight Mountain Home: Glide to the island. (Saki)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Midnight Mountain Home: Stomp the floor. (Buddy)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Midnight Mountain Home: Egg for sale. (Al)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Midnight Mountain Home: Moneybags Chase Complete", "Moneybags Chase Complete",Spyro3LocationCategory.EVENT),
     Spyro3LocationData(f"Midnight Mountain: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
 ],
 "Crystal Islands": [

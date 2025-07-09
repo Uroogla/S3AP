@@ -131,6 +131,20 @@ namespace S3AP
                     };
                     locations.Add(location);
                 }
+                if (level.Name.Equals("Midnight Mountain"))
+                {
+                    // Moneybags Chase Completed
+                    Location location = new Location()
+                    {
+                        Name = "Moneybags Chase Complete",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
+                        AddressBit = 5,
+                        CheckType = LocationCheckType.Bit,
+                        Address = currentAddress,
+                        Category = "Event"
+                    };
+                    locations.Add(location);
+                }
                 for (int i = 0; i < level.EggCount; i++)
                 {
                     // Egg collected
@@ -148,7 +162,7 @@ namespace S3AP
                 }
                 if (includeGems && !level.IsBoss)
                 {
-                    var gemCheckOffset = level.IsHomeworld ? 0 : 1;
+                    var gemCheckOffset = level.IsHomeworld && !level.Name.Equals("Midnight Mountain") ? 0 : 1;
                     Location gemLocation = new Location()
                     {
                         Name = $"{level.Name}: All Gems",

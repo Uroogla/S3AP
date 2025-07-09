@@ -1,5 +1,6 @@
 # world/dc2/__init__.py
 from typing import Dict, Set, List
+from enum import IntEnum
 
 from BaseClasses import MultiWorld, Region, Item, Entrance, Tutorial, ItemClassification
 from Options import Toggle
@@ -10,6 +11,11 @@ from worlds.generic.Rules import set_rule, add_rule, add_item_rule, forbid_item
 from .Items import Spyro3Item, Spyro3ItemCategory, item_dictionary, key_item_names, item_descriptions, BuildItemPool
 from .Locations import Spyro3Location, Spyro3LocationCategory, location_tables, location_dictionary
 from .Options import Spyro3Option
+
+SORCERESS_ONE = 0
+EGG_FOR_SALE = 1
+SORCERESS_TWO = 2
+SUNNY_VILLA = 3
 
 class Spyro3Web(WebWorld):
     bug_report_page = ""
@@ -54,7 +60,6 @@ class Spyro3World(World):
         self.locked_locations = []
         self.main_path_locations = []
         self.enabled_location_categories = set()
-
 
     def generate_early(self):
         self.enabled_location_categories.add(Spyro3LocationCategory.EGG),
@@ -169,18 +174,29 @@ class Spyro3World(World):
 
 
     def create_items(self):
-        skip_items: List[Spyro3Item] = []
         itempool: List[Spyro3Item] = []
         itempoolSize = 0
         
         #print("Creating items")
         for location in self.multiworld.get_locations(self.player):
-            
+                # There is currently
                 #print("found item in category: " + str(location.category))
                 item_data = item_dictionary[location.default_item_name]
-                if item_data.category in [Spyro3ItemCategory.SKIP] or location.category in [Spyro3LocationCategory.EVENT]:
-                    #print("Adding skip item: " + location.default_item_name)
-                    skip_items.append(self.create_item(location.default_item_name))
+                # There is a bug with the current client implementation where another player auto-collecting an item on the
+                # goal condition results in the client thinking the player has completed the goal.
+                # To avoid this, ensure the goal item is always vanilla.  Manually placed items exist outside the item pool.
+                # TODO: Remove this restriction after implementing a better client solution.
+                if item_data.category in [Spyro3ItemCategory.SKIP] or \
+                        location.category in [Spyro3LocationCategory.EVENT] or \
+                        # TODO: Remove this testing line
+                        location.name == "Sunrise Spring Home: Egg by the stream. (Isabelle)" or \
+                        (self.options.goal.value == SORCERESS_ONE and location.name == "Sorceress's Lair: Defeat the Sorceress? (George)") or \
+                        (self.options.goal.value == EGG_FOR_SALE and location.name == "Midnight Mountain Home: Egg for sale. (Al)") or \
+                        (self.options.goal.value == SORCERESS_TWO and location.name == "Super Bonus Round: Woo, a secret egg. (Yin Yang)") or \
+                        (self.options.goal.value == SUNNY_VILLA and location.name == "Sunny Villa: Rescue the mayor. (Sanders)"):
+                    #print(f"Adding vanilla item/event {location.default_item_name} to {location.name}")
+                    item = self.create_item(location.default_item_name)
+                    self.multiworld.get_location(location.name, self.player).place_locked_item(item)
                 elif location.category in self.enabled_location_categories:
                     #print("Adding item: " + location.default_item_name)
                     itempoolSize += 1
@@ -193,6 +209,7 @@ class Spyro3World(World):
         #removable_items = [item for item in itempool if item.classification != ItemClassification.progression]
         #print("marked " + str(len(removable_items)) + " items as removable")
 
+        # TODO: As written this results in a variable number of eggs, but this would ideally be fixed for random junk item pools.
         #for item in itempool:
         #    print("removable item: " + item.name)
         #    #itempool.remove(item)
@@ -200,14 +217,6 @@ class Spyro3World(World):
 
         # Add regular items to itempool
         self.multiworld.itempool += itempool
-
-        # Handle SKIP items separately
-        for skip_item in skip_items:
-            location = next(loc for loc in self.multiworld.get_locations(self.player) 
-                            if loc.default_item_name == skip_item.name)
-            location.place_locked_item(skip_item)
-            #self.multiworld.itempool.append(skip_item)
-            #print("Placing skip item: " + skip_item.name + " in location: " + location.name)
         
         #print("Final Item pool: ")
         #for item in self.multiworld.itempool:
@@ -249,12 +258,14 @@ class Spyro3World(World):
         for region in self.multiworld.get_regions(self.player):
             for location in region.locations:
                     set_rule(location, lambda state: True)
-        if self.options.goal.value == 0:
-            self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player, 100)
-        elif self.options.goal.value == 1:
-            self.multiworld.completion_condition[self.player] = lambda state: state.has("Sunny Villa Complete", self.player)
-        else:
+        if self.options.goal.value == SORCERESS_TWO:
             self.multiworld.completion_condition[self.player] = lambda state: state.has("Super Bonus Round Complete", self.player)
+        elif self.options.goal.value == SUNNY_VILLA:
+            self.multiworld.completion_condition[self.player] = lambda state: state.has("Sunny Villa Complete", self.player)
+        elif self.options.goal.value == EGG_FOR_SALE:
+            self.multiworld.completion_condition[self.player] = lambda state: state.has("Moneybags Chase Complete", self.player)
+        else:
+            self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Sorceress", state) and state.has("Egg", self.player, 100)
         
         set_rule(self.multiworld.get_location("Sunny Villa: All Gems", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state))
         set_rule(self.multiworld.get_location("Sunny Villa: Hop to Rapunzel. (Lucy)", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state))
@@ -338,6 +349,7 @@ class Spyro3World(World):
         set_indirect_rule(self, "Starfish Reef", lambda state: is_boss_defeated(self,"Scorch", state))
         set_indirect_rule(self, "Midnight Mountain", lambda state: is_boss_defeated(self,"Scorch", state))
         set_rule(self.multiworld.get_location("Midnight Mountain Home: Egg for sale. (Al)", self.player), lambda state: is_boss_defeated(self,"Sorceress", state))
+        set_rule(self.multiworld.get_location("Midnight Mountain Home: Moneybags Chase Complete", self.player), lambda state: is_boss_defeated(self, "Sorceress", state))
 
         set_rule(self.multiworld.get_location("Crystal Islands: All Gems", self.player), lambda state: is_level_completed(self,"Bentley's Outpost", state))
         set_rule(self.multiworld.get_location("Crystal Islands: Whack a mole. (Hank)", self.player), lambda state: is_level_completed(self,"Bentley's Outpost", state))
@@ -358,11 +370,6 @@ class Spyro3World(World):
 
         set_indirect_rule(self, "Bugbot Factory", lambda state: is_boss_defeated(self,"Sorceress", state))
         set_indirect_rule(self, "Super Bonus Round", lambda state: is_boss_defeated(self,"Sorceress", state) and state.has("Egg", self.player,149))
-
-        # Prevent multiple eggs from being placed in SBR.
-        # TODO: Make more robust and handle location accessibility settings.
-        if self.options.enable_gem_checks.value:
-            forbid_item(self.multiworld.get_location("Super Bonus Round: All Gems", self.player), "Egg", self.player)
                 
     def fill_slot_data(self) -> Dict[str, object]:
         slot_data: Dict[str, object] = {}

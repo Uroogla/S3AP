@@ -98,11 +98,20 @@ namespace S3AP
             {
                 RunLagTrap();
             }
+            else if (args.Item.Name == "Big Head Mode")
+            {
+                ActivateBigHeadMode();
+            }
+            else if (args.Item.Name == "Turn Spyro Yellow")
+            {
+                TurnSpyroColor(Addresses.SpyroColorYellow);
+            }
         }
         private static void CheckGoalCondition()
         {
             var currentEggs = CalculateCurrentEggs();
             int goal = int.Parse(Client.Options.GetValueOrDefault("goal").ToString());
+            // TODO: Don't hard code IDs.
             if ((CompletionGoal)goal == CompletionGoal.Sorceress1)
             {
                 if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1264000))
@@ -110,9 +119,9 @@ namespace S3AP
                     Client.SendGoalCompletion();
                 }
             }
-            else if ((CompletionGoal)goal == CompletionGoal.SunnyVilla)
+            else if ((CompletionGoal)goal == CompletionGoal.EggForSale)
             {
-                if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1231000))
+                if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1257005))
                 {
                     Client.SendGoalCompletion();
                 }
@@ -124,7 +133,13 @@ namespace S3AP
                     Client.SendGoalCompletion();
                 }
             }
-
+            else if ((CompletionGoal)goal == CompletionGoal.SunnyVilla)
+            {
+                if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1231000))
+                {
+                    Client.SendGoalCompletion();
+                }
+            }
         }
         private static async void RunLagTrap()
         {
@@ -133,6 +148,18 @@ namespace S3AP
                 lagTrap.Start();
                 await lagTrap.WaitForCompletionAsync();
             }
+        }
+        private static async void ActivateBigHeadMode()
+        {
+            Memory.Write(Addresses.BigHeadMode, (short)(1));
+            // TODO: This crashes on save.  But why?
+            Memory.Write(Addresses.SpyroHeight, (short)(32));
+            Memory.Write(Addresses.SpyroLength, (short)(32));
+            Memory.Write(Addresses.SpyroWidth, (short)(32));
+        }
+        private static async void TurnSpyroColor(short colorEnum)
+        {
+            Memory.Write(Addresses.SpyroColorAddress, colorEnum);
         }
         private static void LogItem(Item item)
         {

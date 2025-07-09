@@ -26,8 +26,9 @@ namespace S3AP.Models
         public enum CompletionGoal
         {
             Sorceress1 = 0,
-            SunnyVilla = 1,
-            Sorceress2 = 2
+            EggForSale = 1,
+            Sorceress2 = 2,
+            SunnyVilla = 3
         }
     }
 }
