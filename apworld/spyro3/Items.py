@@ -69,10 +69,21 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     
     ("Egg", 1000, Spyro3ItemCategory.EGG),
     ("Extra Life", 1001, Spyro3ItemCategory.MISC),
-    ("Lag Trap", 1002, Spyro3ItemCategory.TRAP),
-    ("Big Head Mode", 1003, Spyro3ItemCategory.TRAP),
-    ("Turn Spyro Yellow", 1004, Spyro3ItemCategory.MISC),
-    
+    ("Filler", 1002, Spyro3ItemCategory.MISC),
+    ("Lag Trap", 1003, Spyro3ItemCategory.TRAP),
+    ("Damage Sparx Trap", 1004, Spyro3ItemCategory.TRAP),
+    ("Sparxless Trap", 1005, Spyro3ItemCategory.TRAP),
+    ("Invincibility (15 seconds)", 1006, Spyro3ItemCategory.MISC),
+    ("Invincibility (30 seconds)", 1007, Spyro3ItemCategory.MISC),
+    ("Turn Spyro Red", 1008, Spyro3ItemCategory.MISC),
+    ("Turn Spyro Blue", 1009, Spyro3ItemCategory.MISC),
+    ("Turn Spyro Pink", 1010, Spyro3ItemCategory.MISC),
+    ("Turn Spyro Yellow", 1011, Spyro3ItemCategory.MISC),
+    ("Turn Spyro Green", 1012, Spyro3ItemCategory.MISC),
+    ("Turn Spyro Black", 1013, Spyro3ItemCategory.MISC),
+    ("Big Head Mode", 1014, Spyro3ItemCategory.MISC),
+    ("Flat Spyro Mode", 1015, Spyro3ItemCategory.MISC),
+    ("(Over)heal Sparx", 1016, Spyro3ItemCategory.MISC),
 ]]
 
 item_descriptions = {
@@ -80,7 +91,7 @@ item_descriptions = {
 
 item_dictionary = {item_data.name: item_data for item_data in _all_items}
 
-def BuildItemPool(multiworld, count, options):
+def BuildItemPool(multiworld, count, eggsToPlace, options):
     item_pool = []
     included_itemcount = 0
 
@@ -90,14 +101,52 @@ def BuildItemPool(multiworld, count, options):
             item_pool.append(item)
             included_itemcount = included_itemcount + 1
     remaining_count = count - included_itemcount
-    for i in range(150):
+    for i in range(eggsToPlace):
         item_pool.append(item_dictionary["Egg"])
-    remaining_count = remaining_count - 150
-    
-    allowed_items = [item for item in _all_items if item.category not in [Spyro3ItemCategory.EVENT, Spyro3ItemCategory.TRAP, Spyro3ItemCategory.EGG]]
+    remaining_count = remaining_count - eggsToPlace
+
+    # TODO: Determine fallback cases
+    #if remaining_count > 0 and not options.enable_filler_extra_lives and not options.enable_filler_invincibility and not options.enable_filler_color_change:
+    #    print("No filler items are enabled, but filler checks are present.  Defaulting to extra lives.")
+    #    options.enable_filler_extra_lives = 1
+
+    # Build a weighted list of allowed filler items.  Make changing Spyro's color in general the same weight as other items.
+    allowed_filler_items = []
+    allowed_misc_items = []
+    allowed_trap_items = []
+
+    for item in _all_items:
+        if item.name == 'Extra Life' and options.enable_filler_extra_lives:
+            for i in range(0, 6):
+                allowed_misc_items.append(item)
+        elif item.name.startswith('Invincibility (') and options.enable_filler_invincibility:
+            for i in range(0, 3):
+                allowed_misc_items.append(item)
+        elif item.name.startswith('Turn Spyro ') and options.enable_filler_color_change:
+            allowed_misc_items.append(item)
+        elif (item.name == 'Big Head Mode' or item.name == 'Flat Spyro Mode') and options.enable_filler_big_head_mode:
+            for i in range(0, 3):
+                allowed_misc_items.append(item)
+        elif item.name == '(Over)heal Sparx' and options.enable_filler_heal_sparx:
+            for i in range(0, 6):
+                allowed_misc_items.append(item)
+        elif item.name == 'Damage Sparx Trap' and options.enable_trap_damage_sparx:
+            allowed_trap_items.append(item)
+        elif item.name == 'Sparxless Trap' and options.enable_trap_sparxless:
+            allowed_trap_items.append(item)
+
+    # Get the correct blend of traps and filler items.
+    for i in range((100 - options.trap_filler_percent) * 50):
+        itemList = [item for item in allowed_misc_items]
+        item = multiworld.random.choice(itemList)
+        allowed_filler_items.append(item)
+    for i in range(options.trap_filler_percent * 50):
+        itemList = [item for item in allowed_trap_items]
+        item = multiworld.random.choice(itemList)
+        allowed_filler_items.append(item)
       
     for i in range(remaining_count):
-        itemList = [item for item in allowed_items]
+        itemList = [item for item in allowed_filler_items]
         item = multiworld.random.choice(itemList)
         item_pool.append(item)
     

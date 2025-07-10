@@ -10,6 +10,7 @@ using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Microsoft.Maui.Devices.Sensors;
 using Newtonsoft.Json;
 using Serilog;
+using System.Runtime.Intrinsics.X86;
 using static S3AP.Models.Enums;
 using Color = Microsoft.Maui.Graphics.Color;
 using Location = Archipelago.Core.Models.Location;
@@ -102,9 +103,61 @@ namespace S3AP
             {
                 ActivateBigHeadMode();
             }
+            else if (args.Item.Name == "Flat Spyro Mode")
+            {
+                ActivateFlatSpyroMode();
+            }
+            else if (args.Item.Name == "(Over)heal Sparx")
+            {
+                // Collecting a skill point provides a full heal, so wait for that to complete first.
+                Thread.Sleep(3000);
+                var currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
+                Memory.Write(Addresses.PlayerHealth, (byte)(currentHealth + 1));
+            }
+            else if (args.Item.Name == "Damage Sparx Trap")
+            {
+                // Collecting a skill point provides a full heal, so wait for that to complete first.
+                Thread.Sleep(3000);
+                var currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
+                Memory.Write(Addresses.PlayerHealth, Byte.Max((byte)(currentHealth - 1), 0));
+            }
+            else if (args.Item.Name == "Sparxless Trap")
+            {
+                // Collecting a skill point provides a full heal, so wait for that to complete first.
+                Thread.Sleep(3000);
+                Memory.Write(Addresses.PlayerHealth, (byte)(0));
+            }
+            else if (args.Item.Name == "Turn Spyro Red")
+            {
+                TurnSpyroColor(Addresses.SpyroColorRed);
+            }
+            else if (args.Item.Name == "Turn Spyro Blue")
+            {
+                TurnSpyroColor(Addresses.SpyroColorBlue);
+            }
             else if (args.Item.Name == "Turn Spyro Yellow")
             {
                 TurnSpyroColor(Addresses.SpyroColorYellow);
+            }
+            else if (args.Item.Name == "Turn Spyro Pink")
+            {
+                TurnSpyroColor(Addresses.SpyroColorPink);
+            }
+            else if (args.Item.Name == "Turn Spyro Green")
+            {
+                TurnSpyroColor(Addresses.SpyroColorGreen);
+            }
+            else if (args.Item.Name == "Turn Spyro Black")
+            {
+                TurnSpyroColor(Addresses.SpyroColorBlack);
+            }
+            else if (args.Item.Name == "Invincibility (15 seconds)")
+            {
+                ActivateInvincibility(15);
+            }
+            else if (args.Item.Name == "Invincibility (30 seconds)")
+            {
+                ActivateInvincibility(30);
             }
         }
         private static void CheckGoalCondition()
@@ -151,15 +204,30 @@ namespace S3AP
         }
         private static async void ActivateBigHeadMode()
         {
+            Memory.Write(Addresses.SpyroHeight, (byte)(32));
+            Memory.Write(Addresses.SpyroLength, (byte)(32));
+            Memory.Write(Addresses.SpyroWidth, (byte)(32));
             Memory.Write(Addresses.BigHeadMode, (short)(1));
-            // TODO: This crashes on save.  But why?
-            Memory.Write(Addresses.SpyroHeight, (short)(32));
-            Memory.Write(Addresses.SpyroLength, (short)(32));
-            Memory.Write(Addresses.SpyroWidth, (short)(32));
+        }
+        private static async void ActivateFlatSpyroMode()
+        {
+            Memory.Write(Addresses.SpyroHeight, (byte)(16));
+            Memory.Write(Addresses.SpyroLength, (byte)(16));
+            Memory.Write(Addresses.SpyroWidth, (byte)(2));
+            Memory.Write(Addresses.BigHeadMode, (short)(256));
         }
         private static async void TurnSpyroColor(short colorEnum)
         {
             Memory.Write(Addresses.SpyroColorAddress, colorEnum);
+        }
+        private static async void ActivateInvincibility(int seconds)
+        {
+            // The counter ticks down every frame (60 fps for in game calcs)
+            seconds = seconds * 60;
+            // Collecting an egg removes invincibility, so try to avoid a user's own egg
+            // from providing no benefits.
+            Thread.Sleep(6000);
+            Memory.Write(Addresses.InvincibilityDurationAddress, (short)seconds);
         }
         private static void LogItem(Item item)
         {

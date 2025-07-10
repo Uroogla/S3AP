@@ -8,7 +8,8 @@ class Spyro3LocationCategory(IntEnum):
     EGG = 0,
     SKIP = 1,
     EVENT = 2,
-    GEM = 3
+    GEM = 3,
+    SKILLPOINT = 4,
 
 
 class Spyro3LocationData(NamedTuple):
@@ -69,18 +70,19 @@ location_tables = {
     Spyro3LocationData(f"Sunrise Spring Home: Fly through the cave. (Ami)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunrise Spring Home: Bottom of the lake. (Bruce)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunrise Spring Home: Head bash the rock. (Liam)",f"Egg",Spyro3LocationCategory.EGG),
-    # TODO: Change to Junk and handle in Items.BuildItemPool instead
-    Spyro3LocationData(f"Sunrise Spring: All Gems", f"Turn Spyro Yellow", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Sunrise Spring: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Sunny Villa": [
     Spyro3LocationData(f"Sunny Villa: Rescue the mayor. (Sanders)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunny Villa: Hop to Rapunzel. (Lucy)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunny Villa: Lizard skating I. (Emily)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunny Villa: Lizard skating II. (Daisy)",f"Egg",Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Sunny Villa: Egg by the building. (Vanessa)",f"Egg",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunny Villa: Egg by the building. (Vanessa)",f"Filler",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunny Villa: Glide to the spring. (Miles)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Sunny Villa Complete", "Sunny Villa Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Sunny Villa: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData("Sunny Villa: All Gems", "Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Sunny Villa: Flame all trees (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
+    Spyro3LocationData(f"Sunny Villa: Skateboard course record I (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Cloud Spires": [
     Spyro3LocationData(f"Cloud Spires: Turn on the cloud generator. (Henry)",f"Egg",Spyro3LocationCategory.EGG),
@@ -90,7 +92,7 @@ location_tables = {
     Spyro3LocationData(f"Cloud Spires: Run along the wall. (Stephanie)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Cloud Spires: Glide to the island. (Clare)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Cloud Spires Complete", "Cloud Spires Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Cloud Spires: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Cloud Spires: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Molten Crater": [
     Spyro3LocationData(f"Molten Crater: Get to the tiki lodge. (Curlie)",f"Egg",Spyro3LocationCategory.EGG),
@@ -100,7 +102,9 @@ location_tables = {
     Spyro3LocationData(f"Molten Crater: Sgt. Byrd blows up a wall. (Luna)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Molten Crater: Egg by lava river. (Rikki)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Molten Crater Complete", "Molten Crater Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Molten Crater: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Molten Crater: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Molten Crater: Assemble tiki heads (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
+    Spyro3LocationData(f"Molten Crater: Supercharge the wall (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Seashell Shore": [
     Spyro3LocationData(f"Seashell Shore: Free the seals. (Dizzy)",f"Egg",Spyro3LocationCategory.EGG),
@@ -110,20 +114,21 @@ location_tables = {
     Spyro3LocationData(f"Seashell Shore: Clear out the pipe. (Duke)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Seashell Shore: Hop to the secret cave. (Jared)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Seashell Shore Complete", "Seashell Shore Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Seashell Shore: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Seashell Shore: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Seashell Shore: Catch the funky chicken (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Mushroom Speedway": [
     Spyro3LocationData(f"Mushroom Speedway: Time attack. (Sabina)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Mushroom Speedway: Race the butterflies. (John)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Mushroom Speedway: Hunter's dogfight. (Tater)",f"Egg",Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Mushroom Speedway: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Mushroom Speedway: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Sheila's Alp": [
     Spyro3LocationData(f"Sheila's Alp: Help Bobby get home. (Nan)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sheila's Alp: Help Pete get home. (Jenny)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sheila's Alp: Help Billy get home. (Ruby)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Sheila's Alp Complete", "Sheila's Alp Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Sheila's Alp: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Sheila's Alp: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Buzz": [
     Spyro3LocationData(f"Buzz's Dungeon: Defeat Buzz. (Grayson)",f"Egg",Spyro3LocationCategory.EGG),
@@ -132,7 +137,7 @@ location_tables = {
 "Crawdad Farm": [
     Spyro3LocationData(f"Crawdad Farm: Take Sparx to the farm. (Nora)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Crawdad Farm Complete", "Crawdad Farm Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Crawdad Farm: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Crawdad Farm: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 #Homeworld 2
 "Midday Garden": [
@@ -141,7 +146,7 @@ location_tables = {
     Spyro3LocationData(f"Midday Gardens Home: Catch the thief. (Trixie)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Midday Gardens Home: Superflame the flowerpots. (Matt)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Midday Gardens Home: Climb to the ledge. (Modesty)",f"Egg",Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Midday Gardens: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Midday Gardens: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Icy Peak": [
     Spyro3LocationData(f"Icy Peak: Find Doug the polar bear. (Chet)",f"Egg",Spyro3LocationCategory.EGG),
@@ -151,7 +156,8 @@ location_tables = {
     Spyro3LocationData(f"Icy Peak: On top of a ledge. (Maynard)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Icy Peak: Glide to the sky island. (Reez)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Icy Peak Complete", "Icy Peak Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Icy Peak: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Icy Peak: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Icy Peak: Glide to pedestal (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Enchanted Towers": [
     Spyro3LocationData(f"Enchanted Towers: Destroy the sorceress statue. (Peanut)",f"Egg",Spyro3LocationCategory.EGG),
@@ -161,7 +167,8 @@ location_tables = {
     Spyro3LocationData(f"Enchanted Towers: Trick skater II. (Alex)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Enchanted Towers: Glide to the small island. (Gladys)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Enchanted Towers Complete", "Enchanted Towers Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Enchanted Towers: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Enchanted Towers: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Enchanted Towers: Skateboard course record II (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Spooky Swamp": [
     Spyro3LocationData(f"Spooky Swamp: Find Shiny the firefly. (Thelonious)",f"Egg",Spyro3LocationCategory.EGG),
@@ -171,7 +178,8 @@ location_tables = {
     Spyro3LocationData(f"Spooky Swamp: Escort the twins II. (Michele)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Spooky Swamp: Defeat sleepy head. (Herbi)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Spooky Swamp Complete", "Spooky Swamp Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Spooky Swamp: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Spooky Swamp: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Spooky Swamp: Destroy all piranha signs (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Bamboo Terrace": [
     Spyro3LocationData(f"Bamboo Terrace: Clear the pandas' path. (Tom)",f"Egg",Spyro3LocationCategory.EGG),
@@ -181,20 +189,21 @@ location_tables = {
     Spyro3LocationData(f"Bamboo Terrace: Glide to the small island. (Dwight)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Bamboo Terrace: Catch the thief. (Pee-wee)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Bamboo Terrace Complete", "Bamboo Terrace Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Bamboo Terrace: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Bamboo Terrace: All Gems", f"Filler", Spyro3LocationCategory.GEM),
 ],
 "Country Speedway": [
     Spyro3LocationData(f"Country Speedway: Time attack. (Gavin)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Country Speedway: Race the pigs. (Shemp)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Country Speedway: Hunter's rescue mission. (Roberto)",f"Egg",Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Country Speedway: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Country Speedway: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Sgt. Byrd's Base": [
     Spyro3LocationData(f"Sgt. Byrd's Base: Clear the building. (RyanLee)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sgt. Byrd's Base: Clear the caves. (Sigfried)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sgt. Byrd's Base: Rescue 5 hummingbirds. (Roy)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Sgt. Byrd's Base Complete", "Sgt. Byrd's Base Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Sgt. Byrd's Base: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Sgt. Byrd's Base: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Sgt. Byrd's Base: Bomb the gophers (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Spike": [
     Spyro3LocationData(f"Spike's Arena: Defeat Spike. (Monique)",f"Egg",Spyro3LocationCategory.EGG),
@@ -203,7 +212,7 @@ location_tables = {
 "Spider Town": [
     Spyro3LocationData(f"Spider Town: Go to town. (Tootie)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Spider Town Complete", "Spider Town Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Spider Town: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Spider Town: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 #Homeworld 3
 "Evening Lake": [
@@ -212,7 +221,7 @@ location_tables = {
     Spyro3LocationData(f"Evening Lake Home: Break the tower wall. (Stooby)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Evening Lake Home: Belly of the whale. (Jonah)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Evening Lake Home: I'm invincible! (Stuart)",f"Egg",Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Evening Lake: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Evening Lake: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Frozen Altars": [
     Spyro3LocationData(f"Frozen Altars: Melt the snowmen. (Jana)",f"Egg",Spyro3LocationCategory.EGG),
@@ -222,7 +231,8 @@ location_tables = {
     Spyro3LocationData(f"Frozen Altars: Glide from the temple roof. (Cecil)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Frozen Altars: Across the rooftops. (Jasper)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Frozen Altars Complete", "Frozen Altars Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Frozen Altars: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Frozen Altars: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Frozen Altars: Beat yeti in two rounds (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Lost Fleet": [
     Spyro3LocationData(f"Lost Fleet: Find Crazy Ed's treasure. (Craig)",f"Egg",Spyro3LocationCategory.EGG),
@@ -232,7 +242,8 @@ location_tables = {
     Spyro3LocationData(f"Lost Fleet: Skate race the rhynocs. (Oliver)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Lost Fleet: Skate race Hunter. (Aiden)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Lost Fleet Complete", "Lost Fleet Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Lost Fleet: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Lost Fleet: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Lost Fleet: Skateboard record time (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Fireworks Factory": [
     Spyro3LocationData(f"Fireworks Factory: Destwoy the wocket! (Grady)",f"Egg",Spyro3LocationCategory.EGG),
@@ -242,7 +253,8 @@ location_tables = {
     Spyro3LocationData(f"Fireworks Factory: Bad dragon! (Evan)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Fireworks Factory: Hidden in an alcove. (Noodles)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Fireworks Factory Complete", "Fireworks Factory Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Fireworks Factory: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Fireworks Factory: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Fireworks Factory: Find Agent 9's powerup (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Charmed Ridge": [
     Spyro3LocationData(f"Charmed Ridge: Rescue the Fairy Princess. (Sakura)",f"Egg",Spyro3LocationCategory.EGG),
@@ -252,20 +264,23 @@ location_tables = {
     Spyro3LocationData(f"Charmed Ridge: Jack and the beanstalk I. (Shelley)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Charmed Ridge: Jack and the beanstalk II. (Chuck)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Charmed Ridge Complete", "Charmed Ridge Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Charmed Ridge: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Charmed Ridge: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Charmed Ridge: The Impossible Tower (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
+    Spyro3LocationData(f"Charmed Ridge: Shoot the temple windows (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Honey Speedway": [
     Spyro3LocationData(f"Honey Speedway: Time attack. (Chris)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Honey Speedway: Race the bees (Henri)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Honey Speedway: Hunter's narrow escape. (Nori)",f"Egg",Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Honey Speedway: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Honey Speedway: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Bentley's Outpost": [
     Spyro3LocationData(f"Bentley's Outpost: Help Bartholomew home. (Eric)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Bentley's Outpost: The Gong Show (Brian)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Bentley's Outpost: Snowball's chance. (Charlie)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Bentley's Outpost Complete", "Bentley's Outpost Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Bentley's Outpost: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Bentley's Outpost: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Bentley's Outpost: Push box off the cliff (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Scorch": [
     Spyro3LocationData(f"Scorch's Pit: Defeat Scorch. (James)",f"Egg",Spyro3LocationCategory.EGG),
@@ -274,7 +289,7 @@ location_tables = {
 "Starfish Reef": [
     Spyro3LocationData(f"Starfish Reef: Beach party! (Ahnashawn)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Starfish Reef Complete", "Starfish Reef Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Starfish Reef: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Starfish Reef: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 #Homeworld 4
 "Midnight Mountain": [
@@ -285,7 +300,7 @@ location_tables = {
     Spyro3LocationData(f"Midnight Mountain Home: Stomp the floor. (Buddy)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Midnight Mountain Home: Egg for sale. (Al)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Midnight Mountain Home: Moneybags Chase Complete", "Moneybags Chase Complete",Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Midnight Mountain: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Midnight Mountain: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Crystal Islands": [
     Spyro3LocationData(f"Crystal Islands: Reach the crystal tower. (Lloyd)",f"Egg",Spyro3LocationCategory.EGG),
@@ -295,7 +310,7 @@ location_tables = {
     Spyro3LocationData(f"Crystal Islands: Glide to the island. (Manie)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Crystal Islands: Catch the flying thief. (Max)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Crystal Islands Complete", "Crystal Islands Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Crystal Islands: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Crystal Islands: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Desert Ruins": [
     Spyro3LocationData(f"Desert Ruins: Raid the tomb. (Marty)",f"Egg",Spyro3LocationCategory.EGG),
@@ -305,7 +320,8 @@ location_tables = {
     Spyro3LocationData(f"Desert Ruins: Sink or singe. (Nelly)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Desert Ruins: Give me a hand (Andy)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Desert Ruins Complete", "Desert Ruins Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Desert Ruins: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Desert Ruins: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Desert Ruins: Destroy all seaweed (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Haunted Tomb": [
     Spyro3LocationData(f"Haunted Tomb: Release the temple dweller. (Will)",f"Egg",Spyro3LocationCategory.EGG),
@@ -315,7 +331,8 @@ location_tables = {
     Spyro3LocationData(f"Haunted Tomb: Clear the caves. (Roxy)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Haunted Tomb: Climb the wall. (Christine)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Haunted Tomb Complete", "Haunted Tomb Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Haunted Tomb: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Haunted Tomb: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Haunted Tomb: Swim into the dark hole (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Dino Mines": [
     Spyro3LocationData(f"Dino Mines: Jail break! (Kiki)",f"Egg",Spyro3LocationCategory.EGG),
@@ -325,20 +342,23 @@ location_tables = {
     Spyro3LocationData(f"Dino Mines: Leap of faith. (Dan)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Dino Mines: Take it to the bank. (Sergio)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Dino Mines Complete", "Dino Mines Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Dino Mines: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Dino Mines: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Dino Mines: Hit all the seahorses (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
+    Spyro3LocationData(f"Dino Mines: Hit the secret dino (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Harbor Speedway": [
     Spyro3LocationData(f"Harbor Speedway: Time attack. (Kobe)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Harbor Speedway: Race the blue footed boobies. (Jessie)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Harbor Speedway: Hunter's pursuit. (Sara)",f"Egg",Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Harbor Speedway: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Harbor Speedway: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Agent 9's Lab": [
     Spyro3LocationData(f"Agent 9's Lab: Blast and bomb the rhynocs. (Rowan)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Agent 9's Lab: Snipe the boats (Tony)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Agent 9's Lab: This place has gone to the birds. (Beulah)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Agent 9's Lab Complete", "Agent 9's Lab Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Agent 9's Lab: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Agent 9's Lab: All Gems", f"Filler", Spyro3LocationCategory.GEM),
+    Spyro3LocationData(f"Agent 9's Lab: Blow up all palm trees (Skill Point)", f"Filler", Spyro3LocationCategory.SKILLPOINT),
 ],
 "Sorceress": [
     Spyro3LocationData(f"Sorceress's Lair: Defeat the Sorceress? (George)",f"Egg",Spyro3LocationCategory.EGG),
@@ -347,12 +367,12 @@ location_tables = {
 "Bugbot Factory": [
     Spyro3LocationData(f"Bugbot Factory: Shut down the factory. (Anabelle)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Bugbot Factory Complete", "Bugbot Factory Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Bugbot Factory: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Bugbot Factory: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 "Super Bonus Round": [
     Spyro3LocationData(f"Super Bonus Round: Woo, a secret egg. (Yin Yang)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Super Bonus Round Complete", "Super Bonus Round Complete", Spyro3LocationCategory.EVENT),
-    Spyro3LocationData(f"Super Bonus Round: All Gems", f"Extra Life", Spyro3LocationCategory.GEM)
+    Spyro3LocationData(f"Super Bonus Round: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ]
 
 }

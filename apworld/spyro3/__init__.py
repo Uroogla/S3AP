@@ -66,6 +66,8 @@ class Spyro3World(World):
         self.enabled_location_categories.add(Spyro3LocationCategory.EVENT),
         if self.options.enable_gem_checks.value:
             self.enabled_location_categories.add(Spyro3LocationCategory.GEM),
+        if self.options.enable_skillpoint_checks.value:
+            self.enabled_location_categories.add(Spyro3LocationCategory.SKILLPOINT)
 
     def create_regions(self):
         # Create Regions
@@ -176,6 +178,7 @@ class Spyro3World(World):
     def create_items(self):
         itempool: List[Spyro3Item] = []
         itempoolSize = 0
+        placedEggs = 0
         
         #print("Creating items")
         for location in self.multiworld.get_locations(self.player):
@@ -188,8 +191,6 @@ class Spyro3World(World):
                 # TODO: Remove this restriction after implementing a better client solution.
                 if item_data.category in [Spyro3ItemCategory.SKIP] or \
                         location.category in [Spyro3LocationCategory.EVENT] or \
-                        # TODO: Remove this testing line
-                        location.name == "Sunrise Spring Home: Egg by the stream. (Isabelle)" or \
                         (self.options.goal.value == SORCERESS_ONE and location.name == "Sorceress's Lair: Defeat the Sorceress? (George)") or \
                         (self.options.goal.value == EGG_FOR_SALE and location.name == "Midnight Mountain Home: Egg for sale. (Al)") or \
                         (self.options.goal.value == SORCERESS_TWO and location.name == "Super Bonus Round: Woo, a secret egg. (Yin Yang)") or \
@@ -197,23 +198,22 @@ class Spyro3World(World):
                     #print(f"Adding vanilla item/event {location.default_item_name} to {location.name}")
                     item = self.create_item(location.default_item_name)
                     self.multiworld.get_location(location.name, self.player).place_locked_item(item)
+                    if location.default_item_name == 'Egg':
+                        placedEggs = placedEggs + 1
                 elif location.category in self.enabled_location_categories:
                     #print("Adding item: " + location.default_item_name)
                     itempoolSize += 1
-                    itempool.append(self.create_item(location.default_item_name))
+                    #itempool.append(self.create_item(location.default_item_name))
         
         #print("Requesting itempool size: " + str(itempoolSize))
-        foo = BuildItemPool(self.multiworld, itempoolSize, self.options)
+        foo = BuildItemPool(self.multiworld, itempoolSize, 150 - placedEggs, self.options)
         #print("Created item pool size: " + str(len(foo)))
+        #for item in foo:
+            #print(f"{item.name}")
 
-        #removable_items = [item for item in itempool if item.classification != ItemClassification.progression]
-        #print("marked " + str(len(removable_items)) + " items as removable")
-
-        # TODO: As written this results in a variable number of eggs, but this would ideally be fixed for random junk item pools.
-        #for item in itempool:
-        #    print("removable item: " + item.name)
-        #    #itempool.remove(item)
-        #    new_itempool.append(self.create_item(foo.pop().name))
+        for item in foo:
+            #print("Adding regular item: " + item.name)
+            itempool.append(self.create_item(item.name))
 
         # Add regular items to itempool
         self.multiworld.itempool += itempool
@@ -266,14 +266,14 @@ class Spyro3World(World):
             self.multiworld.completion_condition[self.player] = lambda state: state.has("Moneybags Chase Complete", self.player)
         else:
             self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Sorceress", state) and state.has("Egg", self.player, 100)
-        
-        set_rule(self.multiworld.get_location("Sunny Villa: All Gems", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state))
+
         set_rule(self.multiworld.get_location("Sunny Villa: Hop to Rapunzel. (Lucy)", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state))
         
         set_indirect_rule(self, "Molten Crater", lambda state: state.has("Egg", self.player, 10))    
         set_rule(self.multiworld.get_location("Molten Crater: All Gems", self.player), lambda state: is_level_completed(self,"Sgt. Byrd's Base", state))
         set_rule(self.multiworld.get_location("Molten Crater: Replace idol heads. (Ryan)", self.player), lambda state: is_level_completed(self,"Sgt. Byrd's Base", state))
-        set_rule(self.multiworld.get_location("Molten Crater: Sgt. Byrd blows up a wall. (Luna)", self.player), lambda state: is_level_completed(self,"Sgt. Byrd's Base", state))        
+        set_rule(self.multiworld.get_location("Molten Crater: Sgt. Byrd blows up a wall. (Luna)", self.player), lambda state: is_level_completed(self,"Sgt. Byrd's Base", state))
+        set_rule(self.multiworld.get_location("Molten Crater: Assemble tiki heads (Skill Point)", self.player), lambda state: is_level_completed(self, "Sgt. Byrd's Base", state))
         
         set_indirect_rule(self, "Seashell Shore", lambda state: state.has("Egg", self.player, 14))   
         set_rule(self.multiworld.get_location("Seashell Shore: All Gems", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state))
@@ -292,7 +292,6 @@ class Spyro3World(World):
 
         set_indirect_rule(self, "Midday Garden", lambda state: is_boss_defeated(self,"Buzz", state))      
 
-        set_rule(self.multiworld.get_location("Enchanted Towers: All Gems", self.player), lambda state: is_level_completed(self,"Sgt. Byrd's Base", state))
         set_rule(self.multiworld.get_location("Enchanted Towers: Collect the bones. (Ralph)", self.player), lambda state: is_level_completed(self,"Sgt. Byrd's Base", state))        
         
         set_indirect_rule(self, "Spooky Swamp", lambda state: state.has("Egg", self.player,25))        
@@ -317,13 +316,16 @@ class Spyro3World(World):
 
         set_rule(self.multiworld.get_location("Frozen Altars: Box the yeti. (Aly)", self.player), lambda state: is_level_completed(self,"Bentley's Outpost", state))
         set_rule(self.multiworld.get_location("Frozen Altars: Box the yeti again! (Ricco)", self.player), lambda state: is_level_completed(self,"Bentley's Outpost", state) and state.can_reach_location("Frozen Altars: Box the yeti. (Aly)", self.player))
+        set_rule(self.multiworld.get_location("Frozen Altars: Beat yeti in two rounds (Skill Point)", self.player), lambda state: is_level_completed(self, "Bentley's Outpost", state) and state.can_reach_location("Frozen Altars: Box the yeti. (Aly)", self.player))
         set_indirect_rule(self, "Fireworks Factory", lambda state: state.has("Egg", self.player,50))
         set_rule(self.multiworld.get_location("Fireworks Factory: All Gems", self.player), lambda state: is_level_completed(self,"Agent 9's Lab", state))
         set_rule(self.multiworld.get_location("Fireworks Factory: You're doomed! (Patty)", self.player), lambda state: is_level_completed(self,"Agent 9's Lab", state))
         set_rule(self.multiworld.get_location("Fireworks Factory: You're still doomed! (Donovan)", self.player), lambda state: is_level_completed(self,"Agent 9's Lab", state) and state.can_reach_location("Fireworks Factory: You're doomed! (Patty)", self.player))
-        
+        set_rule(self.multiworld.get_location("Fireworks Factory: Find Agent 9's powerup (Skill Point)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
+
         set_indirect_rule(self, "Charmed Ridge", lambda state: state.has("Egg", self.player,58))
         set_rule(self.multiworld.get_location("Charmed Ridge: Cat witch chaos. (Abby)", self.player), lambda state: is_level_completed(self,"Sgt. Byrd's Base", state))
+        set_rule(self.multiworld.get_location("Charmed Ridge: Shoot the temple windows (Skill Point)", self.player), lambda state: is_level_completed(self, "Sgt. Byrd's Base", state))
         
         set_indirect_rule(self, "Honey Speedway", lambda state: state.has("Egg", self.player,65))
 
@@ -336,14 +338,21 @@ class Spyro3World(World):
         # After completing 3 levels in Evening Lake, the player is unable to complete any Hunter challenges until defeating Scorch.
         # To prevent the player from locking themselves out of progression, these must be logically locked behind Scorch.
         # Note: The egg "Sunrise Spring Home: Learn Gliding (Coltrane)" is not affected by this - Hunter remains in Sunrise Spring home.
+        # Most, if not all gems, in skateboarding areas can be collected without the skateboard, but leave out of base logic.
         set_rule(self.multiworld.get_location("Sunny Villa: Lizard skating I. (Emily)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
         set_rule(self.multiworld.get_location("Sunny Villa: Lizard skating II. (Daisy)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
+        set_rule(self.multiworld.get_location("Sunny Villa: Skateboard course record I (Skill Point)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
+        set_rule(self.multiworld.get_location("Sunny Villa: All Gems", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state) and is_boss_defeated(self, "Scorch", state))
         set_rule(self.multiworld.get_location("Mushroom Speedway: Hunter's dogfight. (Tater)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
+        set_rule(self.multiworld.get_location("Enchanted Towers: All Gems", self.player), lambda state: is_level_completed(self,"Sgt. Byrd's Base", state) and is_boss_defeated(self, "Scorch", state))
         set_rule(self.multiworld.get_location("Enchanted Towers: Trick skater I. (Caroline)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
         set_rule(self.multiworld.get_location("Enchanted Towers: Trick skater II. (Alex)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
+        set_rule(self.multiworld.get_location("Enchanted Towers: Skateboard course record II (Skill Point)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
         set_rule(self.multiworld.get_location("Country Speedway: Hunter's rescue mission. (Roberto)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
         set_rule(self.multiworld.get_location("Lost Fleet: Skate race the rhynocs. (Oliver)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
         set_rule(self.multiworld.get_location("Lost Fleet: Skate race Hunter. (Aiden)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
+        set_rule(self.multiworld.get_location("Lost Fleet: All Gems", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
+        set_rule(self.multiworld.get_location("Lost Fleet: Skateboard record time (Skill Point)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
         set_rule(self.multiworld.get_location("Honey Speedway: Hunter's narrow escape. (Nori)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
 
         set_indirect_rule(self, "Starfish Reef", lambda state: is_boss_defeated(self,"Scorch", state))
@@ -361,6 +370,7 @@ class Spyro3World(World):
         set_rule(self.multiworld.get_location("Haunted Tomb: Clear the caves. (Roxy)", self.player), lambda state: is_level_completed(self,"Agent 9's Lab", state))
         set_indirect_rule(self, "Dino Mines", lambda state: state.has("Egg", self.player,80))
         set_rule(self.multiworld.get_location("Dino Mines: All Gems", self.player), lambda state: is_level_completed(self,"Agent 9's Lab", state))
+        set_rule(self.multiworld.get_location("Dino Mines: Hit the secret dino (Skill Point)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
         set_rule(self.multiworld.get_location("Dino Mines: Gunfight at the Jurassic Corral. (Sharon)", self.player), lambda state: is_level_completed(self,"Agent 9's Lab", state))
         set_rule(self.multiworld.get_location("Dino Mines: Take it to the bank. (Sergio)", self.player), lambda state: is_level_completed(self,"Agent 9's Lab", state) and state.can_reach_location("Dino Mines: Gunfight at the Jurassic Corral. (Sharon)", self.player))
         
@@ -404,7 +414,8 @@ class Spyro3World(World):
             "options": {
                 "goal": self.options.goal.value,
                 "guaranteed_items": self.options.guaranteed_items.value,
-                "enable_gem_checks": self.options.enable_gem_checks.value
+                "enable_gem_checks": self.options.enable_gem_checks.value,
+                "enable_skillpoint_checks": self.options.enable_skillpoint_checks.value,
             },
             "seed": self.multiworld.seed_name,  # to verify the server's multiworld
             "slot": self.multiworld.player_name[self.player],  # to connect to server
