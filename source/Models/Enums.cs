@@ -19,7 +19,8 @@ namespace S3AP.Models
             LoadingWorld = 7,
             TitleScreen = 11,
             LoadingHomeworld = 12,
-            GettingEgg = 15
+            GettingEgg = 15,
+            StartingGame = 16
 
         }
 
@@ -27,8 +28,9 @@ namespace S3AP.Models
         {
             Sorceress1 = 0,
             EggForSale = 1,
-            Sorceress2 = 2,
-            SunnyVilla = 3
+            Sorceress2 = 2//,
+            //Test goal for ease of debugging
+            //SunnyVilla = 3
         }
     }
 }

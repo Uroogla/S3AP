@@ -15,6 +15,7 @@ namespace S3AP
 {
     public class Helpers
     {
+        private static GameStatus lastNonZeroStatus = GameStatus.Spawning;
         public static string OpenEmbeddedResource(string resourceName)
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -81,13 +82,20 @@ namespace S3AP
         }
         public static bool IsInGame()
         {
-            // TODO: Handle emulator reset
-            return !IsInDemoMode() && GetGameStatus() != GameStatus.TitleScreen;
+            return !IsInDemoMode() &&
+                GetGameStatus() != GameStatus.TitleScreen &&
+                GetGameStatus() != GameStatus.Loading && // Handle loading into and out of demo mode.
+                Memory.ReadInt(Addresses.ResetCheckAddress) != 0 && // Handle status being 0 on console reset.
+                lastNonZeroStatus != GameStatus.StartingGame; // Handle status swapping from 16 to 0 temporarily on game load
         }
         public static GameStatus GetGameStatus()
         {
             var status = Memory.ReadByte(Addresses.GameStatus);
             var result = (GameStatus)status;
+            if (result != GameStatus.InGame)
+            {
+                lastNonZeroStatus = result;
+            }
             return result;
         }
         public static List<Location> BuildLocationList(bool includeGems = true, bool includeSkillPoints = true)

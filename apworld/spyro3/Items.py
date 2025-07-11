@@ -1,3 +1,4 @@
+import random
 from enum import IntEnum
 from typing import NamedTuple
 from BaseClasses import Item
@@ -136,17 +137,11 @@ def BuildItemPool(multiworld, count, eggsToPlace, options):
             allowed_trap_items.append(item)
 
     # Get the correct blend of traps and filler items.
-    for i in range((100 - options.trap_filler_percent) * 50):
-        itemList = [item for item in allowed_misc_items]
-        item = multiworld.random.choice(itemList)
-        allowed_filler_items.append(item)
-    for i in range(options.trap_filler_percent * 50):
-        itemList = [item for item in allowed_trap_items]
-        item = multiworld.random.choice(itemList)
-        allowed_filler_items.append(item)
-      
     for i in range(remaining_count):
-        itemList = [item for item in allowed_filler_items]
+        if random.random() * 100 < options.trap_filler_percent:
+            itemList = [item for item in allowed_trap_items]
+        else:
+            itemList = [item for item in allowed_misc_items]
         item = multiworld.random.choice(itemList)
         item_pool.append(item)
     

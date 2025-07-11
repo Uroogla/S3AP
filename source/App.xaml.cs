@@ -83,6 +83,7 @@ namespace S3AP
 
         private async void ItemReceived(object? o, ItemReceivedEventArgs args)
         {
+            System.Diagnostics.Debug.WriteLine($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
             Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
             if (args.Item.Name == "Egg")
             {
@@ -93,7 +94,7 @@ namespace S3AP
             else if (args.Item.Name == "Extra Life")
             {
                 var currentLives = Memory.ReadShort(Addresses.PlayerLives);
-                Memory.Write(Addresses.PlayerLives, (short)(currentLives + 1));
+                Memory.Write(Addresses.PlayerLives, (short)(Math.Min(99, currentLives + 1)));
             }
             else if (args.Item.Name == "Lag Trap")
             {
@@ -112,7 +113,8 @@ namespace S3AP
                 // Collecting a skill point provides a full heal, so wait for that to complete first.
                 Thread.Sleep(3000);
                 var currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
-                Memory.Write(Addresses.PlayerHealth, (byte)(currentHealth + 1));
+                // Going too high creates too many particles for the game to handle.
+                Memory.Write(Addresses.PlayerHealth, (byte)(Math.Min(5, currentHealth + 1)));
             }
             else if (args.Item.Name == "Damage Sparx Trap")
             {
@@ -163,7 +165,7 @@ namespace S3AP
         private static void CheckGoalCondition()
         {
             var currentEggs = CalculateCurrentEggs();
-            int goal = int.Parse(Client.Options.GetValueOrDefault("goal").ToString());
+            int goal = int.Parse(Client.Options?.GetValueOrDefault("goal").ToString());
             // TODO: Don't hard code IDs.
             if ((CompletionGoal)goal == CompletionGoal.Sorceress1)
             {
@@ -186,13 +188,14 @@ namespace S3AP
                     Client.SendGoalCompletion();
                 }
             }
-            else if ((CompletionGoal)goal == CompletionGoal.SunnyVilla)
+            // Test goal for ease of debugging
+            /*else if ((CompletionGoal)goal == CompletionGoal.SunnyVilla)
             {
                 if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1231000))
                 {
                     Client.SendGoalCompletion();
                 }
-            }
+            }*/
         }
         private static async void RunLagTrap()
         {
@@ -234,8 +237,7 @@ namespace S3AP
             var messageToLog = new LogListItem(new List<TextSpan>()
             {
                 new TextSpan(){Text = $"[{item.Id.ToString()}] -", TextColor = Color.FromRgb(255, 255, 255)},
-                new TextSpan(){Text = $"{item.Name}", TextColor = Color.FromRgb(200, 255, 200)},
-                new TextSpan(){Text = $"x{item.Quantity.ToString()}", TextColor = Color.FromRgb(200, 255, 200)}
+                new TextSpan(){Text = $"{item.Name}", TextColor = Color.FromRgb(200, 255, 200)}
             });
             lock (_lockObject)
             {
@@ -284,7 +286,10 @@ namespace S3AP
         }
         private static int CalculateCurrentEggs()
         {
-            var count = Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Sum(x => x.Quantity) ?? 0;
+            System.Diagnostics.Debug.WriteLine(Client.GameState?.ReceivedItems);
+            System.Diagnostics.Debug.WriteLine(Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Count() ?? 0);
+            var count = Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Count() ?? 0;
+            count = Math.Min(count, 150);
             Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));
             return count;
         }

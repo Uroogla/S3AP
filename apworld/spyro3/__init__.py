@@ -15,7 +15,8 @@ from .Options import Spyro3Option
 SORCERESS_ONE = 0
 EGG_FOR_SALE = 1
 SORCERESS_TWO = 2
-SUNNY_VILLA = 3
+# Test goal for ease of debugging
+#SUNNY_VILLA = 3
 
 class Spyro3Web(WebWorld):
     bug_report_page = ""
@@ -193,8 +194,9 @@ class Spyro3World(World):
                         location.category in [Spyro3LocationCategory.EVENT] or \
                         (self.options.goal.value == SORCERESS_ONE and location.name == "Sorceress's Lair: Defeat the Sorceress? (George)") or \
                         (self.options.goal.value == EGG_FOR_SALE and location.name == "Midnight Mountain Home: Egg for sale. (Al)") or \
-                        (self.options.goal.value == SORCERESS_TWO and location.name == "Super Bonus Round: Woo, a secret egg. (Yin Yang)") or \
-                        (self.options.goal.value == SUNNY_VILLA and location.name == "Sunny Villa: Rescue the mayor. (Sanders)"):
+                        (self.options.goal.value == SORCERESS_TWO and location.name == "Super Bonus Round: Woo, a secret egg. (Yin Yang)"): #or \
+                        # Test goal for ease of debugging
+                        #(self.options.goal.value == SUNNY_VILLA and location.name == "Sunny Villa: Rescue the mayor. (Sanders)"):
                     #print(f"Adding vanilla item/event {location.default_item_name} to {location.name}")
                     item = self.create_item(location.default_item_name)
                     self.multiworld.get_location(location.name, self.player).place_locked_item(item)
@@ -232,6 +234,8 @@ class Spyro3World(World):
             item_classification = ItemClassification.progression
         elif item_dictionary[name].category in useful_categories:
             item_classification = ItemClassification.useful
+        elif item_dictionary[name].category == Spyro3ItemCategory.TRAP:
+            item_classification = ItemClassification.trap
         else:
             item_classification = ItemClassification.filler
 
@@ -260,8 +264,9 @@ class Spyro3World(World):
                     set_rule(location, lambda state: True)
         if self.options.goal.value == SORCERESS_TWO:
             self.multiworld.completion_condition[self.player] = lambda state: state.has("Super Bonus Round Complete", self.player)
-        elif self.options.goal.value == SUNNY_VILLA:
-            self.multiworld.completion_condition[self.player] = lambda state: state.has("Sunny Villa Complete", self.player)
+        # Test goal for ease of debugging
+        #elif self.options.goal.value == SUNNY_VILLA:
+        #    self.multiworld.completion_condition[self.player] = lambda state: state.has("Sunny Villa Complete", self.player)
         elif self.options.goal.value == EGG_FOR_SALE:
             self.multiworld.completion_condition[self.player] = lambda state: state.has("Moneybags Chase Complete", self.player)
         else:

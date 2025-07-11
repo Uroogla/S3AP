@@ -12,6 +12,8 @@ namespace S3AP
         public const uint EggStartAddress = 0x000703E0;
         public const uint IsInDemoMode = 0x0006c758;
         public const uint GameStatus = 0x0006e424;
+        // The values at this and the following 3 bytes seem to be 0 only on reset.
+        public const uint ResetCheckAddress = 0x0006e434;
         public const uint PlayerLives = 0x0006c864;
         public const uint PlayerHealth = 0x00070688;
 
