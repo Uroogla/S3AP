@@ -16,6 +16,10 @@ class EnableGemChecksOption(Toggle):
     """Adds checks for getting all gems in a level"""
     display_name = "Enable Gem Checks"
 
+class EnableGemsanityOption(Toggle):
+    """Adds each gem in the game as a check.  Currently proof of concept, for Sunrise Spring Home only."""
+    display_name = "Enable Full Gemsanity"
+
 class EnableSkillpointChecksOptions(Toggle):
     """Adds checks for getting skill points"""
     display_name = "Enable Skillpoint Checks"
@@ -73,6 +77,7 @@ class Spyro3Option(PerGameCommonOptions):
     goal: GoalOption
     guaranteed_items: GuaranteedItemsOption
     enable_gem_checks: EnableGemChecksOption
+    enable_gemsanity_checks: EnableGemsanityOption
     enable_skillpoint_checks: EnableSkillpointChecksOptions
     enable_filler_extra_lives: EnableFillerExtraLives
     enable_filler_invincibility: EnableFillerInvincibility

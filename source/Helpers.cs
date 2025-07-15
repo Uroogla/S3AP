@@ -32,6 +32,21 @@ namespace S3AP
             var offset = Memory.ReadULong(baseAddress + 0x008C4FA8);
             return offset;
         }
+        public static int GetTotalGemCount()
+        {
+            int totalGems = 0;
+            Dictionary<string, Tuple<int, uint>> gemCounts = GetLevelGemCounts();
+            foreach (var (levelName, counts) in gemCounts)
+            {
+                totalGems += counts.Item1;  // Anonymous tuples are 1 indexed in C#
+            }
+            return totalGems;
+        }
+        public static uint GetLevelGemCountAddress(string levelName)
+        {
+            Dictionary<string, Tuple<int, uint>> gemCounts = GetLevelGemCounts();
+            return gemCounts.GetValueOrDefault(levelName).Item2; // Anonymous tuples are 1 indexed in C#
+        }
 
         public static Dictionary<string, Tuple<int, uint>> GetLevelGemCounts()
         {
@@ -105,7 +120,7 @@ namespace S3AP
             int processedEggs = 0;
             int processedSkillPoints = 0;
             List<Location> locations = new List<Location>();
-            var currentAddress = Addresses.EggStartAddress;
+            var currentEggAddress = Addresses.EggStartAddress;
             var currentSkillPointAddress = Addresses.SkillPointAddress;
             List<LevelData> levels = GetLevelData();
             var totalEggCount = levels.Select(x => x.EggCount).Sum();
@@ -123,7 +138,7 @@ namespace S3AP
                         Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
                         AddressBit = 0,
                         CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
+                        Address = currentEggAddress,
                         Category = "Event"
                     };
                     locations.Add(location);
@@ -137,7 +152,7 @@ namespace S3AP
                         Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
                         AddressBit = 0,
                         CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
+                        Address = currentEggAddress,
                         Category = "Boss"
                     };
                     locations.Add(location);
@@ -151,7 +166,7 @@ namespace S3AP
                         Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
                         AddressBit = 5,
                         CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
+                        Address = currentEggAddress,
                         Category = "Event"
                     };
                     locations.Add(location);
@@ -165,7 +180,7 @@ namespace S3AP
                         Id = baseId + (levelOffset * (level.LevelId - 1)) + i,
                         AddressBit = i,
                         CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
+                        Address = currentEggAddress,
                         Category = "Egg"
                     };
                     locations.Add(location);
@@ -186,7 +201,7 @@ namespace S3AP
                     };
                     locations.Add(gemLocation);
                 }
-                if (includeSkillPoints && level.SkillPoints.Length > 0)
+                if (level.SkillPoints.Length > 0)
                 {
                     for (int i = 0; i < level.SkillPoints.Length; i++)
                     {
@@ -207,7 +222,29 @@ namespace S3AP
                         currentSkillPointAddress++;
                     }
                 }
-                currentAddress++;
+                uint gemBit = 0;
+                uint gemBitStartAddress = level.GemBitStartAddress;
+                for (int i = 0; i < level.NumberOfGemChecks + level.GemBitSkipIndices.Length; i++)
+                {
+                    if (level.GemBitSkipIndices.Contains(i))
+                    {
+                        continue;
+                    }
+                    string gemName = $"{level.Name} Gem {gemBit + 1}";
+                    Location gemLocation = new Location()
+                    {
+                        Name = gemName,
+                        // TODO: compute ID correctly. This only works for sunrise home
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount + 1 + level.SkillPoints.Length + (int)gemBit,
+                        AddressBit = i % 8,
+                        Address = gemBitStartAddress + (uint)(i/8),
+                        CheckType = LocationCheckType.Bit,
+                        Category = "Gemsanity"
+                    };
+                    locations.Add(gemLocation);
+                    gemBit++;
+                }
+                currentEggAddress++;
             }
             return locations;
         }
@@ -216,43 +253,43 @@ namespace S3AP
         {
             List<LevelData> levels = new List<LevelData>()
             {
-                new LevelData("Sunrise Spring", 1, 5, true, false, 400, []),
-                new LevelData("Sunny Villa", 2, 6, false, false, 400, ["Flame all trees", "Skateboard course record I"]),
-                new LevelData("Cloud Spires", 3, 6, false, false, 400, []),
-                new LevelData("Molten Crater", 4, 6, false, false, 400, ["Assemble tiki heads", "Supercharge the wall"]),
-                new LevelData("Seashell Shore", 5, 6, false, false, 400, ["Catch the funky chicken"]),
-                new LevelData("Mushroom Speedway", 6, 3, false, false, 400, []),
-                new LevelData("Sheila's Alp", 7, 3, false, false, 400, []),
-                new LevelData("Buzz", 8, 1, false, true, 0, []),
-                new LevelData("Crawdad Farm", 9, 1, false, false, 200, []),
-                new LevelData("Midday Garden", 10, 5, true, false, 400, []),
-                new LevelData("Icy Peak", 11, 6, false, false, 500, ["Glide to pedestal"]),
-                new LevelData("Enchanted Towers", 12, 6, false, false, 500, ["Skateboard course record II"]),
-                new LevelData("Spooky Swamp", 13, 6, false, false, 500, ["Destroy all piranha signs"]),
-                new LevelData("Bamboo Terrace", 14, 6, false, false, 500, []),
-                new LevelData("Country Speedway", 15, 3, false, false, 400, []),
-                new LevelData("Sgt. Byrd's Base", 16, 3, false, false, 500, ["Bomb the gophers"]),
-                new LevelData("Spike", 17, 1, false, true, 0, []),
-                new LevelData("Spider Town", 18, 1, false, false, 200, []),
-                new LevelData("Evening Lake", 19, 5, true, false, 400, []),
-                new LevelData("Frozen Altars", 20, 6, false, false, 600, ["Beat yeti in two rounds"]),
-                new LevelData("Lost Fleet", 21, 6, false, false, 600, ["Skateboard record time"]),
-                new LevelData("Fireworks Factory", 22, 6, false, false, 600, ["Find Agent 9's powerup"]),
-                new LevelData("Charmed Ridge", 23, 6, false, false, 600, ["The Impossible Tower", "Shoot the temple windows"]),
-                new LevelData("Honey Speedway", 24, 3, false, false, 400, []),
-                new LevelData("Bentley's Outpost", 25, 3, false, false, 600, ["Push box off the cliff"]),
-                new LevelData("Scorch", 26, 1, false, true, 0, []),
-                new LevelData("Starfish Reef", 27, 1, false, false, 200, []),
-                new LevelData("Midnight Mountain", 28, 6, true, false, 400, []),
-                new LevelData("Crystal Islands", 29, 6, false, false, 700, []),
-                new LevelData("Desert Ruins", 30, 6, false, false, 700, ["Destroy all seaweed"]),
-                new LevelData("Haunted Tomb", 31, 6, false, false, 700, ["Swim into the dark hole"]),
-                new LevelData("Dino Mines", 32, 6, false, false, 700, ["Hit all the seahorses", "Hit the secret dino"]),
-                new LevelData("Harbor Speedway", 33, 3, false, false, 400, []),
-                new LevelData("Agent 9's Lab", 34, 3, false, false, 700, ["Blow up all palm trees"]),
-                new LevelData("Sorceress", 35, 1, false, true, 0, []),
-                new LevelData("Bugbot Factory", 36, 1, false, false, 200, []),
-                new LevelData("Super Bonus Round", 37, 1, false, false, 5000, []),
+                new LevelData("Sunrise Spring", 1, 5, true, false, 400, [], [26, 59, 60, 61, 92, 121, 122, 134], Addresses.SunriseSpringGemMask, 142),
+                new LevelData("Sunny Villa", 2, 6, false, false, 400, ["Flame all trees", "Skateboard course record I"], []),
+                new LevelData("Cloud Spires", 3, 6, false, false, 400, [], []),
+                new LevelData("Molten Crater", 4, 6, false, false, 400, ["Assemble tiki heads", "Supercharge the wall"], []),
+                new LevelData("Seashell Shore", 5, 6, false, false, 400, ["Catch the funky chicken"], []),
+                new LevelData("Mushroom Speedway", 6, 3, false, false, 400, [], []),
+                new LevelData("Sheila's Alp", 7, 3, false, false, 400, [], []),
+                new LevelData("Buzz", 8, 1, false, true, 0, [], []),
+                new LevelData("Crawdad Farm", 9, 1, false, false, 200, [], []),
+                new LevelData("Midday Garden", 10, 5, true, false, 400, [], []),
+                new LevelData("Icy Peak", 11, 6, false, false, 500, ["Glide to pedestal"], []),
+                new LevelData("Enchanted Towers", 12, 6, false, false, 500, ["Skateboard course record II"], []),
+                new LevelData("Spooky Swamp", 13, 6, false, false, 500, ["Destroy all piranha signs"], []),
+                new LevelData("Bamboo Terrace", 14, 6, false, false, 500, [], []),
+                new LevelData("Country Speedway", 15, 3, false, false, 400, [], []),
+                new LevelData("Sgt. Byrd's Base", 16, 3, false, false, 500, ["Bomb the gophers"], []),
+                new LevelData("Spike", 17, 1, false, true, 0, [], []),
+                new LevelData("Spider Town", 18, 1, false, false, 200, [], []),
+                new LevelData("Evening Lake", 19, 5, true, false, 400, [], []),
+                new LevelData("Frozen Altars", 20, 6, false, false, 600, ["Beat yeti in two rounds"], []),
+                new LevelData("Lost Fleet", 21, 6, false, false, 600, ["Skateboard record time"], []),
+                new LevelData("Fireworks Factory", 22, 6, false, false, 600, ["Find Agent 9's powerup"], []),
+                new LevelData("Charmed Ridge", 23, 6, false, false, 600, ["The Impossible Tower", "Shoot the temple windows"], []),
+                new LevelData("Honey Speedway", 24, 3, false, false, 400, [], []),
+                new LevelData("Bentley's Outpost", 25, 3, false, false, 600, ["Push box off the cliff"], []),
+                new LevelData("Scorch", 26, 1, false, true, 0, [], []),
+                new LevelData("Starfish Reef", 27, 1, false, false, 200, [], []),
+                new LevelData("Midnight Mountain", 28, 6, true, false, 400, [], []),
+                new LevelData("Crystal Islands", 29, 6, false, false, 700, [], []),
+                new LevelData("Desert Ruins", 30, 6, false, false, 700, ["Destroy all seaweed"], []),
+                new LevelData("Haunted Tomb", 31, 6, false, false, 700, ["Swim into the dark hole"], []),
+                new LevelData("Dino Mines", 32, 6, false, false, 700, ["Hit all the seahorses", "Hit the secret dino"], []),
+                new LevelData("Harbor Speedway", 33, 3, false, false, 400, [], []),
+                new LevelData("Agent 9's Lab", 34, 3, false, false, 700, ["Blow up all palm trees"], []),
+                new LevelData("Sorceress", 35, 1, false, true, 0, [], []),
+                new LevelData("Bugbot Factory", 36, 1, false, false, 200, [], []),
+                new LevelData("Super Bonus Round", 37, 1, false, false, 5000, [], []),
             };
             return levels;
         }

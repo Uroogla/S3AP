@@ -78,6 +78,8 @@ namespace S3AP
         {
             if (Client.GameState == null) return;
             var currentEggs = CalculateCurrentEggs();
+            // TODO: Expand this.
+            UpdateLevelGemCount("Sunrise Spring");
             CheckGoalCondition();
         }
 
@@ -160,6 +162,11 @@ namespace S3AP
             else if (args.Item.Name == "Invincibility (30 seconds)")
             {
                 ActivateInvincibility(30);
+            }
+            else if (args.Item.Name.EndsWith(" Gem"))
+            {
+                // TODO: Update this.
+                UpdateLevelGemCount("Sunrise Spring");
             }
         }
         private static void CheckGoalCondition()
@@ -292,6 +299,19 @@ namespace S3AP
             count = Math.Min(count, 150);
             Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));
             return count;
+        }
+        private static void UpdateLevelGemCount(string levelName)
+        {
+            int count = 0;
+            count += Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Red Gem").Count() ?? 0;
+            count += 2 * Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Green Gem").Count() ?? 0;
+            count += 5 * Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Blue Gem").Count() ?? 0;
+            count += 10 * Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Gold Gem").Count() ?? 0;
+            count += 25 * Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Pink Gem").Count() ?? 0;
+            uint writeAddress = Helpers.GetLevelGemCountAddress(levelName);
+            Memory.WriteByte(writeAddress, (byte)(count));
+            int totalGemCount = Helpers.GetTotalGemCount();
+            Memory.Write(Addresses.TotalGemAddress, totalGemCount);
         }
         private static void OnConnected(object sender, EventArgs args)
         {

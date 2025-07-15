@@ -9,7 +9,8 @@ class Spyro3ItemCategory(IntEnum):
     SKIP = 1,
     EVENT = 2,
     MISC = 3,
-    TRAP = 4
+    TRAP = 4,
+    GEM = 5
 
 
 class Spyro3ItemData(NamedTuple):
@@ -28,7 +29,7 @@ class Spyro3Item(Item):
 
 
 key_item_names = {
-"Egg"
+    "Egg"
 }
 
 
@@ -85,6 +86,11 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Big Head Mode", 1014, Spyro3ItemCategory.MISC),
     ("Flat Spyro Mode", 1015, Spyro3ItemCategory.MISC),
     ("(Over)heal Sparx", 1016, Spyro3ItemCategory.MISC),
+
+    ("Sunrise Spring Red Gem", 1100, Spyro3ItemCategory.GEM),
+    ("Sunrise Spring Green Gem", 1101, Spyro3ItemCategory.GEM),
+    ("Sunrise Spring Blue Gem", 1102, Spyro3ItemCategory.GEM),
+    ("Sunrise Spring Gold Gem", 1103, Spyro3ItemCategory.GEM),
 ]]
 
 item_descriptions = {
@@ -105,6 +111,16 @@ def BuildItemPool(multiworld, count, eggsToPlace, options):
     for i in range(eggsToPlace):
         item_pool.append(item_dictionary["Egg"])
     remaining_count = remaining_count - eggsToPlace
+    if options.enable_gemsanity_checks.value:
+        for i in range(47):
+            item_pool.append(item_dictionary["Sunrise Spring Red Gem"])
+        for i in range(59):
+            item_pool.append(item_dictionary["Sunrise Spring Green Gem"])
+        for i in range(25):
+            item_pool.append(item_dictionary["Sunrise Spring Blue Gem"])
+        for i in range(11):
+            item_pool.append(item_dictionary["Sunrise Spring Gold Gem"])
+        remaining_count = remaining_count - 142
 
     # TODO: Determine fallback cases
     #if remaining_count > 0 and not options.enable_filler_extra_lives and not options.enable_filler_invincibility and not options.enable_filler_color_change:

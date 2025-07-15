@@ -17,6 +17,7 @@ namespace S3AP
         public const uint PlayerLives = 0x0006c864;
         public const uint PlayerHealth = 0x00070688;
 
+        public const uint TotalGemAddress = 0x0006c7fc;
         public const uint SunriseSpringGems = 0x071af0;
         public const uint SunnyVillaGems = 0x071af4;
         public const uint CloudSpireLevelGems = 0x071af8;
@@ -54,6 +55,8 @@ namespace S3AP
         public const uint SorcererLairGems = 0x071b78;
         public const uint BugbotFactoryGems = 0x071b7c;
         public const uint SuperBonusRoundGems = 0x071b80;
+
+        public const uint SunriseSpringGemMask = 0x071b90;
 
         public const uint SkillPointAddress = 0x066ca0;
 
