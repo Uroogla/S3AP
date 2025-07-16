@@ -29,17 +29,21 @@ namespace S3AP
             Context.ConnectClicked += Context_ConnectClicked;
             Context.CommandReceived += (e, a) =>
             {
+                if (string.IsNullOrWhiteSpace(a.Command)) return;
                 Client?.SendMessage(a.Command);
-                if (a.Command == "clearSpyroGameState")
-                {
-                    Log.Logger.Information("Clearing the game state.  Please reconnect to the server while in game to refresh received items.");
-                    Client.ForceReloadAllItems();
-                }
+                HandleCommand(a.Command);
             };
             MainPage = new MainPage(Context);
             Context.ConnectButtonEnabled = true;
         }
-
+        private void HandleCommand(string command)
+        {
+            if (command == "clearSpyroGameState")
+            {
+                Log.Logger.Information("Clearing the game state.  Please reconnect to the server while in game to refresh received items.");
+                Client.ForceReloadAllItems();
+            }
+        }
         private async void Context_ConnectClicked(object? sender, ConnectClickedEventArgs e)
         {
             if (Client != null)
@@ -56,7 +60,7 @@ namespace S3AP
             var DuckstationConnected = client.Connect();
             if (!DuckstationConnected)
             {
-                Log.Logger.Warning("duckstation not running, open duckstation and launch the game before connecting!");
+                Log.Logger.Warning("Duckstation not running, open Duckstation and launch the game before connecting!");
                 return;
             }
             Client = new ArchipelagoClient(client);

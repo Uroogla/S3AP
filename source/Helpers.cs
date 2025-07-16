@@ -26,13 +26,6 @@ namespace S3AP
                 return jsonFile;
             }
         }
-        public static ulong GetDuckstationOffset()
-        {
-            var baseAddress = Memory.GetBaseAddress("duckstation-qt-x64-ReleaseLTCG");
-            var offset = Memory.ReadULong(baseAddress + 0x008C4FA8);
-            return offset;
-        }
-
         public static Dictionary<string, Tuple<int, uint>> GetLevelGemCounts()
         {
             return new Dictionary<string, Tuple<int, uint>>
@@ -82,9 +75,10 @@ namespace S3AP
         }
         public static bool IsInGame()
         {
+            var status = GetGameStatus();
             return !IsInDemoMode() &&
-                GetGameStatus() != GameStatus.TitleScreen &&
-                GetGameStatus() != GameStatus.Loading && // Handle loading into and out of demo mode.
+                status != GameStatus.TitleScreen &&
+                status != GameStatus.Loading && // Handle loading into and out of demo mode.
                 Memory.ReadInt(Addresses.ResetCheckAddress) != 0 && // Handle status being 0 on console reset.
                 lastNonZeroStatus != GameStatus.StartingGame; // Handle status swapping from 16 to 0 temporarily on game load
         }
