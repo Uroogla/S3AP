@@ -77,7 +77,7 @@ location_tables = {
     Spyro3LocationData(f"Sunny Villa: Hop to Rapunzel. (Lucy)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunny Villa: Lizard skating I. (Emily)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunny Villa: Lizard skating II. (Daisy)",f"Egg",Spyro3LocationCategory.EGG),
-    Spyro3LocationData(f"Sunny Villa: Egg by the building. (Vanessa)",f"Filler",Spyro3LocationCategory.EGG),
+    Spyro3LocationData(f"Sunny Villa: Egg by the building. (Vanessa)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunny Villa: Glide to the spring. (Miles)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData("Sunny Villa Complete", "Sunny Villa Complete", Spyro3LocationCategory.EVENT),
     Spyro3LocationData("Sunny Villa: All Gems", "Filler", Spyro3LocationCategory.GEM),

@@ -10,7 +10,6 @@ using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Microsoft.Maui.Devices.Sensors;
 using Newtonsoft.Json;
 using Serilog;
-using System.Runtime.Intrinsics.X86;
 using static S3AP.Models.Enums;
 using Color = Microsoft.Maui.Graphics.Color;
 using Location = Archipelago.Core.Models.Location;
@@ -83,6 +82,7 @@ namespace S3AP
 
         private async void ItemReceived(object? o, ItemReceivedEventArgs args)
         {
+            Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
             if (args.Item.Name == "Egg")
             {
                 var currentEggs = CalculateCurrentEggs();
