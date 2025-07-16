@@ -10,6 +10,7 @@ using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Microsoft.Maui.Devices.Sensors;
 using Newtonsoft.Json;
 using Serilog;
+using static S3AP.Models.Enums;
 using Color = Microsoft.Maui.Graphics.Color;
 using Location = Archipelago.Core.Models.Location;
 
@@ -29,6 +30,11 @@ namespace S3AP
             Context.CommandReceived += (e, a) =>
             {
                 Client?.SendMessage(a.Command);
+                if (a.Command == "clearSpyroGameState")
+                {
+                    Log.Logger.Information("Clearing the game state.  Please reconnect to the server while in game to refresh received items.");
+                    Client.ForceReloadAllItems();
+                }
             };
             MainPage = new MainPage(Context);
             Context.ConnectButtonEnabled = true;
@@ -82,29 +88,113 @@ namespace S3AP
         private async void ItemReceived(object? o, ItemReceivedEventArgs args)
         {
             Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
-            if (args.Item.Name == "Egg")
+            int currentHealth;
+            switch (args.Item.Name)
             {
-                var currentEggs = CalculateCurrentEggs();
-
-                CheckGoalCondition();
-            }
-            else if (args.Item.Name == "Extra Life")
-            {
-                var currentLives = Memory.ReadShort(Addresses.PlayerLives);
-                Memory.Write(Addresses.PlayerLives, (short)(currentLives + 1));
-            }
-            else if (args.Item.Name == "Lag Trap")
-            {
-                RunLagTrap();
+                case "Egg":
+                    var currentEggs = CalculateCurrentEggs();
+                    CheckGoalCondition();
+                    break;
+                case "Extra Life":
+                    var currentLives = Memory.ReadShort(Addresses.PlayerLives);
+                    Memory.Write(Addresses.PlayerLives, (short)(Math.Min(99, currentLives + 1)));
+                    break;
+                case "Lag Trap":
+                    RunLagTrap();
+                    break;
+                case "Big Head Mode":
+                    ActivateBigHeadMode();
+                    break;
+                case "Flat Spyro Mode":
+                    ActivateFlatSpyroMode();
+                    break;
+                case "(Over)heal Sparx":
+                    // Collecting a skill point provides a full heal, so wait for that to complete first.
+                    await Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
+                        // Going too high creates too many particles for the game to handle.
+                        Memory.Write(Addresses.PlayerHealth, (byte)(Math.Min(5, currentHealth + 1)));
+                    });
+                    break;
+                case "Damage Sparx Trap":
+                    // Collecting a skill point provides a full heal, so wait for that to complete first.
+                    await Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
+                        Memory.Write(Addresses.PlayerHealth, Byte.Max((byte)(currentHealth - 1), 0));
+                    });
+                    break;
+                case "Sparxless Trap":
+                    // Collecting a skill point provides a full heal, so wait for that to complete first.
+                    await Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        Memory.Write(Addresses.PlayerHealth, (byte)(0));
+                    });
+                    break;
+                case "Turn Spyro Red":
+                    TurnSpyroColor(SpyroColor.SpyroColorRed);
+                    break;
+                case "Turn Spyro Blue":
+                    TurnSpyroColor(SpyroColor.SpyroColorBlue);
+                    break;
+                case "Turn Spyro Yellow":
+                    TurnSpyroColor(SpyroColor.SpyroColorYellow);
+                    break;
+                case "Turn Spyro Pink":
+                    TurnSpyroColor(SpyroColor.SpyroColorPink);
+                    break;
+                case "Turn Spyro Green":
+                    TurnSpyroColor(SpyroColor.SpyroColorGreen);
+                    break;
+                case "Turn Spyro Black":
+                    TurnSpyroColor(SpyroColor.SpyroColorBlack);
+                    break;
+                case "Invincibility (15 seconds)":
+                    ActivateInvincibility(15);
+                    break;
+                case "Invincibility (30 seconds)":
+                    ActivateInvincibility(30);
+                    break;
             }
         }
         private static void CheckGoalCondition()
         {
             var currentEggs = CalculateCurrentEggs();
-            if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Name == "Sorceress Defeated"))
+            int goal = int.Parse(Client.Options?.GetValueOrDefault("goal", 0).ToString());
+            // TODO: Don't hard code IDs.
+            if ((CompletionGoal)goal == CompletionGoal.Sorceress1)
             {
-                Client.SendGoalCompletion();
+                if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1264000))
+                {
+                    Client.SendGoalCompletion();
+                }
             }
+            else if ((CompletionGoal)goal == CompletionGoal.EggForSale)
+            {
+                if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1257005))
+                {
+                    Client.SendGoalCompletion();
+                }
+            }
+            else if ((CompletionGoal)goal == CompletionGoal.Sorceress2)
+            {
+                if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1266000))
+                {
+                    Client.SendGoalCompletion();
+                }
+            }
+            // Test goal for ease of debugging
+            /*else if ((CompletionGoal)goal == CompletionGoal.SunnyVilla)
+            {
+                if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == 1231000))
+                {
+                    Client.SendGoalCompletion();
+                }
+            }*/
         }
         private static async void RunLagTrap()
         {
@@ -114,13 +204,43 @@ namespace S3AP
                 await lagTrap.WaitForCompletionAsync();
             }
         }
+        private static async void ActivateBigHeadMode()
+        {
+            Memory.Write(Addresses.SpyroHeight, (byte)(32));
+            Memory.Write(Addresses.SpyroLength, (byte)(32));
+            Memory.Write(Addresses.SpyroWidth, (byte)(32));
+            Memory.Write(Addresses.BigHeadMode, (short)(1));
+        }
+        private static async void ActivateFlatSpyroMode()
+        {
+            Memory.Write(Addresses.SpyroHeight, (byte)(16));
+            Memory.Write(Addresses.SpyroLength, (byte)(16));
+            Memory.Write(Addresses.SpyroWidth, (byte)(2));
+            Memory.Write(Addresses.BigHeadMode, (short)(256));
+        }
+        private static async void TurnSpyroColor(SpyroColor colorEnum)
+        {
+            Memory.Write(Addresses.SpyroColorAddress, (short)colorEnum);
+        }
+        private static async void ActivateInvincibility(int seconds)
+        {
+            // The counter ticks down every frame (60 fps for in game calcs)
+            seconds = seconds * 60;
+            // Collecting an egg removes invincibility, so try to avoid a user's own egg
+            // from providing no benefits.
+
+            await Task.Run(async () =>
+            {
+                await Task.Delay(6000);
+                Memory.Write(Addresses.InvincibilityDurationAddress, (short)seconds);
+            });
+        }
         private static void LogItem(Item item)
         {
             var messageToLog = new LogListItem(new List<TextSpan>()
             {
                 new TextSpan(){Text = $"[{item.Id.ToString()}] -", TextColor = Color.FromRgb(255, 255, 255)},
-                new TextSpan(){Text = $"{item.Name}", TextColor = Color.FromRgb(200, 255, 200)},
-                new TextSpan(){Text = $"x{item.Quantity.ToString()}", TextColor = Color.FromRgb(200, 255, 200)}
+                new TextSpan(){Text = $"{item.Name}", TextColor = Color.FromRgb(200, 255, 200)}
             });
             lock (_lockObject)
             {
@@ -169,7 +289,8 @@ namespace S3AP
         }
         private static int CalculateCurrentEggs()
         {
-            var count = Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Sum(x => x.Quantity) ?? 0;
+            var count = Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Count() ?? 0;
+            count = Math.Min(count, 150);
             Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));
             return count;
         }

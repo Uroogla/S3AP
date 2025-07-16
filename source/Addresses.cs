@@ -12,7 +12,10 @@ namespace S3AP
         public const uint EggStartAddress = 0x000703E0;
         public const uint IsInDemoMode = 0x0006c758;
         public const uint GameStatus = 0x0006e424;
+        // The values at this and the following 3 bytes seem to be 0 only on reset.
+        public const uint ResetCheckAddress = 0x0006e434;
         public const uint PlayerLives = 0x0006c864;
+        public const uint PlayerHealth = 0x00070688;
 
         public const uint SunriseSpringGems = 0x071af0;
         public const uint SunnyVillaGems = 0x071af4;
@@ -52,6 +55,14 @@ namespace S3AP
         public const uint BugbotFactoryGems = 0x071b7c;
         public const uint SuperBonusRoundGems = 0x071b80;
 
+        public const uint SkillPointAddress = 0x066ca0;
+
+        public const uint BigHeadMode = 0x06fc76;
+        public const uint SpyroWidth = 0x06fc79;
+        public const uint SpyroHeight = 0x06fc7d;
+        public const uint SpyroLength = 0x06fc81;
+        public const uint SpyroColorAddress = 0x06fc84;
+        public const uint InvincibilityDurationAddress = 0x0705d4;
 
     }
 }

@@ -396,3 +396,6 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/apworld/spyro3.apworld
+/apworld.zip
+*.apworld
