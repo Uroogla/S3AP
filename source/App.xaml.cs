@@ -30,6 +30,11 @@ namespace S3AP
             Context.CommandReceived += (e, a) =>
             {
                 Client?.SendMessage(a.Command);
+                if (a.Command == "clearSpyroGameState")
+                {
+                    Log.Logger.Information("Clearing the game state.  Please reconnect to the server while in game to refresh received items.");
+                    Client.ForceReloadAllItems();
+                }
             };
             MainPage = new MainPage(Context);
             Context.ConnectButtonEnabled = true;
@@ -83,81 +88,77 @@ namespace S3AP
         private async void ItemReceived(object? o, ItemReceivedEventArgs args)
         {
             Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
-            if (args.Item.Name == "Egg")
+            int currentHealth;
+            switch (args.Item.Name)
             {
-                var currentEggs = CalculateCurrentEggs();
-
-                CheckGoalCondition();
-            }
-            else if (args.Item.Name == "Extra Life")
-            {
-                var currentLives = Memory.ReadShort(Addresses.PlayerLives);
-                Memory.Write(Addresses.PlayerLives, (short)(Math.Min(99, currentLives + 1)));
-            }
-            else if (args.Item.Name == "Lag Trap")
-            {
-                RunLagTrap();
-            }
-            else if (args.Item.Name == "Big Head Mode")
-            {
-                ActivateBigHeadMode();
-            }
-            else if (args.Item.Name == "Flat Spyro Mode")
-            {
-                ActivateFlatSpyroMode();
-            }
-            else if (args.Item.Name == "(Over)heal Sparx")
-            {
-                // Collecting a skill point provides a full heal, so wait for that to complete first.
-                Thread.Sleep(3000);
-                var currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
-                // Going too high creates too many particles for the game to handle.
-                Memory.Write(Addresses.PlayerHealth, (byte)(Math.Min(5, currentHealth + 1)));
-            }
-            else if (args.Item.Name == "Damage Sparx Trap")
-            {
-                // Collecting a skill point provides a full heal, so wait for that to complete first.
-                Thread.Sleep(3000);
-                var currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
-                Memory.Write(Addresses.PlayerHealth, Byte.Max((byte)(currentHealth - 1), 0));
-            }
-            else if (args.Item.Name == "Sparxless Trap")
-            {
-                // Collecting a skill point provides a full heal, so wait for that to complete first.
-                Thread.Sleep(3000);
-                Memory.Write(Addresses.PlayerHealth, (byte)(0));
-            }
-            else if (args.Item.Name == "Turn Spyro Red")
-            {
-                TurnSpyroColor(Addresses.SpyroColorRed);
-            }
-            else if (args.Item.Name == "Turn Spyro Blue")
-            {
-                TurnSpyroColor(Addresses.SpyroColorBlue);
-            }
-            else if (args.Item.Name == "Turn Spyro Yellow")
-            {
-                TurnSpyroColor(Addresses.SpyroColorYellow);
-            }
-            else if (args.Item.Name == "Turn Spyro Pink")
-            {
-                TurnSpyroColor(Addresses.SpyroColorPink);
-            }
-            else if (args.Item.Name == "Turn Spyro Green")
-            {
-                TurnSpyroColor(Addresses.SpyroColorGreen);
-            }
-            else if (args.Item.Name == "Turn Spyro Black")
-            {
-                TurnSpyroColor(Addresses.SpyroColorBlack);
-            }
-            else if (args.Item.Name == "Invincibility (15 seconds)")
-            {
-                ActivateInvincibility(15);
-            }
-            else if (args.Item.Name == "Invincibility (30 seconds)")
-            {
-                ActivateInvincibility(30);
+                case "Egg":
+                    var currentEggs = CalculateCurrentEggs();
+                    CheckGoalCondition();
+                    break;
+                case "Extra Life":
+                    var currentLives = Memory.ReadShort(Addresses.PlayerLives);
+                    Memory.Write(Addresses.PlayerLives, (short)(Math.Min(99, currentLives + 1)));
+                    break;
+                case "Lag Trap":
+                    RunLagTrap();
+                    break;
+                case "Big Head Mode":
+                    ActivateBigHeadMode();
+                    break;
+                case "Flat Spyro Mode":
+                    ActivateFlatSpyroMode();
+                    break;
+                case "(Over)heal Sparx":
+                    // Collecting a skill point provides a full heal, so wait for that to complete first.
+                    await Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
+                        // Going too high creates too many particles for the game to handle.
+                        Memory.Write(Addresses.PlayerHealth, (byte)(Math.Min(5, currentHealth + 1)));
+                    });
+                    break;
+                case "Damage Sparx Trap":
+                    // Collecting a skill point provides a full heal, so wait for that to complete first.
+                    await Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
+                        Memory.Write(Addresses.PlayerHealth, Byte.Max((byte)(currentHealth - 1), 0));
+                    });
+                    break;
+                case "Sparxless Trap":
+                    // Collecting a skill point provides a full heal, so wait for that to complete first.
+                    await Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        Memory.Write(Addresses.PlayerHealth, (byte)(0));
+                    });
+                    break;
+                case "Turn Spyro Red":
+                    TurnSpyroColor(SpyroColor.SpyroColorRed);
+                    break;
+                case "Turn Spyro Blue":
+                    TurnSpyroColor(SpyroColor.SpyroColorBlue);
+                    break;
+                case "Turn Spyro Yellow":
+                    TurnSpyroColor(SpyroColor.SpyroColorYellow);
+                    break;
+                case "Turn Spyro Pink":
+                    TurnSpyroColor(SpyroColor.SpyroColorPink);
+                    break;
+                case "Turn Spyro Green":
+                    TurnSpyroColor(SpyroColor.SpyroColorGreen);
+                    break;
+                case "Turn Spyro Black":
+                    TurnSpyroColor(SpyroColor.SpyroColorBlack);
+                    break;
+                case "Invincibility (15 seconds)":
+                    ActivateInvincibility(15);
+                    break;
+                case "Invincibility (30 seconds)":
+                    ActivateInvincibility(30);
+                    break;
             }
         }
         private static void CheckGoalCondition()
@@ -217,9 +218,9 @@ namespace S3AP
             Memory.Write(Addresses.SpyroWidth, (byte)(2));
             Memory.Write(Addresses.BigHeadMode, (short)(256));
         }
-        private static async void TurnSpyroColor(short colorEnum)
+        private static async void TurnSpyroColor(SpyroColor colorEnum)
         {
-            Memory.Write(Addresses.SpyroColorAddress, colorEnum);
+            Memory.Write(Addresses.SpyroColorAddress, (short)colorEnum);
         }
         private static async void ActivateInvincibility(int seconds)
         {
@@ -227,8 +228,12 @@ namespace S3AP
             seconds = seconds * 60;
             // Collecting an egg removes invincibility, so try to avoid a user's own egg
             // from providing no benefits.
-            Thread.Sleep(6000);
-            Memory.Write(Addresses.InvincibilityDurationAddress, (short)seconds);
+
+            await Task.Run(async () =>
+            {
+                await Task.Delay(6000);
+                Memory.Write(Addresses.InvincibilityDurationAddress, (short)seconds);
+            });
         }
         private static void LogItem(Item item)
         {
@@ -251,11 +256,6 @@ namespace S3AP
             if (e.Message.Parts.Any(x => x.Text == "[Hint]: "))
             {
                 LogHint(e.Message);
-            }
-            else if (e.Message.Parts.Length == 1 && e.Message.Parts[0].Text == $"{Client.CurrentSession.Players.ActivePlayer.Name}: clearSpyroGameState")
-            {
-                Log.Logger.Information("Clearing the game state.  Please reconnect to the server while in game to refresh received items.");
-                Client.ForceReloadAllItems();
             }
             Log.Logger.Information(JsonConvert.SerializeObject(e.Message));
         }

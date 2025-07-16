@@ -32,5 +32,16 @@ namespace S3AP.Models
             //Test goal for ease of debugging
             //SunnyVilla = 3
         }
+
+        public enum SpyroColor : short
+        {
+            SpyroColorDefault = 0,
+            SpyroColorRed = 1,
+            SpyroColorBlue = 2,
+            SpyroColorPink = 3,
+            SpyroColorGreen = 4,
+            SpyroColorYellow = 5,
+            SpyroColorBlack = 6
+    }
     }
 }

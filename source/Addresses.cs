@@ -62,13 +62,6 @@ namespace S3AP
         public const uint SpyroHeight = 0x06fc7d;
         public const uint SpyroLength = 0x06fc81;
         public const uint SpyroColorAddress = 0x06fc84;
-        public const short SpyroColorDefault = 0;
-        public const short SpyroColorRed = 1;
-        public const short SpyroColorBlue = 2;
-        public const short SpyroColorPink = 3;
-        public const short SpyroColorGreen = 4;
-        public const short SpyroColorYellow = 5;
-        public const short SpyroColorBlack = 6;
         public const uint InvincibilityDurationAddress = 0x0705d4;
 
     }

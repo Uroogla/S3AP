@@ -10,13 +10,7 @@ from worlds.generic.Rules import set_rule, add_rule, add_item_rule, forbid_item
 
 from .Items import Spyro3Item, Spyro3ItemCategory, item_dictionary, key_item_names, item_descriptions, BuildItemPool
 from .Locations import Spyro3Location, Spyro3LocationCategory, location_tables, location_dictionary
-from .Options import Spyro3Option
-
-SORCERESS_ONE = 0
-EGG_FOR_SALE = 1
-SORCERESS_TWO = 2
-# Test goal for ease of debugging
-#SUNNY_VILLA = 3
+from .Options import Spyro3Option, GoalOptions
 
 class Spyro3Web(WebWorld):
     bug_report_page = ""
@@ -192,9 +186,9 @@ class Spyro3World(World):
                 # TODO: Remove this restriction after implementing a better client solution.
                 if item_data.category in [Spyro3ItemCategory.SKIP] or \
                         location.category in [Spyro3LocationCategory.EVENT] or \
-                        (self.options.goal.value == SORCERESS_ONE and location.name == "Sorceress's Lair: Defeat the Sorceress? (George)") or \
-                        (self.options.goal.value == EGG_FOR_SALE and location.name == "Midnight Mountain Home: Egg for sale. (Al)") or \
-                        (self.options.goal.value == SORCERESS_TWO and location.name == "Super Bonus Round: Woo, a secret egg. (Yin Yang)"): #or \
+                        (self.options.goal.value == GoalOptions.SORCERESS_ONE and location.name == "Sorceress's Lair: Defeat the Sorceress? (George)") or \
+                        (self.options.goal.value == GoalOptions.EGG_FOR_SALE and location.name == "Midnight Mountain Home: Egg for sale. (Al)") or \
+                        (self.options.goal.value == GoalOptions.SORCERESS_TWO and location.name == "Super Bonus Round: Woo, a secret egg. (Yin Yang)"): #or \
                         # Test goal for ease of debugging
                         #(self.options.goal.value == SUNNY_VILLA and location.name == "Sunny Villa: Rescue the mayor. (Sanders)"):
                     #print(f"Adding vanilla item/event {location.default_item_name} to {location.name}")
@@ -208,7 +202,7 @@ class Spyro3World(World):
                     #itempool.append(self.create_item(location.default_item_name))
         
         #print("Requesting itempool size: " + str(itempoolSize))
-        foo = BuildItemPool(self.multiworld, itempoolSize, 150 - placedEggs, self.options)
+        foo = BuildItemPool(self.multiworld, itempoolSize, placedEggs, self.options)
         #print("Created item pool size: " + str(len(foo)))
         #for item in foo:
             #print(f"{item.name}")
@@ -262,12 +256,12 @@ class Spyro3World(World):
         for region in self.multiworld.get_regions(self.player):
             for location in region.locations:
                     set_rule(location, lambda state: True)
-        if self.options.goal.value == SORCERESS_TWO:
+        if self.options.goal.value == GoalOptions.SORCERESS_TWO:
             self.multiworld.completion_condition[self.player] = lambda state: state.has("Super Bonus Round Complete", self.player)
         # Test goal for ease of debugging
         #elif self.options.goal.value == SUNNY_VILLA:
         #    self.multiworld.completion_condition[self.player] = lambda state: state.has("Sunny Villa Complete", self.player)
-        elif self.options.goal.value == EGG_FOR_SALE:
+        elif self.options.goal.value == GoalOptions.EGG_FOR_SALE:
             self.multiworld.completion_condition[self.player] = lambda state: state.has("Moneybags Chase Complete", self.player)
         else:
             self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Sorceress", state) and state.has("Egg", self.player, 100)
@@ -425,6 +419,14 @@ class Spyro3World(World):
                 "guaranteed_items": self.options.guaranteed_items.value,
                 "enable_gem_checks": self.options.enable_gem_checks.value,
                 "enable_skillpoint_checks": self.options.enable_skillpoint_checks.value,
+                "enable_filler_extra_lives": self.options.enable_filler_extra_lives.value,
+                "enable_filler_invincibility": self.options.enable_filler_invincibility.value,
+                "enable_filler_color_change": self.options.enable_filler_color_change.value,
+                "enable_filler_big_head_mode": self.options.enable_filler_big_head_mode.value,
+                "enable_filler_heal_sparx": self.options.enable_filler_heal_sparx.value,
+                "trap_filler_percent": self.options.trap_filler_percent.value,
+                "enable_trap_damage_sparx": self.options.enable_trap_damage_sparx.value,
+                "enable_trap_sparxless": self.options.enable_trap_sparxless.value,
             },
             "seed": self.multiworld.seed_name,  # to verify the server's multiworld
             "slot": self.multiworld.player_name[self.player],  # to connect to server

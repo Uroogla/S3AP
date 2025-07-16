@@ -2,11 +2,12 @@ import typing
 from dataclasses import dataclass
 from Options import Toggle, DefaultOnToggle, Option, Range, Choice, ItemDict, DeathLink, PerGameCommonOptions
 
-SORCERESS_ONE = 0
-EGG_FOR_SALE = 1
-SORCERESS_TWO = 2
-# Test goal for ease of debugging
-#SUNNY_VILLA = 3
+class GoalOptions():
+    SORCERESS_ONE = 0
+    EGG_FOR_SALE = 1
+    SORCERESS_TWO = 2
+    # Test goal for ease of debugging
+    #SUNNY_VILLA = 3
 
 class GuaranteedItemsOption(ItemDict):
     """Guarantees that the specified items will be in the item pool"""
@@ -61,10 +62,10 @@ class GoalOption(Choice):
     Egg For Sale - Chase Moneybags after defeating the sorceress the first time.
     Sorceress 2 - Beat the sorceress a second time"""
     display_name = "Completion Goal"
-    default = SORCERESS_ONE
-    option_sorceress_1 = SORCERESS_ONE
-    option_egg_for_sale = EGG_FOR_SALE
-    option_sorceress_2 = SORCERESS_TWO
+    default = GoalOptions.SORCERESS_ONE
+    option_sorceress_1 = GoalOptions.SORCERESS_ONE
+    option_egg_for_sale = GoalOptions.EGG_FOR_SALE
+    option_sorceress_2 = GoalOptions.SORCERESS_TWO
     # Test goal for ease of debugging
     #option_sunny_villa = SUNNY_VILLA
 
