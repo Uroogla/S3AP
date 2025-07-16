@@ -83,8 +83,6 @@ namespace S3AP
 
         private async void ItemReceived(object? o, ItemReceivedEventArgs args)
         {
-            System.Diagnostics.Debug.WriteLine($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
-            Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
             if (args.Item.Name == "Egg")
             {
                 var currentEggs = CalculateCurrentEggs();
@@ -165,7 +163,7 @@ namespace S3AP
         private static void CheckGoalCondition()
         {
             var currentEggs = CalculateCurrentEggs();
-            int goal = int.Parse(Client.Options?.GetValueOrDefault("goal").ToString());
+            int goal = int.Parse(Client.Options?.GetValueOrDefault("goal", 0).ToString());
             // TODO: Don't hard code IDs.
             if ((CompletionGoal)goal == CompletionGoal.Sorceress1)
             {
@@ -254,6 +252,11 @@ namespace S3AP
             {
                 LogHint(e.Message);
             }
+            else if (e.Message.Parts.Length == 1 && e.Message.Parts[0].Text == $"{Client.CurrentSession.Players.ActivePlayer.Name}: clearSpyroGameState")
+            {
+                Log.Logger.Information("Clearing the game state.  Please reconnect to the server while in game to refresh received items.");
+                Client.ForceReloadAllItems();
+            }
             Log.Logger.Information(JsonConvert.SerializeObject(e.Message));
         }
         private static void LogHint(LogMessage message)
@@ -286,8 +289,6 @@ namespace S3AP
         }
         private static int CalculateCurrentEggs()
         {
-            System.Diagnostics.Debug.WriteLine(Client.GameState?.ReceivedItems);
-            System.Diagnostics.Debug.WriteLine(Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Count() ?? 0);
             var count = Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Count() ?? 0;
             count = Math.Min(count, 150);
             Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));

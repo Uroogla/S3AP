@@ -42,8 +42,8 @@ class Spyro3Location(Location):
         table_offset = 1000
 
         table_order = [
-            "Sunrise Springs","Sunny Villa","Cloud Spires","Molten Crater","Seashell Shore","Mushroom Speedway","Sheila's Alp", "Buzz", "Crawdad Farm",
-            "Midday Garden","Icy Peak","Enchanted Towers","Spooky Swamp","Bamboo Terrace","Country Speedway","Sgt. Byrd's Base","Spike","Spider Town",
+            "Sunrise Spring","Sunny Villa","Cloud Spires","Molten Crater","Seashell Shore","Mushroom Speedway","Sheila's Alp", "Buzz", "Crawdad Farm",
+            "Midday Gardens","Icy Peak","Enchanted Towers","Spooky Swamp","Bamboo Terrace","Country Speedway","Sgt. Byrd's Base","Spike","Spider Town",
             "Evening Lake","Frozen Altars","Lost Fleet","Fireworks Factory","Charmed Ridge","Honey Speedway","Bentley's Outpost","Scorch","Starfish Reef",
             "Midnight Mountain","Crystal Islands","Desert Ruins","Haunted Tomb","Dino Mines","Harbor Speedway","Agent 9's Lab","Sorceress","Bugbot Factory","Super Bonus Round"
         ]
@@ -64,7 +64,7 @@ class Spyro3Location(Location):
 
 location_tables = {
 #Homeworld 1
-"Sunrise Springs": [
+"Sunrise Spring": [
     Spyro3LocationData(f"Sunrise Spring Home: Learn gliding. (Coltrane)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunrise Spring Home: Egg by the stream. (Isabelle)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Sunrise Spring Home: Fly through the cave. (Ami)",f"Egg",Spyro3LocationCategory.EGG),
@@ -140,7 +140,7 @@ location_tables = {
     Spyro3LocationData(f"Crawdad Farm: All Gems", f"Filler", Spyro3LocationCategory.GEM)
 ],
 #Homeworld 2
-"Midday Garden": [
+"Midday Gardens": [
     Spyro3LocationData(f"Midday Gardens Home: Underwater egg. (Dave)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Midday Gardens Home: Secret ice cave. (Mingus)",f"Egg",Spyro3LocationCategory.EGG),
     Spyro3LocationData(f"Midday Gardens Home: Catch the thief. (Trixie)",f"Egg",Spyro3LocationCategory.EGG),
