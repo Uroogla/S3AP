@@ -163,6 +163,42 @@ namespace S3AP
                 case "Invincibility (30 seconds)":
                     ActivateInvincibility(30);
                     break;
+                case "Moneybags Unlock - Cloud Spires Bellows":
+                    UnlockMoneybags(Addresses.CloudBellowsUnlock);
+                    break;
+                case "Moneybags Unlock - Spooky Swamp Door":
+                    UnlockMoneybags(Addresses.SpookyDoorUnlock);
+                    break;
+                case "Moneybags Unlock - Sheila":
+                    UnlockMoneybags(Addresses.SheilaUnlock);
+                    break;
+                case "Moneybags Unlock - Icy Peak Nancy Door":
+                    UnlockMoneybags(Addresses.IcyNancyUnlock);
+                    break;
+                case "Moneybags Unlock - Molten Crater Thieves Door":
+                    UnlockMoneybags(Addresses.MoltenThievesUnlock);
+                    break;
+                case "Moneybags Unlock - Charmed Ridge Stairs":
+                    UnlockMoneybags(Addresses.CharmedStairsUnlock);
+                    break;
+                case "Moneybags Unlock - Sgt. Byrd":
+                    UnlockMoneybags(Addresses.SgtByrdUnlock);
+                    break;
+                case "Moneybags Unlock - Bentley":
+                    UnlockMoneybags(Addresses.BentleyUnlock);
+                    break;
+                case "Moneybags Unlock - Desert Ruins Door":
+                    UnlockMoneybags(Addresses.DesertDoorUnlock);
+                    break;
+                case "Moneybags Unlock - Agent 9":
+                    UnlockMoneybags(Addresses.Agent9Unlock);
+                    break;
+                case "Moneybags Unlock - Frozen Altars Cat Hockey Door":
+                    UnlockMoneybags(Addresses.FrozenHockeyUnlock);
+                    break;
+                case "Moneybags Unlock - Crystal Islands Bridge":
+                    UnlockMoneybags(Addresses.CrystalBridgeUnlock);
+                    break;
             }
         }
         private static void CheckGoalCondition()
@@ -239,6 +275,12 @@ namespace S3AP
                 Memory.Write(Addresses.InvincibilityDurationAddress, (short)seconds);
             });
         }
+        private static async void UnlockMoneybags(uint address)
+        {
+            // Flag the check as paid for, and set the price to 0.  Otherwise, we'll get back too many gems during the chase.
+            Memory.Write(address, 65536);
+            Log.Logger.Information("If you are in the same zone as Moneybags, you can talk to him to complete the unlock for free.");
+        }
         private static void LogItem(Item item)
         {
             var messageToLog = new LogListItem(new List<TextSpan>()
@@ -302,6 +344,28 @@ namespace S3AP
         {
             Log.Logger.Information("Connected to Archipelago");
             Log.Logger.Information($"Playing {Client.CurrentSession.ConnectionInfo.Game} as {Client.CurrentSession.Players.GetPlayerName(Client.CurrentSession.ConnectionInfo.Slot)}");
+            // TODO: Set up a task to do this only when in game.
+            // TODO: Find a way to manage loading in async, where checks may be coming in at the same time.
+            // Determine what to do if options aren't set yet.
+            MoneybagsOptions moneybagsOption = (MoneybagsOptions)int.Parse(Client.Options?.GetValueOrDefault("moneybags_settings", "0").ToString());
+            if (moneybagsOption != MoneybagsOptions.Vanilla)
+            {
+                Memory.Write(Addresses.SheilaUnlock, 20001);
+                Memory.Write(Addresses.SgtByrdUnlock, 20001);
+                Memory.Write(Addresses.BentleyUnlock, 20001);
+                Memory.Write(Addresses.Agent9Unlock, 20001);
+            }
+            if (moneybagsOption == MoneybagsOptions.Moneybagssanity)
+            {
+                Memory.Write(Addresses.CloudBellowsUnlock, 20001);
+                Memory.Write(Addresses.SpookyDoorUnlock, 20001);
+                Memory.Write(Addresses.IcyNancyUnlock, 20001);
+                Memory.Write(Addresses.MoltenThievesUnlock, 20001);
+                Memory.Write(Addresses.CharmedStairsUnlock, 20001);
+                Memory.Write(Addresses.DesertDoorUnlock, 20001);
+                Memory.Write(Addresses.FrozenHockeyUnlock, 20001);
+                Memory.Write(Addresses.CrystalBridgeUnlock, 20001);
+            }
         }
 
         private static void OnDisconnected(object sender, EventArgs args)

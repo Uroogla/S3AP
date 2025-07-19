@@ -64,5 +64,18 @@ namespace S3AP
         public const uint SpyroColorAddress = 0x06fc84;
         public const uint InvincibilityDurationAddress = 0x0705d4;
 
+        public const uint CloudBellowsUnlock = 0x00066f84;
+        public const uint SpookyDoorUnlock = 0x00066f88;
+        public const uint SheilaUnlock = 0x00066f8c;
+        public const uint IcyNancyUnlock = 0x00066f90;
+        public const uint MoltenThievesUnlock = 0x00066f94;
+        public const uint CharmedStairsUnlock = 0x00066f98;
+        public const uint SgtByrdUnlock = 0x00066f9c;
+        public const uint BentleyUnlock = 0x00066fa0;
+        public const uint DesertDoorUnlock = 0x00066fa4;
+        public const uint Agent9Unlock = 0x00066fa8;
+        public const uint FrozenHockeyUnlock = 0x00066fac;
+        public const uint CrystalBridgeUnlock = 0x00066fb0;
+
     }
 }

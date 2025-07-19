@@ -1,6 +1,7 @@
 from enum import IntEnum
 from typing import NamedTuple
 from BaseClasses import Item
+from .Options import MoneybagsOptions
 
 
 class Spyro3ItemCategory(IntEnum):
@@ -8,7 +9,8 @@ class Spyro3ItemCategory(IntEnum):
     SKIP = 1,
     EVENT = 2,
     MISC = 3,
-    TRAP = 4
+    TRAP = 4,
+    MONEYBAGS = 9,
 
 
 class Spyro3ItemData(NamedTuple):
@@ -84,6 +86,21 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Big Head Mode", 1014, Spyro3ItemCategory.MISC),
     ("Flat Spyro Mode", 1015, Spyro3ItemCategory.MISC),
     ("(Over)heal Sparx", 1016, Spyro3ItemCategory.MISC),
+
+    ("Moneybags Unlock - Cloud Spires Bellows", 3000, Spyro3ItemCategory.MONEYBAGS),
+    ("Moneybags Unlock - Spooky Swamp Door", 3001, Spyro3ItemCategory.MONEYBAGS),
+    ("Moneybags Unlock - Sheila", 3002, Spyro3ItemCategory.MONEYBAGS),
+    ("Moneybags Unlock - Icy Peak Nancy Door", 3003, Spyro3ItemCategory.MONEYBAGS),
+    ("Moneybags Unlock - Molten Crater Thieves Door", 3004, Spyro3ItemCategory.MONEYBAGS),
+    ("Moneybags Unlock - Charmed Ridge Stairs", 3005, Spyro3ItemCategory.MONEYBAGS),
+    ("Moneybags Unlock - Sgt. Byrd", 3006, Spyro3ItemCategory.MONEYBAGS),
+    # TODO: VERIFY THIS
+    ("Moneybags Unlock - Bentley", 3007, Spyro3ItemCategory.MONEYBAGS),
+    ("Moneybags Unlock - Desert Ruins Door", 3008, Spyro3ItemCategory.MONEYBAGS),
+    ("Moneybags Unlock - Agent 9", 3009, Spyro3ItemCategory.MONEYBAGS),
+    ("Moneybags Unlock - Frozen Altars Cat Hockey Door", 3010, Spyro3ItemCategory.MONEYBAGS),
+    # TODO: VERIFY THIS
+    ("Moneybags Unlock - Crystal Islands Bridge", 3011, Spyro3ItemCategory.MONEYBAGS),
 ]]
 
 item_descriptions = {
@@ -106,7 +123,25 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
         item_pool.append(item_dictionary["Egg"])
     remaining_count = remaining_count - eggs_to_place
 
-    # TODO: Determine fallback cases
+    if options.moneybags_settings.value in [MoneybagsOptions.COMPANIONSANITY, MoneybagsOptions.MONEYBAGSSANITY]:
+        item_pool.append(item_dictionary["Moneybags Unlock - Sheila"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Sgt. Byrd"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Bentley"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Agent 9"]);
+        remaining_count = remaining_count - 4;
+
+    if options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY:
+        item_pool.append(item_dictionary["Moneybags Unlock - Cloud Spires Bellows"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Spooky Swamp Door"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Icy Peak Nancy Door"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Molten Crater Thieves Door"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Charmed Ridge Stairs"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Desert Ruins Door"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Frozen Altars Cat Hockey Door"]);
+        item_pool.append(item_dictionary["Moneybags Unlock - Crystal Islands Bridge"]);
+        remaining_count = remaining_count - 8;
+
+    # TODO: Determine fallback cases, such as raising an exception if remaining_count < 0
     #if remaining_count > 0 and not options.enable_filler_extra_lives and not options.enable_filler_invincibility and not options.enable_filler_color_change:
     #    print("No filler items are enabled, but filler checks are present.  Defaulting to extra lives.")
     #    options.enable_filler_extra_lives = 1

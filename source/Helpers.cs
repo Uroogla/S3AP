@@ -108,55 +108,14 @@ namespace S3AP
             var gemDict = GetLevelGemCounts();
             foreach (var level in levels)
             {
-                if (!level.IsHomeworld && !level.IsBoss)
-                {
-                    // Level Completed (first egg)
-                    Location location = new Location()
-                    {
-                        Name = level.Name + " Complete",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
-                        AddressBit = 0,
-                        CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
-                        Category = "Event"
-                    };
-                    locations.Add(location);
-                }
-                if (!level.IsHomeworld && level.IsBoss)
-                {
-                    // Boss Defeated (first egg)
-                    Location location = new Location()
-                    {
-                        Name = level.Name + " Defeated",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
-                        AddressBit = 0,
-                        CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
-                        Category = "Boss"
-                    };
-                    locations.Add(location);
-                }
-                if (level.Name.Equals("Midnight Mountain"))
-                {
-                    // Moneybags Chase Completed
-                    Location location = new Location()
-                    {
-                        Name = "Moneybags Chase Complete",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
-                        AddressBit = 5,
-                        CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
-                        Category = "Event"
-                    };
-                    locations.Add(location);
-                }
+                int locationOffset = 0;
                 for (int i = 0; i < level.EggCount; i++)
                 {
                     // Egg collected
                     Location location = new Location()
                     {
                         Name = $"Egg {processedEggs + 1}",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + i,
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
                         AddressBit = i,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
@@ -164,14 +123,59 @@ namespace S3AP
                     };
                     locations.Add(location);
                     processedEggs++;
+                    locationOffset++;
                 }
-                if (includeGems && !level.IsBoss)
+                if (!level.IsHomeworld && !level.IsBoss)
                 {
-                    var gemCheckOffset = level.IsHomeworld && !level.Name.Equals("Midnight Mountain") ? 0 : 1;
+                    // Level Completed (first egg)
+                    Location location = new Location()
+                    {
+                        Name = level.Name + " Complete",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        AddressBit = 0,
+                        CheckType = LocationCheckType.Bit,
+                        Address = currentAddress,
+                        Category = "Event"
+                    };
+                    locations.Add(location);
+                    locationOffset++;
+                }
+                else if (!level.IsHomeworld && level.IsBoss)
+                {
+                    // Boss Defeated (first egg)
+                    Location location = new Location()
+                    {
+                        Name = level.Name + " Defeated",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        AddressBit = 0,
+                        CheckType = LocationCheckType.Bit,
+                        Address = currentAddress,
+                        Category = "Boss"
+                    };
+                    locations.Add(location);
+                    locationOffset++;
+                }
+                else if (level.Name.Equals("Midnight Mountain"))
+                {
+                    // Moneybags Chase Completed
+                    Location location = new Location()
+                    {
+                        Name = "Moneybags Chase Complete",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        AddressBit = 5,
+                        CheckType = LocationCheckType.Bit,
+                        Address = currentAddress,
+                        Category = "Event"
+                    };
+                    locations.Add(location);
+                    locationOffset++;
+                }
+                if (!level.IsBoss)
+                {
                     Location gemLocation = new Location()
                     {
                         Name = $"{level.Name}: All Gems",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount + gemCheckOffset,
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
                         Address = gemDict[level.Name].Item2,
                         CheckType = LocationCheckType.Int,
                         CompareType = LocationCheckCompareType.GreaterThan,
@@ -179,8 +183,9 @@ namespace S3AP
                         Category = "Gem"
                     };
                     locations.Add(gemLocation);
+                    locationOffset++;
                 }
-                if (includeSkillPoints && level.SkillPoints.Length > 0)
+                if (level.SkillPoints.Length > 0)
                 {
                     for (int i = 0; i < level.SkillPoints.Length; i++)
                     {
@@ -189,7 +194,7 @@ namespace S3AP
                         {
                             Name = $"{level.Name}: {skillPointName} (Skill Point)",
                             // All skill points are in levels with gems and a completion "location".
-                            Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount + 2 + i,
+                            Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
                             Address = currentSkillPointAddress,
                             CheckType = LocationCheckType.Byte,
                             CompareType = LocationCheckCompareType.GreaterThan,
@@ -199,7 +204,49 @@ namespace S3AP
                         };
                         locations.Add(skillLocation);
                         currentSkillPointAddress++;
+                        locationOffset++;
                     }
+                }
+                if (!level.IsBoss)
+                {
+                    Location gem25Location = new Location()
+                    {
+                        Name = $"{level.Name}: 25% Gems",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        Address = gemDict[level.Name].Item2,
+                        CheckType = LocationCheckType.Int,
+                        CompareType = LocationCheckCompareType.GreaterThan,
+                        CheckValue = $"{level.GemCount / 4 - 1}",
+                        Category = "Gem 25%"
+                    };
+                    locations.Add(gem25Location);
+                    locationOffset++;
+
+                    Location gem50Location = new Location()
+                    {
+                        Name = $"{level.Name}: 50% Gems",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        Address = gemDict[level.Name].Item2,
+                        CheckType = LocationCheckType.Int,
+                        CompareType = LocationCheckCompareType.GreaterThan,
+                        CheckValue = $"{level.GemCount / 2 - 1}",
+                        Category = "Gem 50%"
+                    };
+                    locations.Add(gem50Location);
+                    locationOffset++;
+
+                    Location gem75Location = new Location()
+                    {
+                        Name = $"{level.Name}: 75% Gems",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        Address = gemDict[level.Name].Item2,
+                        CheckType = LocationCheckType.Int,
+                        CompareType = LocationCheckCompareType.GreaterThan,
+                        CheckValue = $"{3 * level.GemCount / 4 - 1}",
+                        Category = "Gem 75%"
+                    };
+                    locations.Add(gem75Location);
+                    locationOffset++;
                 }
                 currentAddress++;
             }

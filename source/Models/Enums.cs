@@ -42,6 +42,13 @@ namespace S3AP.Models
             SpyroColorGreen = 4,
             SpyroColorYellow = 5,
             SpyroColorBlack = 6
-    }
+        }
+
+        public enum MoneybagsOptions
+        {
+            Vanilla = 0,
+            Companionsanity = 1,
+            Moneybagssanity = 3
+        }
     }
 }
