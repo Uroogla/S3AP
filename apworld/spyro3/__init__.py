@@ -145,6 +145,7 @@ class Spyro3World(World):
                     self.location_name_to_id[location.name],
                     new_region
                 )
+                new_region.locations.append(new_location)
             elif location.category == Spyro3LocationCategory.EVENT:
                 # Remove non-randomized progression items as checks because of the use of a "filler" fake item.
                 # Replace events with event items for spoiler log readability.
@@ -163,8 +164,8 @@ class Spyro3World(World):
                 event_item.code = None
                 new_location.place_locked_item(event_item)
                 #print("Placing event: " + event_item.name + " in location: " + location.name)
+                new_region.locations.append(new_location)
 
-            new_region.locations.append(new_location)
         #print("created " + str(len(new_region.locations)) + " locations")
         self.multiworld.regions.append(new_region)
         #print("adding region: " + region_name)
