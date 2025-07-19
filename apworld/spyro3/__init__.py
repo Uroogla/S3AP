@@ -36,7 +36,7 @@ class Spyro3World(World):
     game: str = "Spyro 3"
     options_dataclass = Spyro3Option
     options: Spyro3Option
-    topology_present: bool = True
+    topology_present: bool = False  # Turn on when entrance randomizer is available.
     web = Spyro3Web()
     data_version = 0
     base_id = 1230000
@@ -137,6 +137,7 @@ class Spyro3World(World):
         
     # For each region, add the associated locations retrieved from the corresponding location_table
     def create_region(self, region_name, location_table) -> Region:
+        print(f"Adding region {region_name}")
         new_region = Region(region_name, self.player, self.multiworld)
         #print("location table size: " + str(len(location_table)))
         for location in location_table:
@@ -249,7 +250,7 @@ class Spyro3World(World):
         return "Egg"
     
     def set_rules(self) -> None:          
-        def is_level_completed(self, level, state):        
+        def is_level_completed(self, level, state):
             return state.has(level + " Complete", self.player)
         
         def is_boss_defeated(self, boss, state):
@@ -443,7 +444,7 @@ class Spyro3World(World):
         if not self.options.logic_spooky_early.value:
             set_indirect_rule(self, "Spooky Swamp", lambda state: state.has("Egg", self.player, 25))
         # Can skip Moneybags by damage boosting from the island egg to the end of level.
-        if self.options.logic_spooky_no_moneybags.value:
+        if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_spooky_no_moneybags.value:
             # Technically possible without Sheila completion with a glide out of bounds, but there's no reason to add an option for this at this time.
             set_rule(self.multiworld.get_location("Spooky Swamp: Escort the twins I. (Peggy)", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state))
             set_rule(self.multiworld.get_location("Spooky Swamp: Escort the twins II. (Michele)", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state) and state.can_reach_location("Spooky Swamp: Escort the twins I. (Peggy)", self.player))
@@ -506,7 +507,7 @@ class Spyro3World(World):
         set_indirect_rule(self, "Spider Town", lambda state: is_boss_defeated(self,"Spike", state))
 
         # Evening Lake Rules
-        set_indirect_rule(self, "Evening Lake", lambda state: is_boss_defeated(self,"Spike", state))     
+        set_indirect_rule(self, "Evening Lake", lambda state: is_boss_defeated(self,"Spike", state))
 
         # Frozen Altars Rules
         # Requires a proxy or getting onto the nearby wall and gliding out of bounds

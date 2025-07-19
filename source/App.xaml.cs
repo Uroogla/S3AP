@@ -22,6 +22,7 @@ namespace S3AP
         public static ArchipelagoClient Client { get; set; }
         public static List<Location> GameLocations { get; set; }
         private static readonly object _lockObject = new object();
+        private static Queue<string> CosmeticEffects { get; set; }
         public App()
         {
             InitializeComponent();
@@ -72,6 +73,7 @@ namespace S3AP
 
             await Client.Connect(e.Host, "Spyro 3");
             GameLocations = Helpers.BuildLocationList();
+            CosmeticEffects = new Queue<string>();
             Client.LocationCompleted += Client_LocationCompleted;
             Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
             Client.MessageReceived += Client_MessageReceived;
@@ -106,12 +108,6 @@ namespace S3AP
                 case "Lag Trap":
                     RunLagTrap();
                     break;
-                case "Big Head Mode":
-                    ActivateBigHeadMode();
-                    break;
-                case "Flat Spyro Mode":
-                    ActivateFlatSpyroMode();
-                    break;
                 case "(Over)heal Sparx":
                     // Collecting a skill point provides a full heal, so wait for that to complete first.
                     await Task.Run(async () =>
@@ -119,7 +115,7 @@ namespace S3AP
                         await Task.Delay(3000);
                         currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
                         // Going too high creates too many particles for the game to handle.
-                        Memory.Write(Addresses.PlayerHealth, (byte)(Math.Min(5, currentHealth + 1)));
+                        Memory.Write(Addresses.PlayerHealth, (byte)(Math.Min(4, currentHealth + 1)));
                     });
                     break;
                 case "Damage Sparx Trap":
@@ -139,23 +135,15 @@ namespace S3AP
                         Memory.Write(Addresses.PlayerHealth, (byte)(0));
                     });
                     break;
+                case "Big Head Mode":
+                case "Flat Spyro Mode":
                 case "Turn Spyro Red":
-                    TurnSpyroColor(SpyroColor.SpyroColorRed);
-                    break;
                 case "Turn Spyro Blue":
-                    TurnSpyroColor(SpyroColor.SpyroColorBlue);
-                    break;
                 case "Turn Spyro Yellow":
-                    TurnSpyroColor(SpyroColor.SpyroColorYellow);
-                    break;
                 case "Turn Spyro Pink":
-                    TurnSpyroColor(SpyroColor.SpyroColorPink);
-                    break;
                 case "Turn Spyro Green":
-                    TurnSpyroColor(SpyroColor.SpyroColorGreen);
-                    break;
                 case "Turn Spyro Black":
-                    TurnSpyroColor(SpyroColor.SpyroColorBlack);
+                    CosmeticEffects.Enqueue(args.Item.Name);
                     break;
                 case "Invincibility (15 seconds)":
                     ActivateInvincibility(15);
@@ -199,6 +187,49 @@ namespace S3AP
                 case "Moneybags Unlock - Crystal Islands Bridge":
                     UnlockMoneybags(Addresses.CrystalBridgeUnlock);
                     break;
+            }
+        }
+        private static async void HandleCosmeticQueue()
+        {
+            // Avoid overwhelming the game when many cosmetic effects are received at once by processing only 1
+            // every 5 seconds.  This also lets the user see effects when logging in asynchronously.
+            while (true)
+            {
+                if (CosmeticEffects.Count > 0)
+                {
+                    await Task.Run(() =>
+                    {
+                        string effect = CosmeticEffects.Dequeue();
+                        switch (effect)
+                        {
+                            case "Big Head Mode":
+                                ActivateBigHeadMode();
+                                break;
+                            case "Flat Spyro Mode":
+                                ActivateFlatSpyroMode();
+                                break;
+                            case "Turn Spyro Red":
+                                TurnSpyroColor(SpyroColor.SpyroColorRed);
+                                break;
+                            case "Turn Spyro Blue":
+                                TurnSpyroColor(SpyroColor.SpyroColorBlue);
+                                break;
+                            case "Turn Spyro Yellow":
+                                TurnSpyroColor(SpyroColor.SpyroColorYellow);
+                                break;
+                            case "Turn Spyro Pink":
+                                TurnSpyroColor(SpyroColor.SpyroColorPink);
+                                break;
+                            case "Turn Spyro Green":
+                                TurnSpyroColor(SpyroColor.SpyroColorGreen);
+                                break;
+                            case "Turn Spyro Black":
+                                TurnSpyroColor(SpyroColor.SpyroColorBlack);
+                                break;
+                        }
+                    });
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
             }
         }
         private static void CheckGoalCondition()
@@ -366,11 +397,14 @@ namespace S3AP
                 Memory.Write(Addresses.FrozenHockeyUnlock, 20001);
                 Memory.Write(Addresses.CrystalBridgeUnlock, 20001);
             }
+            HandleCosmeticQueue();
         }
 
         private static void OnDisconnected(object sender, EventArgs args)
         {
             Log.Logger.Information("Disconnected from Archipelago");
+            // Avoid queued cosmetic effects impacting another game.
+            CosmeticEffects.Clear();
         }
         protected override Microsoft.Maui.Controls.Window CreateWindow(IActivationState activationState)
         {
