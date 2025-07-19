@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace S3AP.Models
+﻿namespace S3AP.Models
 {
     public class Enums
     {
@@ -28,9 +22,9 @@ namespace S3AP.Models
         {
             Sorceress1 = 0,
             EggForSale = 1,
-            Sorceress2 = 2//,
-            //Test goal for ease of debugging
-            //SunnyVilla = 3
+            Sorceress2 = 2,
+            AllSkillPoints = 3,
+            Epilogue = 4
         }
 
         public enum SpyroColor : short
@@ -42,6 +36,30 @@ namespace S3AP.Models
             SpyroColorGreen = 4,
             SpyroColorYellow = 5,
             SpyroColorBlack = 6
-    }
+        }
+
+        public enum MoneybagsOptions
+        {
+            Vanilla = 0,
+            Companionsanity = 1,
+            Moneybagssanity = 3
+        }
+
+        public enum ProgressiveSparxHealthOptions
+        {
+            Off = 0,
+            Blue = 1,
+            Green = 2,
+            Sparxless = 3,
+            TrueSparxless = 4
+        }
+
+        public enum ImportantLocationIDs : int
+        {
+            SunnyEndOfLevelEgg = 1231000,
+            SorceressEgg = 1264000,
+            EggForSale = 1257005,
+            SuperBonusRoundEgg = 1266000
+        }
     }
 }
