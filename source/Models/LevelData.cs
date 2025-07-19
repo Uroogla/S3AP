@@ -15,7 +15,9 @@ namespace S3AP.Models
         public bool IsBoss { get; set; }
         public int GemCount { get; set; }
         public string[] SkillPoints { get; set; }
-        public LevelData(string name, int levelId, int eggCount, bool isHomeworld, bool isBoss, int gemCount, string[] skillPoints)
+        public uint[] LifeBottles {  get; set; }
+        public uint[] ZoeHintAddresses { get; set; }
+        public LevelData(string name, int levelId, int eggCount, bool isHomeworld, bool isBoss, int gemCount, string[] skillPoints, uint[] lifeBottleAddresses, uint[] zoeHintAddresses)
         {
             Name = name;
             EggCount = eggCount;
@@ -24,6 +26,8 @@ namespace S3AP.Models
             IsBoss = isBoss;
             GemCount = gemCount;
             SkillPoints = skillPoints;
+            LifeBottles = lifeBottleAddresses;
+            ZoeHintAddresses = zoeHintAddresses;
         }
     }
 }

@@ -106,57 +106,18 @@ namespace S3AP
             var homeworldList = levels.Where(x => x.IsHomeworld).ToList();
             var bossList = levels.Where(x => x.IsBoss).ToList();
             var gemDict = GetLevelGemCounts();
+            var hintID = 1;
+            var lifeBottleID = 1;
             foreach (var level in levels)
             {
-                if (!level.IsHomeworld && !level.IsBoss)
-                {
-                    // Level Completed (first egg)
-                    Location location = new Location()
-                    {
-                        Name = level.Name + " Complete",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
-                        AddressBit = 0,
-                        CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
-                        Category = "Event"
-                    };
-                    locations.Add(location);
-                }
-                if (!level.IsHomeworld && level.IsBoss)
-                {
-                    // Boss Defeated (first egg)
-                    Location location = new Location()
-                    {
-                        Name = level.Name + " Defeated",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
-                        AddressBit = 0,
-                        CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
-                        Category = "Boss"
-                    };
-                    locations.Add(location);
-                }
-                if (level.Name.Equals("Midnight Mountain"))
-                {
-                    // Moneybags Chase Completed
-                    Location location = new Location()
-                    {
-                        Name = "Moneybags Chase Complete",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount,
-                        AddressBit = 5,
-                        CheckType = LocationCheckType.Bit,
-                        Address = currentAddress,
-                        Category = "Event"
-                    };
-                    locations.Add(location);
-                }
+                int locationOffset = 0;
                 for (int i = 0; i < level.EggCount; i++)
                 {
                     // Egg collected
                     Location location = new Location()
                     {
                         Name = $"Egg {processedEggs + 1}",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + i,
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
                         AddressBit = i,
                         CheckType = LocationCheckType.Bit,
                         Address = currentAddress,
@@ -164,14 +125,59 @@ namespace S3AP
                     };
                     locations.Add(location);
                     processedEggs++;
+                    locationOffset++;
                 }
-                if (includeGems && !level.IsBoss)
+                if (!level.IsHomeworld && !level.IsBoss)
                 {
-                    var gemCheckOffset = level.IsHomeworld && !level.Name.Equals("Midnight Mountain") ? 0 : 1;
+                    // Level Completed (first egg)
+                    Location location = new Location()
+                    {
+                        Name = level.Name + " Complete",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        AddressBit = 0,
+                        CheckType = LocationCheckType.Bit,
+                        Address = currentAddress,
+                        Category = "Event"
+                    };
+                    locations.Add(location);
+                    locationOffset++;
+                }
+                else if (!level.IsHomeworld && level.IsBoss)
+                {
+                    // Boss Defeated (first egg)
+                    Location location = new Location()
+                    {
+                        Name = level.Name + " Defeated",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        AddressBit = 0,
+                        CheckType = LocationCheckType.Bit,
+                        Address = currentAddress,
+                        Category = "Boss"
+                    };
+                    locations.Add(location);
+                    locationOffset++;
+                }
+                else if (level.Name.Equals("Midnight Mountain"))
+                {
+                    // Moneybags Chase Completed
+                    Location location = new Location()
+                    {
+                        Name = "Moneybags Chase Complete",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        AddressBit = 5,
+                        CheckType = LocationCheckType.Bit,
+                        Address = currentAddress,
+                        Category = "Event"
+                    };
+                    locations.Add(location);
+                    locationOffset++;
+                }
+                if (!level.IsBoss)
+                {
                     Location gemLocation = new Location()
                     {
                         Name = $"{level.Name}: All Gems",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount + gemCheckOffset,
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
                         Address = gemDict[level.Name].Item2,
                         CheckType = LocationCheckType.Int,
                         CompareType = LocationCheckCompareType.GreaterThan,
@@ -179,8 +185,9 @@ namespace S3AP
                         Category = "Gem"
                     };
                     locations.Add(gemLocation);
+                    locationOffset++;
                 }
-                if (includeSkillPoints && level.SkillPoints.Length > 0)
+                if (level.SkillPoints.Length > 0)
                 {
                     for (int i = 0; i < level.SkillPoints.Length; i++)
                     {
@@ -189,7 +196,7 @@ namespace S3AP
                         {
                             Name = $"{level.Name}: {skillPointName} (Skill Point)",
                             // All skill points are in levels with gems and a completion "location".
-                            Id = baseId + (levelOffset * (level.LevelId - 1)) + level.EggCount + 2 + i,
+                            Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
                             Address = currentSkillPointAddress,
                             CheckType = LocationCheckType.Byte,
                             CompareType = LocationCheckCompareType.GreaterThan,
@@ -199,9 +206,98 @@ namespace S3AP
                         };
                         locations.Add(skillLocation);
                         currentSkillPointAddress++;
+                        locationOffset++;
                     }
                 }
+                if (!level.IsBoss)
+                {
+                    Location gem25Location = new Location()
+                    {
+                        Name = $"{level.Name}: 25% Gems",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        Address = gemDict[level.Name].Item2,
+                        CheckType = LocationCheckType.Int,
+                        CompareType = LocationCheckCompareType.GreaterThan,
+                        CheckValue = $"{level.GemCount / 4 - 1}",
+                        Category = "Gem 25%"
+                    };
+                    locations.Add(gem25Location);
+                    locationOffset++;
+
+                    Location gem50Location = new Location()
+                    {
+                        Name = $"{level.Name}: 50% Gems",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        Address = gemDict[level.Name].Item2,
+                        CheckType = LocationCheckType.Int,
+                        CompareType = LocationCheckCompareType.GreaterThan,
+                        CheckValue = $"{level.GemCount / 2 - 1}",
+                        Category = "Gem 50%"
+                    };
+                    locations.Add(gem50Location);
+                    locationOffset++;
+
+                    Location gem75Location = new Location()
+                    {
+                        Name = $"{level.Name}: 75% Gems",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        Address = gemDict[level.Name].Item2,
+                        CheckType = LocationCheckType.Int,
+                        CompareType = LocationCheckCompareType.GreaterThan,
+                        CheckValue = $"{3 * level.GemCount / 4 - 1}",
+                        Category = "Gem 75%"
+                    };
+                    locations.Add(gem75Location);
+                    locationOffset++;
+                }
+                for (int i = 0; i < level.ZoeHintAddresses.Length; i++)
+                {
+                    Location hintLocation = new Location()
+                    {
+                        Name = $"Hint {hintID}",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        CheckType = LocationCheckType.Byte,
+                        Address = level.ZoeHintAddresses[i],
+                        CompareType = LocationCheckCompareType.Match,
+                        CheckValue = "7",
+                        Category = "Hint"
+                    };
+                    locations.Add(hintLocation);
+                    locationOffset++;
+                    hintID++;
+                }
+                for (int i = 0; i < level.LifeBottles.Length; i++)
+                {
+                    Location lifeBottleLocation = new Location()
+                    {
+                        Name = $"Life Bottle {lifeBottleID}",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        CheckType = LocationCheckType.Byte,
+                        Address = level.LifeBottles[i],
+                        CompareType = LocationCheckCompareType.Match,
+                        CheckValue = "1",
+                        Category = "Life Bottle"
+                    };
+                    locations.Add(lifeBottleLocation);
+                    locationOffset++;
+                    lifeBottleID++;
+                }
                 currentAddress++;
+            }
+            baseId = 1267000;
+            for (int i = 0; i < 40; i++)
+            {
+                Location totalGemLocation = new Location()
+                {
+                    Name = $"{500 * (i + 1)} Total Gems",
+                    Id = baseId + i,
+                    CheckType = LocationCheckType.Int,
+                    Address = Addresses.TotalGemAddress,
+                    CompareType = LocationCheckCompareType.GreaterThan,
+                    CheckValue = $"{500 * (i + 1) - 1}",
+                    Category = "Total Gems"
+                };
+                locations.Add(totalGemLocation);
             }
             return locations;
         }
@@ -210,43 +306,43 @@ namespace S3AP
         {
             List<LevelData> levels = new List<LevelData>()
             {
-                new LevelData("Sunrise Spring", 1, 5, true, false, 400, []),
-                new LevelData("Sunny Villa", 2, 6, false, false, 400, ["Flame all trees", "Skateboard course record I"]),
-                new LevelData("Cloud Spires", 3, 6, false, false, 400, []),
-                new LevelData("Molten Crater", 4, 6, false, false, 400, ["Assemble tiki heads", "Supercharge the wall"]),
-                new LevelData("Seashell Shore", 5, 6, false, false, 400, ["Catch the funky chicken"]),
-                new LevelData("Mushroom Speedway", 6, 3, false, false, 400, []),
-                new LevelData("Sheila's Alp", 7, 3, false, false, 400, []),
-                new LevelData("Buzz", 8, 1, false, true, 0, []),
-                new LevelData("Crawdad Farm", 9, 1, false, false, 200, []),
-                new LevelData("Midday Garden", 10, 5, true, false, 400, []),
-                new LevelData("Icy Peak", 11, 6, false, false, 500, ["Glide to pedestal"]),
-                new LevelData("Enchanted Towers", 12, 6, false, false, 500, ["Skateboard course record II"]),
-                new LevelData("Spooky Swamp", 13, 6, false, false, 500, ["Destroy all piranha signs"]),
-                new LevelData("Bamboo Terrace", 14, 6, false, false, 500, []),
-                new LevelData("Country Speedway", 15, 3, false, false, 400, []),
-                new LevelData("Sgt. Byrd's Base", 16, 3, false, false, 500, ["Bomb the gophers"]),
-                new LevelData("Spike", 17, 1, false, true, 0, []),
-                new LevelData("Spider Town", 18, 1, false, false, 200, []),
-                new LevelData("Evening Lake", 19, 5, true, false, 400, []),
-                new LevelData("Frozen Altars", 20, 6, false, false, 600, ["Beat yeti in two rounds"]),
-                new LevelData("Lost Fleet", 21, 6, false, false, 600, ["Skateboard record time"]),
-                new LevelData("Fireworks Factory", 22, 6, false, false, 600, ["Find Agent 9's powerup"]),
-                new LevelData("Charmed Ridge", 23, 6, false, false, 600, ["The Impossible Tower", "Shoot the temple windows"]),
-                new LevelData("Honey Speedway", 24, 3, false, false, 400, []),
-                new LevelData("Bentley's Outpost", 25, 3, false, false, 600, ["Push box off the cliff"]),
-                new LevelData("Scorch", 26, 1, false, true, 0, []),
-                new LevelData("Starfish Reef", 27, 1, false, false, 200, []),
-                new LevelData("Midnight Mountain", 28, 6, true, false, 400, []),
-                new LevelData("Crystal Islands", 29, 6, false, false, 700, []),
-                new LevelData("Desert Ruins", 30, 6, false, false, 700, ["Destroy all seaweed"]),
-                new LevelData("Haunted Tomb", 31, 6, false, false, 700, ["Swim into the dark hole"]),
-                new LevelData("Dino Mines", 32, 6, false, false, 700, ["Hit all the seahorses", "Hit the secret dino"]),
-                new LevelData("Harbor Speedway", 33, 3, false, false, 400, []),
-                new LevelData("Agent 9's Lab", 34, 3, false, false, 700, ["Blow up all palm trees"]),
-                new LevelData("Sorceress", 35, 1, false, true, 0, []),
-                new LevelData("Bugbot Factory", 36, 1, false, false, 200, []),
-                new LevelData("Super Bonus Round", 37, 1, false, false, 5000, []),
+                new LevelData("Sunrise Spring", 1, 5, true, false, 400, [], [Addresses.SunrisePondLifeBottleAddress, Addresses.SunriseSheilaLifeBottleAddress], [Addresses.SunriseFirstZoeAddress, Addresses.SunriseSuperflyZoeAddress, Addresses.SunriseCameraZoeAddress]),
+                new LevelData("Sunny Villa", 2, 6, false, false, 400, ["Flame all trees", "Skateboard course record I"], [Addresses.SunnyFirstLifeBottleAddress, Addresses.SunnySecondLifeBottleAddress], [Addresses.SunnyBigRhynocZoeAddress, Addresses.SunnyCheckpointZoeAddress]),
+                new LevelData("Cloud Spires", 3, 6, false, false, 400, [], [Addresses.CloudLifeBottleAddress], [Addresses.CloudMetalArmorZoeAddress, Addresses.CloudGlideZoeAddress]),
+                new LevelData("Molten Crater", 4, 6, false, false, 400, ["Assemble tiki heads", "Supercharge the wall"], [Addresses.MoltenLifeBottleAddress], [Addresses.MoltenFodderZoeAddress]),
+                new LevelData("Seashell Shore", 5, 6, false, false, 400, ["Catch the funky chicken"], [Addresses.SeashellLifeBottleAddress], [Addresses.SeashellAtlasZoeAddress, Addresses.SeashellHoverZoeAddress]),
+                new LevelData("Mushroom Speedway", 6, 3, false, false, 400, [], [], []),
+                new LevelData("Sheila's Alp", 7, 3, false, false, 400, [], [Addresses.SheilaLifeBottleAddress], [Addresses.SheilaControlsZoeAddress]),
+                new LevelData("Buzz", 8, 1, false, true, 0, [], [], []),
+                new LevelData("Crawdad Farm", 9, 1, false, false, 200, [], [], []),
+                new LevelData("Midday Garden", 10, 5, true, false, 400, [], [], []),
+                new LevelData("Icy Peak", 11, 6, false, false, 500, ["Glide to pedestal"], [Addresses.IcyLifeBottleAddress], []),
+                new LevelData("Enchanted Towers", 12, 6, false, false, 500, ["Skateboard course record II"], [Addresses.EnchantedLifeBottleAddress], []),
+                new LevelData("Spooky Swamp", 13, 6, false, false, 500, ["Destroy all piranha signs"], [], []),
+                new LevelData("Bamboo Terrace", 14, 6, false, false, 500, [], [Addresses.BambooBentleyLifeBottleAddress, Addresses.BambooFirstUnderwaterLifeBottleAddress, Addresses.BambooSecondUnderwaterLifeBottleAddress, Addresses.BambooThirdUnderwaterLifeBottleAddress, Addresses.BambooFourthUnderwaterLifeBottleAddress], []),
+                new LevelData("Country Speedway", 15, 3, false, false, 400, [], [], []),
+                new LevelData("Sgt. Byrd's Base", 16, 3, false, false, 500, ["Bomb the gophers"], [Addresses.ByrdLifeBottleAddress], []),
+                new LevelData("Spike", 17, 1, false, true, 0, [], [], []),
+                new LevelData("Spider Town", 18, 1, false, false, 200, [], [], []),
+                new LevelData("Evening Lake", 19, 5, true, false, 400, [], [Addresses.EveningLifeBottleAddress], []),
+                new LevelData("Frozen Altars", 20, 6, false, false, 600, ["Beat yeti in two rounds"], [], []),
+                new LevelData("Lost Fleet", 21, 6, false, false, 600, ["Skateboard record time"], [Addresses.FleetAcidLifeBottleAddress, Addresses.FleetSkateboardingLifeBottleAddress], []),
+                new LevelData("Fireworks Factory", 22, 6, false, false, 600, ["Find Agent 9's powerup"], [Addresses.FireworksAgentLifeBottleAddress, Addresses.FireworksOOBLifeBottleAddress], []),
+                new LevelData("Charmed Ridge", 23, 6, false, false, 600, ["The Impossible Tower", "Shoot the temple windows"], [Addresses.CharmedFirstLifeBottleAddress, Addresses.CharmedSecondLifeBottleAddress], []),
+                new LevelData("Honey Speedway", 24, 3, false, false, 400, [], [], []),
+                new LevelData("Bentley's Outpost", 25, 3, false, false, 600, ["Push box off the cliff"], [], []),
+                new LevelData("Scorch", 26, 1, false, true, 0, [], [], []),
+                new LevelData("Starfish Reef", 27, 1, false, false, 200, [], [], []),
+                new LevelData("Midnight Mountain", 28, 6, true, false, 400, [], [], []),
+                new LevelData("Crystal Islands", 29, 6, false, false, 700, [], [], []),
+                new LevelData("Desert Ruins", 30, 6, false, false, 700, ["Destroy all seaweed"], [Addresses.DesertInsideLifeBottleAddress, Addresses.DesertOutsideLifeBottleAddress], []),
+                new LevelData("Haunted Tomb", 31, 6, false, false, 700, ["Swim into the dark hole"], [Addresses.HauntedLifeBottleAddress], []),
+                new LevelData("Dino Mines", 32, 6, false, false, 700, ["Hit all the seahorses", "Hit the secret dino"], [Addresses.DinoLifeBottleAddress], []),
+                new LevelData("Harbor Speedway", 33, 3, false, false, 400, [], [], []),
+                new LevelData("Agent 9's Lab", 34, 3, false, false, 700, ["Blow up all palm trees"], [], []),
+                new LevelData("Sorceress", 35, 1, false, true, 0, [], [], []),
+                new LevelData("Bugbot Factory", 36, 1, false, false, 200, [], [], []),
+                new LevelData("Super Bonus Round", 37, 1, false, false, 5000, [], [], []),
             };
             return levels;
         }
