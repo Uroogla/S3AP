@@ -1,60 +1,15 @@
-# Instructions:
+# Spyro: Year of the Dragon (Spyro 3)
 
-[Click Here](https://github.com/ArsonAssassin/Archipelago.Core/wiki/How-to-start-playing-a-game-using-this-library) for
-general instructions.
+## Where is the options page?
 
-## Playing a Game with Spyro 3
+The [player options page for this game](../player-options) contains all the options you need to configure and export a
+config file.
 
-### Required Software
+## Which version of the game is supported?
 
-Important: As the mandatory client runs only on Windows, no other systems are supported.
-
-- [Duckstation](https://www.duckstation.org) - Detailed installation instructions for Duckstation can be found at the above link.
-- Archipelago version 0.6.1 or later.
-- The [Spyro 3 Archipelago Client and .apworld](https://github.com/ArsonAssassin/S3AP/releases)
-- A US Spyro: Year of the Dragon v1.1 ROM.
-### Create a Config (.yaml) File
-
-#### What is a config file and why do I need one?
-
-See the guide on setting up a basic YAML at the Archipelago setup guide: [Basic Multiworld Setup Guide](/tutorial/Archipelago/setup/en)
-
-This also includes instructions on generating and hosting the file.  The "On your local installation" instructions
-are particularly important.
-
-#### Where do I get a config file?
-
-Run `ArchipelagoLauncher.exe` and generate template files.  Copy `Spyro 3.yaml`, fill it out, and place
-it in the `players` folder.
-
-Alternatively, if you are using the local Webhost (not [archipelago.gg](archipelago.gg), the Player Options page allows you to configure
-your personal options and export a config file from them. Player options page: [Spyro 3 Player Options Page](/games/Spyro%203/player-options).
-
-#### Verifying your config file
-
-If you would like to validate your config file to make sure it works and are using the local Webhost,
-you may do so on the YAML Validator page. YAML validator page: [YAML Validation page](/mysterycheck).
-
-### Generate and host your world
-
-Run `ArchipelagoGenerate.exe` to build a world from the YAML files in your `players` folder.  This places
-a `.zip` file in the `output` folder.
-
-You may upload this to [the Archipelago website](https://archipelago.gg/uploads) or host the game locally with
-`ArchipelagoHost.exe`.
-
-### Setting Up Spyro 3 for Archipelago
-
-1. Download the S3AP.zip and spyro3.apworld from the GitHub page linked above.
-2. Double click the apworld to install to your Archipelago installation.
-3. Extract S3AP.zip and note where S3AP.exe is.
-4. Open Duckstation and load into Spyro: Year of the Dragon.
-5. Start a new game (or if continuing an exisiting seed, load into that save file).
-6. Open S3AP.exe, the Spyro 3 client.  You will likely want to do so as an administrator.
-7. In the top left of the Spyro 3 client, click the "burger" menu to open the settings page.
-8. Enter your host, slot, and optionally your password.
-9. Click Connect. The first time you connect, a few error messages may appear - these are okay.
-10. Start playing!
+This is an Archipelago implementation of the PlayStation 1 version of Spyro: Year of the Dragon (2000), **not**
+the Reignited Trilogy version (2018).  This randomizer requires use of the Greatest Hits (often called version 1.1 or revision 1)
+NTSC-U (North America, as opposed to the PAL/European) version, due to differences in the internal workings of the game.
 
 ## What does randomization do to this game?
 
@@ -107,7 +62,9 @@ The following command (without a slash or exclamation point) is available when u
 - `clearSpyroGameState` Resync your save file's received items with the server.  This may result in duplicate filler items.
 If playing on a new save file, you will still need to get to the end of each level and defeat the bosses to progress in the game.
 
-## Known Issues
+## Are There Any Bugs?
+
+The following are known issues that can impact your gameplay.
 
 - Companionsanity and Moneybagssanity can result in softlocks in a few places. In general, go to each companion as soon as you acquire the unlock item, and be sure to speak to Bianca at the start of each world as quickly as possible.
 - Closing and reopening the client clears the hint list.
