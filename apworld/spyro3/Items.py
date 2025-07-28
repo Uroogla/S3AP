@@ -98,12 +98,10 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Moneybags Unlock - Molten Crater Thieves Door", 3004, Spyro3ItemCategory.MONEYBAGS),
     ("Moneybags Unlock - Charmed Ridge Stairs", 3005, Spyro3ItemCategory.MONEYBAGS),
     ("Moneybags Unlock - Sgt. Byrd", 3006, Spyro3ItemCategory.MONEYBAGS),
-    # TODO: VERIFY THIS
     ("Moneybags Unlock - Bentley", 3007, Spyro3ItemCategory.MONEYBAGS),
     ("Moneybags Unlock - Desert Ruins Door", 3008, Spyro3ItemCategory.MONEYBAGS),
     ("Moneybags Unlock - Agent 9", 3009, Spyro3ItemCategory.MONEYBAGS),
     ("Moneybags Unlock - Frozen Altars Cat Hockey Door", 3010, Spyro3ItemCategory.MONEYBAGS),
-    # TODO: VERIFY THIS
     ("Moneybags Unlock - Crystal Islands Bridge", 3011, Spyro3ItemCategory.MONEYBAGS),
 
     ("Hint 1", 4000, Spyro3ItemCategory.HINT),

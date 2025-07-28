@@ -26,7 +26,7 @@ helping all 5 NPCs in this world, whether or not they give an egg for the assist
 shows how many egg items you have received, while the in game Atlas shows which checks you have completed.
 
 ## What items and locations get shuffled?
-Eggs are always shuffled.  Based on the player's options, skill points, breaking life bottles, and milestones for reaching certain numbers of gems
+Eggs are always shuffled.  Based on the player's options, skill points, and milestones for reaching certain numbers of gems
 per level or overall may also release checks.
 
 The item pool will always contain 150 eggs.  Depending on the player's options, companion unlocks or all Moneybags unlocks may
@@ -69,3 +69,4 @@ The following are known issues that can impact your gameplay.
 - Companionsanity and Moneybagssanity can result in softlocks in a few places. In general, go to each companion as soon as you acquire the unlock item, and be sure to speak to Bianca at the start of each world as quickly as possible.
 - Closing and reopening the client clears the hint list.
 - Failing to connect to the Archipelago server crashes the client.
+- Zoe hints that the player skips may be awarded for free in later levels.
