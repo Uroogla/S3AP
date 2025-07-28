@@ -9,7 +9,7 @@ As the mandatory client runs only on Windows, no other systems are supported.
 - [Duckstation](https://www.duckstation.org) - Detailed installation instructions for Duckstation can be found at the above link.
 - Archipelago version 0.6.1 or later.
 - The [Spyro 3 Archipelago Client and .apworld](https://github.com/ArsonAssassin/S3AP/releases)
-- A US (NTSC-U) Spyro: Year of the Dragon v1.1 (Greatest Hits version) ROM.
+- A legal US (NTSC-U) Spyro: Year of the Dragon v1.1 (Greatest Hits version) ROM.  We cannot help with this step.
 
 
 ## Create a Config (.yaml) File
@@ -26,7 +26,7 @@ are particularly important.
 Run `ArchipelagoLauncher.exe` and generate template files.  Copy `Spyro 3.yaml`, fill it out, and place
 it in the `players` folder.
 
-Alternatively, if you are using the local Webhost (not [archipelago.gg](archipelago.gg), the Player Options page allows you to configure
+Alternatively, if you are using the local Webhost rather than [archipelago.gg](archipelago.gg), the Player Options page allows you to configure
 your personal options and export a config file from them. Player options page: [Spyro 3 Player Options Page](/games/Spyro%203/player-options).
 
 ### Verifying your config file

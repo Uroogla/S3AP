@@ -12,7 +12,7 @@ Important: As the mandatory client runs only on Windows, no other systems are su
 - [Duckstation](https://www.duckstation.org) - Detailed installation instructions for Duckstation can be found at the above link.
 - Archipelago version 0.6.1 or later.
 - The [Spyro 3 Archipelago Client and .apworld](https://github.com/ArsonAssassin/S3AP/releases)
-- A US Spyro: Year of the Dragon v1.1 ROM.
+- A legal US Spyro: Year of the Dragon v1.1 ROM.  We cannot help with this step.
 ### Create a Config (.yaml) File
 
 #### What is a config file and why do I need one?
@@ -27,7 +27,7 @@ are particularly important.
 Run `ArchipelagoLauncher.exe` and generate template files.  Copy `Spyro 3.yaml`, fill it out, and place
 it in the `players` folder.
 
-Alternatively, if you are using the local Webhost (not [archipelago.gg](archipelago.gg), the Player Options page allows you to configure
+Alternatively, if you are using the local Webhost rather than [archipelago.gg](archipelago.gg), the Player Options page allows you to configure
 your personal options and export a config file from them. Player options page: [Spyro 3 Player Options Page](/games/Spyro%203/player-options).
 
 #### Verifying your config file
@@ -71,7 +71,7 @@ helping all 5 NPCs in this world, whether or not they give an egg for the assist
 shows how many egg items you have received, while the in game Atlas shows which checks you have completed.
 
 ## What items and locations get shuffled?
-Eggs are always shuffled.  Based on the player's options, skill points, breaking life bottles, and milestones for reaching certain numbers of gems
+Eggs are always shuffled.  Based on the player's options, skill points, and milestones for reaching certain numbers of gems
 per level or overall may also release checks.
 
 The item pool will always contain 150 eggs.  Depending on the player's options, companion unlocks or all Moneybags unlocks may
@@ -112,3 +112,4 @@ If playing on a new save file, you will still need to get to the end of each lev
 - Companionsanity and Moneybagssanity can result in softlocks in a few places. In general, go to each companion as soon as you acquire the unlock item, and be sure to speak to Bianca at the start of each world as quickly as possible.
 - Closing and reopening the client clears the hint list.
 - Failing to connect to the Archipelago server crashes the client.
+- Zoe hints that the player skips may be awarded for free in later levels.

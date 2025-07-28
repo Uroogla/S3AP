@@ -12,6 +12,7 @@ class GoalOptions():
 class MoneybagsOptions():
     VANILLA = 0
     COMPANIONSANITY = 1
+    # Reserve 2 for shuffling moneybags prices on companions
     MONEYBAGSSANITY = 3
 
 class SparxUpgradeOptions():
