@@ -61,5 +61,19 @@
             EggForSale = 1257005,
             SuperBonusRoundEgg = 1266000
         }
+
+        public enum LevelInGameIDs : byte
+        {
+            SunnyVilla = 11,
+            SeashellShore = 14,
+            EnchantedTowers = 22,
+            SpookySwamp = 23,
+            FrozenAltars = 31,
+            LostFleet = 32,
+            CrystalIslands = 41,
+            DesertRuins = 42,
+            HauntedTomb = 43,
+            DinoMines = 44,
+        }
     }
 }

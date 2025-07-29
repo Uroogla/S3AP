@@ -106,6 +106,8 @@ The following command (without a slash or exclamation point) is available when u
 
 - `clearSpyroGameState` Resync your save file's received items with the server.  This may result in duplicate filler items.
 If playing on a new save file, you will still need to get to the end of each level and defeat the bosses to progress in the game.
+- `useQuietHints` Suppresses hints for found locations to make the client easier to read. On by default.
+- `useVerboseHints` Include found locations in hint lists. Due to Archipelago Server limitations, only applies to hints requested after this change.
 
 ## Known Issues
 

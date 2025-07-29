@@ -9,6 +9,11 @@ class GoalOptions():
     ALL_SKILLPOINTS = 3
     EPILOGUE = 4
 
+class LifeBottleOptions():
+    OFF = 0
+    NORMAL = 1
+    HARD = 2
+
 class MoneybagsOptions():
     VANILLA = 0
     COMPANIONSANITY = 1
@@ -21,6 +26,10 @@ class SparxUpgradeOptions():
     GREEN = 2
     SPARXLESS = 3
     TRUE_SPARXLESS = 4
+
+class GemsanityOptions():
+    OFF = 0
+    PINK_GEMS = 1
 
 
 class GoalOption(Choice):
@@ -72,16 +81,35 @@ class MaxTotalGemCheckOption(Range):
     range_end = 20000
     default = 6000
 
+class EnableGemsanityOption(Choice):
+    """Adds checks on individual gems and shuffles those gems into the pool.
+    Off: Individual gems are not checks or shuffled into the pool.
+    Pink Gems: Each pink (25) gem is a check and shuffled into the pool."""
+    display_name = "Enable Gemsanity Checks"
+    option_off = GemsanityOptions.OFF
+    option_pink_gems = GemsanityOptions.PINK_GEMS
+    default = GemsanityOptions.OFF
+
 class EnableSkillpointChecksOption(Toggle):
     """Adds checks for getting skill points"""
     display_name = "Enable Skillpoint Checks"
 
-class EnableLifeBottleChecksOption(Toggle):
+class EnableLifeBottleChecksOption(Choice):
     """Adds checks for breaking life bottles.
+    Off: Life bottles are not checks.
+    Normal: The 26 life bottles accessible during normal gameplay become checks.
+    Hard: Adds the life bottle stuck out of bounds in a wall in Fireworks Factory to the pool.
+    See https://youtu.be/ugS9orAyExc?si=NbiE_Vz2KlPopkkN&t=2201 on how to obtain it.
     This does not include the 3 bottles on the impossible island in Midnight Mountain.
-    This does include the life bottle stuck in a wall in Fireworks Factory.
-    To disable this bottle specifically, disable the location 'Fireworks Factory: Life Bottle Out of Bounds Near Start'"""
+    WARNING: While this option is stable, the current Spyro 3 Archipelago implementation is unable to identify bottles
+    broken while disconnected.  This means that if something goes wrong, you must load a save/save state from before
+    breaking the bottle, start a new save file, or have the game host release the item.
+    Please be respectful of the game host's wishes if you are asked not to use this option."""
     display_name = "Enable Life Bottle Checks"
+    default = LifeBottleOptions.OFF
+    option_off = LifeBottleOptions.OFF
+    option_normal = LifeBottleOptions.NORMAL
+    option_hard = LifeBottleOptions.HARD
 
 class MoneybagsSettings(Choice):
     """Determines settings for Moneybags unlocks.
@@ -131,6 +159,10 @@ class EnableTrapSparxless(Toggle):
     """Allows filler items to include removing Sparx."""
     display_name = "Enable Sparxless Trap"
 
+class EnableTrapLag(Toggle):
+    """Allows filler items to include traps that simulate lag in Duckstation."""
+    display_name = "Enable Lag Trap"
+
 class EnableProgressiveSparxHealth(Choice):
     """Start the game with lower max health and add items to the pool to increase your max health.
     The Starfish Reef health upgrade will have no effect until you find all Progressive Sparx Health Upgrade items.
@@ -147,6 +179,13 @@ class EnableProgressiveSparxHealth(Choice):
     option_sparxless = SparxUpgradeOptions.SPARXLESS
     option_true_sparxless = SparxUpgradeOptions.TRUE_SPARXLESS
 
+class ProgressiveSparxHealthLogic(Toggle):
+    """Ensures that sufficient max Sparx health is in logic before various required checks.
+    Entering any Midday level logically requires green Sparx.  Entering Fireworks Factory and Charmed Ridge
+    logically requires blue Sparx, and entering Dino Mines and the Sorceress logically requires gold Sparx.
+    Note: This does nothing unless Enable Progressive Sparx Health Upgrades is set to blue, green, or Sparxless,"""
+    display_name = "Enable Progressive Sparx Health Logic"
+
 class ZoeGivesHints(Range):
     """Enables some or all of the 11 Tutorial Zoes across Sunrise Spring and its levels giving hints.
     Which Zoes give hints are random.  Those in Crawdad Farm never will, as this tutorial can be accessed only once.
@@ -158,6 +197,52 @@ class ZoeGivesHints(Range):
     range_start = 0
     range_end = 11
     default = 0
+
+class EasySkateboarding(Toggle):
+    """Makes most skateboarding challenges and skill points much easier.
+    Sunny Villa: Both eggs require only 1 lizard.  Skill point requires 1 trick. Lizards will remain after the eggs.
+    Enchanted Towers: Hunter cannot beat you.  Skill point requires 1 trick.
+    Lost Fleet and Super Bonus Round: Your have infinite turbo without doing tricks."""
+    # TODO: Implement Super Bonus Round!
+    display_name = "Easy Skateboarding"
+
+class EasySubs(Toggle):
+    """Makes Lost Fleet submarine challenges much easier by removing all but 1 sub (behind and right of the ship).
+    The HUD will incorrectly display 1/1."""
+    # TODO: Implement for SBR too.
+    display_name = "Easy Subs"
+
+class EasyBoxing(Toggle):
+    """Makes the enemy yeti have only 1 health in Frozen Altars boxing 1 and 2."""
+    display_name = "Easy Boxing"
+
+class EasySheilaBombing(Toggle):
+    """Makes rocks and mushrooms never respawn in Spooky Swamp's Sheila sub-area."""
+    display_name = "Easy Spooky Sheila Missions"
+
+class EasyBluto(Toggle):
+    """Makes Bluto have only 1 health in Seashell Shore."""
+    display_name = "Easy Bluto"
+
+class EasySleepyhead(Toggle):
+    """Makes Sleepyhead have only 1 health in Spooky Swamp"""
+    display_name = "Easy Sleepyhead"
+
+class EasyWhackAMole(Toggle):
+    """Makes the Bentley Whack-A-Mole challenge in Crystal Islands require only 1 mole."""
+    display_name = "Easy Whack-a-Mole"
+
+class EasySharkRiders(Toggle):
+    """Makes the Shark Riders challenge in Desert Ruins easier by removing all but 1 shark, which starts to the left of the building."""
+    display_name = "Easy Shark Riders"
+
+class EasyTanks(Toggle):
+    """Makes the Tanks challenges in Haunted Tomb require only 1 tank each. Unmanned tanks will remain between rounds."""
+    display_name = "Easy Tanks"
+
+class EasyTunnels(Toggle):
+    """Makes Spyro move more slowly through the water tunnels in Seashell Shore and Dino Mines."""
+    display_name = "Easy Tunnels"
 
 class LogicSunnySheilaEarly(Toggle):
     """Puts entering the Sheila sub-area of Sunny Villa without completing Sheila into logic.
@@ -311,9 +396,9 @@ class Spyro3Option(PerGameCommonOptions):
     enable_gem_checks: EnableGemChecksOption
     enable_total_gem_checks: EnableTotalGemChecksOption
     max_total_gem_checks: MaxTotalGemCheckOption
+    #enable_gemsanity_checks: EnableGemsanityOption
     enable_skillpoint_checks: EnableSkillpointChecksOption
-    # TODO: Enable once memory addresses are fixed in client.
-    #enable_life_bottle_checks: EnableLifeBottleChecksOption
+    enable_life_bottle_checks: EnableLifeBottleChecksOption
     moneybags_settings: MoneybagsSettings
     enable_filler_extra_lives: EnableFillerExtraLives
     enable_filler_invincibility: EnableFillerInvincibility
@@ -323,8 +408,20 @@ class Spyro3Option(PerGameCommonOptions):
     trap_filler_percent: TrapFillerPercent
     enable_trap_damage_sparx: EnableTrapDamageSparx
     enable_trap_sparxless: EnableTrapSparxless
+    enable_trap_lag: EnableTrapLag
     enable_progressive_sparx_health: EnableProgressiveSparxHealth
+    #enable_progressive_sparx_logic: ProgressiveSparxHealthLogic
     zoe_gives_hints: ZoeGivesHints
+    easy_skateboarding: EasySkateboarding
+    easy_boxing: EasyBoxing
+    easy_sheila_bombing: EasySheilaBombing
+    easy_tanks: EasyTanks
+    easy_subs: EasySubs
+    easy_bluto: EasyBluto
+    easy_sleepyhead: EasySleepyhead
+    easy_shark_riders: EasySharkRiders
+    easy_whackamole: EasyWhackAMole
+    easy_tunnels: EasyTunnels
     logic_sunny_sheila_early: LogicSunnySheilaEarly
     logic_cloud_backwards: LogicCloudBackwards
     logic_molten_early: LogicMoltenEarly
@@ -351,8 +448,25 @@ class Spyro3Option(PerGameCommonOptions):
     logic_desert_no_moneybags: LogicDesertNoMoneybags
     logic_sorceress_early: LogicSorceressEarly
 
-# Group logic/trick options together, espeically for the local WebHost.
+
+# Group logic/trick options together, especially for the local WebHost.
 spyro_options_groups = [
+    OptionGroup(
+        "Game Difficulty",
+        [
+            EasySkateboarding,
+            EasyBoxing,
+            EasySheilaBombing,
+            EasyTanks,
+            EasySubs,
+            EasyBluto,
+            EasySleepyhead,
+            EasySharkRiders,
+            EasyWhackAMole,
+            EasyTunnels
+        ],
+        True
+    ),
     OptionGroup(
         "Tricks",
         [

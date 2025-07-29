@@ -16,7 +16,9 @@ class Spyro3LocationCategory(IntEnum):
     HINT = 8,
     SKILLPOINT_GOAL = 9,
     TOTAL_GEM = 10,
-    LIFE_BOTTLE = 11
+    LIFE_BOTTLE = 11,
+    LIFE_BOTTLE_HARD = 12,
+    PINK_GEMS = 17
 
 
 class Spyro3LocationData(NamedTuple):
@@ -186,7 +188,16 @@ location_tables = {
         Spyro3LocationData("Mushroom Speedway: All Gems", "Filler", Spyro3LocationCategory.GEM),
         Spyro3LocationData("Mushroom Speedway: 25% Gems", "Filler", Spyro3LocationCategory.GEM_25),
         Spyro3LocationData("Mushroom Speedway: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
-        Spyro3LocationData("Mushroom Speedway: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75)
+        Spyro3LocationData("Mushroom Speedway: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
+        # TODO: Add filler locations based on RAM.
+        Spyro3LocationData("Mushroom Speedway: Pink Gem from Butterfly 1", "Mushroom Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Mushroom Speedway: Pink Gem from Butterfly 2", "Mushroom Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Mushroom Speedway: Pink Gem from Butterfly 3", "Mushroom Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Mushroom Speedway: Pink Gem from Butterfly 4", "Mushroom Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Mushroom Speedway: Pink Gem from Butterfly 5", "Mushroom Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Mushroom Speedway: Pink Gem from Butterfly 6", "Mushroom Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Mushroom Speedway: Pink Gem from Butterfly 7", "Mushroom Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Mushroom Speedway: Pink Gem from Butterfly 8", "Mushroom Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Sheila's Alp": [
         Spyro3LocationData("Sheila's Alp: Help Bobby get home. (Nan)", "Egg", Spyro3LocationCategory.EGG),
@@ -199,6 +210,8 @@ location_tables = {
         Spyro3LocationData("Sheila's Alp: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
         Spyro3LocationData("Sheila's Alp: Controls Zoe", "Hint 11", Spyro3LocationCategory.HINT),
         Spyro3LocationData("Sheila's Alp: Life Bottle by Headbash Crate in Huts Area", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
+        # TODO: Insert filler locations based on RAM address of each gem.
+        Spyro3LocationData("Sheila's Alp: Pink Gem from first Headbash Crate", "Sheila's Alp Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Buzz": [
         Spyro3LocationData("Buzz's Dungeon: Defeat Buzz. (Grayson)", "Egg", Spyro3LocationCategory.EGG),
@@ -210,7 +223,9 @@ location_tables = {
         Spyro3LocationData("Crawdad Farm: All Gems", "Filler", Spyro3LocationCategory.GEM),
         Spyro3LocationData("Crawdad Farm: 25% Gems", "Filler", Spyro3LocationCategory.GEM_25),
         Spyro3LocationData("Crawdad Farm: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
-        Spyro3LocationData("Crawdad Farm: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75)
+        Spyro3LocationData("Crawdad Farm: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
+        # TODO: Add filler locations based on RAM.
+        Spyro3LocationData("Crawdad Farm: Pink Gem at Level Start", "Crawdad Farm Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     #Homeworld 2
     "Midday Gardens": [
@@ -269,7 +284,11 @@ location_tables = {
         Spyro3LocationData("Spooky Swamp: Destroy all piranha signs (Goal)", "Skill Point", Spyro3LocationCategory.SKILLPOINT_GOAL),
         Spyro3LocationData("Spooky Swamp: 25% Gems", "Filler", Spyro3LocationCategory.GEM_25),
         Spyro3LocationData("Spooky Swamp: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
-        Spyro3LocationData("Spooky Swamp: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75)
+        Spyro3LocationData("Spooky Swamp: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
+        # TODO: Add filler locations based on RAM.
+        # TODO: Figure out order of this.
+        Spyro3LocationData("Spooky Swamp: Pink Gem in Locked Chest", "Spooky Swamp Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Spooky Swamp: Sheila Sub-Area: Pink Gem behind Wall", "Spooky Swamp Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Bamboo Terrace": [
         Spyro3LocationData("Bamboo Terrace: Clear the pandas' path. (Tom)", "Egg", Spyro3LocationCategory.EGG),
@@ -296,7 +315,16 @@ location_tables = {
         Spyro3LocationData("Country Speedway: All Gems", "Filler", Spyro3LocationCategory.GEM),
         Spyro3LocationData("Country Speedway: 25% Gems", "Filler", Spyro3LocationCategory.GEM_25),
         Spyro3LocationData("Country Speedway: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
-        Spyro3LocationData("Country Speedway: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75)
+        Spyro3LocationData("Country Speedway: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
+        # TODO: Add filler locations based on RAM.
+        Spyro3LocationData("Country Speedway: Pink Gem from Plane 1", "Country Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Country Speedway: Pink Gem from Plane 2", "Country Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Country Speedway: Pink Gem from Plane 3", "Country Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Country Speedway: Pink Gem from Plane 4", "Country Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Country Speedway: Pink Gem from Plane 5", "Country Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Country Speedway: Pink Gem from Plane 6", "Country Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Country Speedway: Pink Gem from Plane 7", "Country Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Country Speedway: Pink Gem from Plane 8", "Country Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Sgt. Byrd's Base": [
         Spyro3LocationData("Sgt. Byrd's Base: Clear the building. (RyanLee)", "Egg", Spyro3LocationCategory.EGG),
@@ -310,6 +338,8 @@ location_tables = {
         Spyro3LocationData("Sgt. Byrd's Base: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
         Spyro3LocationData("Sgt. Byrd's Base: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
         Spyro3LocationData("Sgt. Byrd's Base: Life Bottle above Exit Portal", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
+        # TODO: Add filler locations based on RAM.
+        Spyro3LocationData("Sgt. Byrd's Base: Pink Gem from First Balloon Vase", "Sgt. Byrd's Base Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Spike": [
         Spyro3LocationData("Spike's Arena: Defeat Spike. (Monique)", "Egg", Spyro3LocationCategory.EGG),
@@ -349,7 +379,10 @@ location_tables = {
         Spyro3LocationData("Frozen Altars: Beat yeti in two rounds (Goal)", "Skill Point", Spyro3LocationCategory.SKILLPOINT_GOAL),
         Spyro3LocationData("Frozen Altars: 25% Gems", "Filler", Spyro3LocationCategory.GEM_25),
         Spyro3LocationData("Frozen Altars: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
-        Spyro3LocationData("Frozen Altars: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75)
+        Spyro3LocationData("Frozen Altars: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
+        # TODO: Add filler locations based on RAM.
+        Spyro3LocationData("Frozen Altars: Pink Gem from Headbash Chest", "Frozen Altars Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Frozen Altars: Pink Gem from Out-of-Reach Chest in Icy Room", "Frozen Altars Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Lost Fleet": [
         Spyro3LocationData("Lost Fleet: Find Crazy Ed's treasure. (Craig)", "Egg", Spyro3LocationCategory.EGG),
@@ -383,7 +416,7 @@ location_tables = {
         Spyro3LocationData("Fireworks Factory: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
         Spyro3LocationData("Fireworks Factory: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
         Spyro3LocationData("Fireworks Factory: Life Bottle in Agent 9 Sub-Area", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
-        Spyro3LocationData("Fireworks Factory: Life Bottle Out of Bounds Near Start", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
+        Spyro3LocationData("Fireworks Factory: Life Bottle Out of Bounds Near Start", "Filler", Spyro3LocationCategory.LIFE_BOTTLE_HARD),
     ],
     "Charmed Ridge": [
         Spyro3LocationData("Charmed Ridge: Rescue the Fairy Princess. (Sakura)", "Egg", Spyro3LocationCategory.EGG),
@@ -403,6 +436,9 @@ location_tables = {
         Spyro3LocationData("Charmed Ridge: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
         Spyro3LocationData("Charmed Ridge: Life Bottle by End of Level 1", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
         Spyro3LocationData("Charmed Ridge: Life Bottle by End of Level 2", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
+        # TODO: Find RAM Address.
+        Spyro3LocationData("Charmed Ridge: Golden Goose Sub-Area: First Pink Gem from Headbash Chest", "Charmed Ridge Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Charmed Ridge: Golden Goose Sub-Area: Second Pink Gem from Headbash Chest", "Charmed Ridge Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Honey Speedway": [
         Spyro3LocationData("Honey Speedway: Time attack. (Chris)", "Egg", Spyro3LocationCategory.EGG),
@@ -411,7 +447,16 @@ location_tables = {
         Spyro3LocationData("Honey Speedway: All Gems", "Filler", Spyro3LocationCategory.GEM),
         Spyro3LocationData("Honey Speedway: 25% Gems", "Filler", Spyro3LocationCategory.GEM_25),
         Spyro3LocationData("Honey Speedway: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
-        Spyro3LocationData("Honey Speedway: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75)
+        Spyro3LocationData("Honey Speedway: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
+        # TODO: Find RAM Address.
+        Spyro3LocationData("Honey Speedway: Pink Gem from Boat 1", "Honey Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Honey Speedway: Pink Gem from Boat 2", "Honey Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Honey Speedway: Pink Gem from Boat 3", "Honey Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Honey Speedway: Pink Gem from Boat 4", "Honey Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Honey Speedway: Pink Gem from Boat 5", "Honey Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Honey Speedway: Pink Gem from Boat 6", "Honey Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Honey Speedway: Pink Gem from Boat 7", "Honey Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Honey Speedway: Pink Gem from Boat 8", "Honey Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Bentley's Outpost": [
         Spyro3LocationData("Bentley's Outpost: Help Bartholomew home. (Eric)", "Egg", Spyro3LocationCategory.EGG),
@@ -423,7 +468,10 @@ location_tables = {
         Spyro3LocationData("Bentley's Outpost: Push box off the cliff (Goal)", "Skill Point", Spyro3LocationCategory.SKILLPOINT_GOAL),
         Spyro3LocationData("Bentley's Outpost: 25% Gems", "Filler", Spyro3LocationCategory.GEM_25),
         Spyro3LocationData("Bentley's Outpost: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
-        Spyro3LocationData("Bentley's Outpost: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75)
+        Spyro3LocationData("Bentley's Outpost: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
+        # TODO: Find RAM Address.
+        Spyro3LocationData("Bentley's Outpost: Pink Gem from strong chest right of level end", "Bentley's Outpost Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Bentley's Outpost: Pink Gem from strong chest overlooking level start", "Bentley's Outpost Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Scorch": [
         Spyro3LocationData("Scorch's Pit: Defeat Scorch. (James)", "Egg", Spyro3LocationCategory.EGG),
@@ -462,7 +510,11 @@ location_tables = {
         Spyro3LocationData("Crystal Islands: All Gems", "Filler", Spyro3LocationCategory.GEM),
         Spyro3LocationData("Crystal Islands: 25% Gems", "Filler", Spyro3LocationCategory.GEM_25),
         Spyro3LocationData("Crystal Islands: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
-        Spyro3LocationData("Crystal Islands: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75)
+        Spyro3LocationData("Crystal Islands: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
+        # TODO: Find RAM Address.
+        Spyro3LocationData("Bentley's Outpost: Pink Gem from strong chest right of level end", "Bentley's Outpost Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Bentley's Outpost: Pink Gem from strong chest overlooking level start", "Bentley's Outpost Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Bentley's Outpost: Pink Gem from strong chest overlooking level start", "Bentley's Outpost Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Desert Ruins": [
         Spyro3LocationData("Desert Ruins: Raid the tomb. (Marty)", "Egg", Spyro3LocationCategory.EGG),
@@ -522,7 +574,16 @@ location_tables = {
         Spyro3LocationData("Harbor Speedway: All Gems", "Filler", Spyro3LocationCategory.GEM),
         Spyro3LocationData("Harbor Speedway: 25% Gems", "Filler", Spyro3LocationCategory.GEM_25),
         Spyro3LocationData("Harbor Speedway: 50% Gems", "Filler", Spyro3LocationCategory.GEM_50),
-        Spyro3LocationData("Harbor Speedway: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75)
+        Spyro3LocationData("Harbor Speedway: 75% Gems", "Filler", Spyro3LocationCategory.GEM_75),
+        # TODO: Find RAM Address.
+        Spyro3LocationData("Harbor Speedway: Pink Gem from Boat 1", "Harbor Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Harbor Speedway: Pink Gem from Boat 2", "Harbor Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Harbor Speedway: Pink Gem from Boat 3", "Harbor Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Harbor Speedway: Pink Gem from Boat 4", "Harbor Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Harbor Speedway: Pink Gem from Boat 5", "Harbor Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Harbor Speedway: Pink Gem from Boat 6", "Harbor Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Harbor Speedway: Pink Gem from Boat 7", "Harbor Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
+        Spyro3LocationData("Harbor Speedway: Pink Gem from Boat 8", "Harbor Speedway Pink Gem", Spyro3LocationCategory.PINK_GEMS),
     ],
     "Agent 9's Lab": [
         Spyro3LocationData("Agent 9's Lab: Blast and bomb the rhynocs. (Rowan)", "Egg", Spyro3LocationCategory.EGG),

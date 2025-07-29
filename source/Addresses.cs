@@ -5,6 +5,9 @@
         public const uint TotalEggAddress = 0x0006C740;
         public const uint EggStartAddress = 0x000703E0;
         public const uint CurrentLevelAddress = 0x0006c69c;
+        public const uint CurrentSubareaAddress = 0x0006c6a8; // 0 for main area, 1/2/3 for subareas.
+        public const uint LocalDifficultySettingAddress = 0x0006c8a4; // byte
+        public const uint GlobalDifficultySettingAddress = 0x0006c888; // byte
         public const uint IsInDemoMode = 0x0006c758;
         public const uint GameStatus = 0x0006e424;
         // The values at this and the following 3 bytes seem to be 0 only on reset.
@@ -96,10 +99,10 @@
         public const uint SunnySecondLifeBottleAddress = 0x0019086a;
         public const uint CloudLifeBottleAddress = 0x0018cd52;
         public const uint SheilaLifeBottleAddress = 0x00167c57;
-        public const uint MoltenLifeBottleAddress = 0x0012d204;
+        public const uint MoltenLifeBottleAddress = 0x0012d206;
         public const uint SeashellLifeBottleAddress = 0x00189fba;
         public const uint ByrdLifeBottleAddress = 0x00188f6a;
-        public const uint BambooBentleyLifeBottleAddress = 0x00186fc6;
+        public const uint BambooBentleyLifeBottleAddress = 0x00186fc7;
         public const uint BambooFirstUnderwaterLifeBottleAddress = 0x00186b22;
         public const uint BambooSecondUnderwaterLifeBottleAddress = 0x00186b7a;
         public const uint BambooThirdUnderwaterLifeBottleAddress = 0x00186bd2;
@@ -117,5 +120,21 @@
         public const uint DesertOutsideLifeBottleAddress = 0x001814e6;
         public const uint HauntedLifeBottleAddress = 0x0018f4be;
         public const uint DinoLifeBottleAddress = 0x0018f5ca;
+
+        public const uint SunnyLizardsCount = 0x001865ec; // byte
+        public const uint SunnySkateScore = 0x001876e4; // short
+        public const uint BlutoHealth = 0x00162574; // byte
+        public const uint SleepyheadHealth = 0x00159670; // byte
+        public const uint EnchantedSkateScore = 0x00181428; // short
+        public const uint YetiBoxingHealth = 0x0015d050; // byte
+        public const uint LostFleetNitro = 0x00173944; // short
+        public static readonly uint[] LostFleetSubAddresses = [
+            0x0015b126, 0x0015b17e, 0x0015b286, 0x0015b3e6, 0x0015b43e, // Subs 1
+            0x0015ae0e, 0x0015aebe, 0x0015af16, 0x0015afc6, 0x0015b01e, 0x0015b2de // Subs 2
+        ]; // bytes
+        public const uint WhackAMoleCount = 0x0016bd64; // byte
+        public static readonly uint[] DesertSharkAddresses = [0x0016b72c, 0x0016b784, 0x0016b7dc, 0x0016b834, 0x0016b88c, 0x0016b93c, 0x0016b994];
+        public const uint TanksCount = 0x00177964; // byte
+        public const uint MaxTanksCount = 0x0006757a; // byte; also the "max" for any bottom right HUD value. Read-only.
     }
 }

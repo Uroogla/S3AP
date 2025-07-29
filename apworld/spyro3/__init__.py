@@ -1,16 +1,14 @@
 # world/spyro3/__init__.py
 from typing import Dict, Set, List
-from enum import IntEnum
 
 from BaseClasses import MultiWorld, Region, Item, Entrance, Tutorial, ItemClassification
-from Options import Toggle
 
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_rule, add_item_rule, forbid_item
 
 from .Items import Spyro3Item, Spyro3ItemCategory, item_dictionary, key_item_names, item_descriptions, BuildItemPool
 from .Locations import Spyro3Location, Spyro3LocationCategory, location_tables, location_dictionary, hint_locations
-from .Options import Spyro3Option, GoalOptions, MoneybagsOptions, spyro_options_groups
+from .Options import Spyro3Option, GoalOptions, LifeBottleOptions, MoneybagsOptions, SparxUpgradeOptions, GemsanityOptions, spyro_options_groups
 from .Hints import generateHints
 
 class Spyro3Web(WebWorld):
@@ -83,10 +81,14 @@ class Spyro3World(World):
             self.enabled_location_categories.add(Spyro3LocationCategory.GEM)
         if self.options.enable_total_gem_checks.value:
             self.enabled_location_categories.add(Spyro3LocationCategory.TOTAL_GEM)
+        #if self.options.enable_gemsanity_checks.value == GemsanityOptions.PINK_GEMS:
+        #    self.enabled_location_categories.add(Spyro3LocationCategory.PINK_GEMS)
         if self.options.enable_skillpoint_checks.value:
             self.enabled_location_categories.add(Spyro3LocationCategory.SKILLPOINT)
-        #if self.options.enable_life_bottle_checks.value:
-        #    self.enabled_location_categories.add(Spyro3LocationCategory.LIFE_BOTTLE)
+        if self.options.enable_life_bottle_checks.value != LifeBottleOptions.OFF:
+            self.enabled_location_categories.add(Spyro3LocationCategory.LIFE_BOTTLE)
+        if self.options.enable_life_bottle_checks.value == LifeBottleOptions.HARD:
+            self.enabled_location_categories.add(Spyro3LocationCategory.LIFE_BOTTLE_HARD)
 
     def create_regions(self):
         # Create Regions
@@ -278,6 +280,7 @@ class Spyro3World(World):
                 or item_dictionary[name].category == Spyro3ItemCategory.EVENT \
                 or item_dictionary[name].category == Spyro3ItemCategory.MONEYBAGS \
                 or item_dictionary[name].category == Spyro3ItemCategory.SKILLPOINT_GOAL:
+            # TODO: Sparx health can be progression.
             item_classification = ItemClassification.progression
         elif item_dictionary[name].category in useful_categories:
             item_classification = ItemClassification.useful
@@ -539,6 +542,17 @@ class Spyro3World(World):
         def has_all_gems(self, state):
             # Don't include SBR in gem calculations to avoid recursion issues.
             return has_total_accessible_gems(self, state, 15000, include_sbr=False)
+
+        def has_sparx_health(self, health, state):
+            if self.options.enable_progressive_sparx_health.value in [SparxUpgradeOptions.OFF, SparxUpgradeOptions.TRUE_SPARXLESS]:
+                return True
+            max_health = 0
+            if self.options.enable_progressive_sparx_health.value == SparxUpgradeOptions.BLUE:
+                max_health = 2
+            elif self.options.enable_progressive_sparx_health.value == SparxUpgradeOptions.GREEN:
+                max_health = 1
+            max_health += state.count("Progressive Sparx Health Upgrade", self.player)
+            return max_health >= health
             
         def set_indirect_rule(self, regionName, rule):
             region = self.multiworld.get_region(regionName, self.player)
@@ -667,12 +681,16 @@ class Spyro3World(World):
         set_indirect_rule(self, "Midday Gardens", lambda state: is_boss_defeated(self,"Buzz", state))
 
         # Icy Peak Rules
+        #if self.options.enable_progressive_sparx_logic.value:
+        #    set_indirect_rule(self, "Icy Peak", lambda state: has_sparx_health(self, 1, state))
         # This can be entered without paying Moneybags, but shooting the crystal you need to jump on with the cannon renders the skip impossible.
         if self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY:
             # No gems in Nancy area.
             set_rule(self.multiworld.get_location("Icy Peak: Protect Nancy the skater. (Cerny)", self.player), lambda state: state.has("Moneybags Unlock - Icy Peak Nancy Door", self.player))
 
         # Enchanted Towers Rules
+        #if self.options.enable_progressive_sparx_logic.value:
+        #    set_indirect_rule(self, "Enchanted Towers", lambda state: has_sparx_health(self, 1, state))
         set_rule(self.multiworld.get_location("Enchanted Towers: Collect the bones. (Ralph)", self.player), lambda state: is_level_completed(self,"Sgt. Byrd's Base", state))
         # Skateboarding challenges are not available while Hunter is captured.
         set_rule(self.multiworld.get_location("Enchanted Towers: Trick skater I. (Caroline)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
@@ -687,6 +705,7 @@ class Spyro3World(World):
 
         # Spooky Swamp Rules
         # This can be done with a swim in air or a glide out of bounds.
+        # TODO: Finish implementing Sparx logic rules.
         if not self.options.logic_spooky_early.value:
             set_indirect_rule(self, "Spooky Swamp", lambda state: state.has("Egg", self.player, 25))
         # Can skip Moneybags by damage boosting from the island egg to the end of level.
@@ -982,7 +1001,7 @@ class Spyro3World(World):
                     locations_target.append(0)
 
         if self.options.zoe_gives_hints.value > 0:
-            hints = generateHints(self.multiworld, self.player, self.options.zoe_gives_hints.value)
+            hints = generateHints(self.player, self.options.zoe_gives_hints.value, self)
         
 
         slot_data = {
@@ -995,8 +1014,9 @@ class Spyro3World(World):
                 "enable_gem_checks": self.options.enable_gem_checks.value,
                 "enable_total_gem_checks": self.options.enable_total_gem_checks.value,
                 "max_total_gem_checks": self.options.max_total_gem_checks.value,
+                #"enable_gemsanity_checks": self.options.enable_gemsanity_checks.value,
                 "enable_skillpoint_checks": self.options.enable_skillpoint_checks.value,
-                #"enable_life_bottle_checks": self.options.enable_life_bottle_checks.value,
+                "enable_life_bottle_checks": self.options.enable_life_bottle_checks.value,
                 "moneybags_settings": self.options.moneybags_settings.value,
                 "enable_filler_extra_lives": self.options.enable_filler_extra_lives.value,
                 "enable_filler_invincibility": self.options.enable_filler_invincibility.value,
@@ -1006,8 +1026,20 @@ class Spyro3World(World):
                 "trap_filler_percent": self.options.trap_filler_percent.value,
                 "enable_trap_damage_sparx": self.options.enable_trap_damage_sparx.value,
                 "enable_trap_sparxless": self.options.enable_trap_sparxless.value,
+                "enable_trap_lag": self.options.enable_trap_lag.value,
                 "enable_progressive_sparx_health": self.options.enable_progressive_sparx_health.value,
+                #"enable_progressive_sparx_logic": self.options.enable_progressive_sparx_logic.value,
                 "zoe_gives_hints": self.options.zoe_gives_hints.value,
+                "easy_skateboarding": self.options.easy_skateboarding.value,
+                "easy_boxing": self.options.easy_boxing.value,
+                "easy_sheila_bombing": self.options.easy_sheila_bombing.value,
+                "easy_tanks": self.options.easy_tanks.value,
+                "easy_subs": self.options.easy_subs.value,
+                "easy_bluto": self.options.easy_bluto.value,
+                "easy_sleepyhead": self.options.easy_sleepyhead.value,
+                "easy_shark_riders": self.options.easy_shark_riders.value,
+                "easy_whackamole": self.options.easy_whackamole.value,
+                "easy_tunnels": self.options.easy_tunnels.value,
                 "logic_sunny_sheila_early": self.options.logic_sunny_sheila_early.value,
                 "logic_cloud_backwards": self.options.logic_cloud_backwards.value,
                 "logic_molten_early": self.options.logic_molten_early.value,

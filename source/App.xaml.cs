@@ -10,7 +10,6 @@ using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Archipelago.MultiClient.Net.Packets;
 using Newtonsoft.Json;
 using Serilog;
-using System.Runtime.InteropServices;
 using System.Timers;
 using static S3AP.Models.Enums;
 using Color = Microsoft.Maui.Graphics.Color;
@@ -21,13 +20,16 @@ namespace S3AP
     {
         public static MainPageViewModel Context;
         public static ArchipelagoClient Client { get; set; }
-        public static List<Archipelago.Core.Models.Location> GameLocations { get; set; }
+        public static List<Archipelago.Core.Models.ILocation> GameLocations { get; set; }
         private static readonly object _lockObject = new object();
         private static Queue<string> CosmeticEffects { get; set; }
         private static Dictionary<string, string> HintsList { get; set; }
         private static byte sparxUpgrades { get; set; }
         private static bool hasSubmittedGoal { get; set; }
+        private static bool useQuietHints { get; set; }
+        private static List<string> easyChallenges { get; set; }
         private static System.Timers.Timer sparxTimer { get; set; }
+        private static System.Timers.Timer loadGameTimer { get; set; }
         public App()
         {
             InitializeComponent();
@@ -44,15 +46,28 @@ namespace S3AP
             HintsList = null;
             sparxUpgrades = 0;
             hasSubmittedGoal = false;
+            useQuietHints = true;
+            easyChallenges = new List<string>();
+            // TODO: Make this wait a few seconds to ensure it displays.
             Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U 1.1 release of Spyro 1 (North America Greatest Hits version).");
             Log.Logger.Information("Trying to play with a different version will not work and may release all of your locations at the start.");
         }
         private void HandleCommand(string command)
         {
-            if (command == "clearSpyroGameState")
+            switch (command)
             {
-                Log.Logger.Information("Clearing the game state.  Please reconnect to the server while in game to refresh received items.");
-                Client.ForceReloadAllItems();
+                case "clearSpyroGameState":
+                    Log.Logger.Information("Clearing the game state.  Please reconnect to the server while in game to refresh received items.");
+                    Client.ForceReloadAllItems();
+                    break;
+                case "useQuietHints":
+                    Log.Logger.Information("Hints for found locations will not be displayed.  Type 'useVerboseHints' to show them.");
+                    useQuietHints = true;
+                    break;
+                case "useVerboseHints":
+                    Log.Logger.Information("Hints for found locations will be displayed.  Type 'useQuietHints' to show them.");
+                    useQuietHints = false;
+                    break;
             }
         }
         private async void Context_ConnectClicked(object? sender, ConnectClickedEventArgs e)
@@ -67,7 +82,16 @@ namespace S3AP
                 Client.LocationCompleted -= Client_LocationCompleted;
                 Client.CurrentSession.Locations.CheckedLocationsUpdated -= Locations_CheckedLocationsUpdated;
             }
-            DuckstationClient client = new DuckstationClient();
+            DuckstationClient? client = null;
+            try
+            {
+                client = new DuckstationClient();
+            }
+            catch (ArgumentException ex)
+            {
+                Log.Logger.Warning("Duckstation not running, open Duckstation and launch the game before connecting!");
+                return;
+            }
             var DuckstationConnected = client.Connect();
             if (!DuckstationConnected)
             {
@@ -82,6 +106,11 @@ namespace S3AP
             Client.Disconnected += OnDisconnected;
 
             await Client.Connect(e.Host, "Spyro 3");
+            if (!Client.IsConnected)
+            {
+                Log.Logger.Error("Your host seems to be invalid.  Please confirm that you have entered it correctly.");
+                return;
+            }
             GameLocations = Helpers.BuildLocationList();
             CosmeticEffects = new Queue<string>();
             Client.LocationCompleted += Client_LocationCompleted;
@@ -90,9 +119,14 @@ namespace S3AP
             Client.ItemReceived += ItemReceived;
             Client.EnableLocationsCondition = () => Helpers.IsInGame();
             await Client.Login(e.Slot, !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
-            Client.MonitorLocations(GameLocations);
-            Log.Logger.Information("Warnings and errors above are okay if this is your first time connecting to this multiworld server.");
-
+            if (Client.Options?.Count > 0)
+            {
+                Client.MonitorLocations(GameLocations);
+                Log.Logger.Information("Warnings and errors above are okay if this is your first time connecting to this multiworld server.");
+            } else
+            {
+                Log.Logger.Error("Failed to login.  Please check your host, name, and password.");
+            }
         }
 
         private void Client_LocationCompleted(object? sender, LocationCompletedEventArgs e)
@@ -104,7 +138,9 @@ namespace S3AP
 
         private async void ItemReceived(object? o, ItemReceivedEventArgs args)
         {
-            Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
+            // TODO: Test whether a queue with an IsInGame() check makes sense here.
+            // This overwhelms the client less, but any disconnect will desync the seed.
+            Log.Logger.Debug($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
             int currentHealth;
             switch (args.Item.Name)
             {
@@ -246,8 +282,12 @@ namespace S3AP
                 }
             }
         }
-        private static async void HandleMaxSparxHealth(object source, ElapsedEventArgs e)
+        private static void HandleMaxSparxHealth(object source, ElapsedEventArgs e)
         {
+            if (!Helpers.IsInGame())
+            {
+                return;
+            }
             byte currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
             if (currentHealth > sparxUpgrades)
             {
@@ -258,8 +298,155 @@ namespace S3AP
                 sparxTimer.Enabled = false;
             }
         }
-        private static async void HandleCosmeticQueue(object source, ElapsedEventArgs e)
+        private static void HandleMinigames(object source, ElapsedEventArgs e)
         {
+            // NOTE: Be very careful here, as writing to the wrong address or at the wrong time can crash the game.
+            if (!Helpers.IsInGame())
+            {
+                return;
+            }
+            LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.CurrentLevelAddress);
+            byte currentSubarea = Memory.ReadByte(Addresses.CurrentSubareaAddress);
+
+            // For some challenges, it makes more sense to adjust local adaptive difficulty than modify other values.
+            if (
+                easyChallenges.Contains("easy_tunnels") &&
+                (
+                    currentLevel == LevelInGameIDs.SeashellShore && currentSubarea == 3 ||    // Tunnel
+                    currentLevel == LevelInGameIDs.DinoMines && currentSubarea == 2           // Tunnel
+                ) ||
+                (
+                    easyChallenges.Contains("easy_sheila_bombing") &&
+                    currentLevel == LevelInGameIDs.SpookySwamp && currentSubarea == 2         // Sheila Subarea
+                )
+            )
+            {
+                Memory.WriteByte(Addresses.LocalDifficultySettingAddress, 0);
+            }
+
+            // For other challenges, we can set values in RAM to make the challenge easier.
+            if (
+                easyChallenges.Contains("easy_skateboarding") &&
+                currentLevel == LevelInGameIDs.SunnyVilla && currentSubarea == 2              // Skatepark
+            )
+            {
+                byte currentLizards = Memory.ReadByte(Addresses.SunnyLizardsCount);
+                short currentScore = Memory.ReadShort(Addresses.SunnySkateScore);
+                if (currentLizards < 14)
+                {
+                    Memory.Write(Addresses.SunnyLizardsCount, (byte)14);
+                }
+                if (currentScore < 3199)
+                {
+                    Memory.Write(Addresses.SunnySkateScore, (short)3199);
+                }
+            }
+            else if (
+                easyChallenges.Contains("easy_bluto") &&
+                currentLevel == LevelInGameIDs.SeashellShore && currentSubarea == 2          // Bluto
+            )
+            {
+                byte currentEnemyHealth = Memory.ReadByte(Addresses.BlutoHealth);
+                if (currentEnemyHealth > 1)
+                {
+                    Memory.WriteByte(Addresses.BlutoHealth, (byte)1);
+                }
+            }
+            else if (
+                easyChallenges.Contains("easy_skateboarding") &&
+                currentLevel == LevelInGameIDs.EnchantedTowers && currentSubarea == 1        // Skatepark
+            )
+            {
+                short currentScore = Memory.ReadShort(Addresses.EnchantedSkateScore);
+                if (currentScore < 9999)
+                {
+                    Memory.Write(Addresses.EnchantedSkateScore, (short)9999);
+                }
+            }
+            else if (
+                easyChallenges.Contains("easy_sleepyhead") &&
+                currentLevel == LevelInGameIDs.SpookySwamp && currentSubarea == 1            // Sleepyhead
+            )
+            {
+                byte currentEnemyHealth = Memory.ReadByte(Addresses.SleepyheadHealth);
+                if (currentEnemyHealth > 1)
+                {
+                    Memory.WriteByte(Addresses.SleepyheadHealth, (byte)1);
+                }
+            }
+            else if (
+                easyChallenges.Contains("easy_boxing") &&
+                currentLevel == LevelInGameIDs.FrozenAltars && currentSubarea == 1           // Yeti Boxing
+            )
+            {
+                byte currentEnemyHealth = Memory.ReadByte(Addresses.YetiBoxingHealth);
+                if (currentEnemyHealth > 1)
+                {
+                    Memory.WriteByte(Addresses.YetiBoxingHealth, (byte)1);
+                }
+            }
+            else if (
+                easyChallenges.Contains("easy_subs") &&
+                currentLevel == LevelInGameIDs.LostFleet && currentSubarea == 1              // Subs
+            )
+            {
+                foreach (uint address in Addresses.LostFleetSubAddresses)
+                {
+                    Memory.WriteByte(address, (byte)19);
+                }
+            }
+            else if (
+                easyChallenges.Contains("easy_skateboarding") &&
+                currentLevel == LevelInGameIDs.LostFleet && currentSubarea == 2              // Skatepark
+            )
+            {
+                Memory.Write(Addresses.LostFleetNitro, (short)1000);
+            }
+            else if (
+                easyChallenges.Contains("easy_whackamole") &&
+                currentLevel == LevelInGameIDs.CrystalIslands && currentSubarea == 2         // Whack-A-Mole
+            )
+            {
+                byte currentMoleCount = Memory.ReadByte(Addresses.WhackAMoleCount);
+                if (currentMoleCount < 19)
+                {
+                    Memory.WriteByte(Addresses.WhackAMoleCount, (byte)19);
+                }
+            }
+            else if (
+                easyChallenges.Contains("easy_shark_riders") &&
+                currentLevel == LevelInGameIDs.DesertRuins && currentSubarea == 2            // Shark Riders
+            )
+            {
+                foreach (uint address in Addresses.DesertSharkAddresses)
+                {
+                    Memory.WriteByte(address, (byte)253);
+                }
+            }
+            else if (
+                easyChallenges.Contains("easy_tanks") &&
+                currentLevel == LevelInGameIDs.HauntedTomb && currentSubarea == 1            // Tanks
+            )
+            {
+                byte currentTankCount = Memory.ReadByte(Addresses.TanksCount);
+                byte maxTankCount = Memory.ReadByte(Addresses.MaxTanksCount);
+                if (maxTankCount == 4 && currentTankCount < 4)
+                {
+                    Memory.WriteByte(Addresses.TanksCount, (byte)3);
+                }
+                else if (maxTankCount == 10 && currentTankCount < 10)
+                {
+                    Memory.WriteByte(Addresses.TanksCount, (byte)9);
+                }
+            }
+            // TODO: Add SBR.
+        }
+        private static void HandleCosmeticQueue(object source, ElapsedEventArgs e)
+        {
+            if (!Helpers.IsInGame())
+            {
+                return;
+            }
             // Avoid overwhelming the game when many cosmetic effects are received at once by processing only 1
             // every 5 seconds.  This also lets the user see effects when logging in asynchronously.
             if (CosmeticEffects.Count > 0 && Memory.ReadShort(Addresses.GameStatus) == (short)GameStatus.InGame)
@@ -293,6 +480,122 @@ namespace S3AP
                         break;
                 }
             }
+        }
+        private static void StartSpyroGame(object source, ElapsedEventArgs e)
+        {
+            if (!Helpers.IsInGame())
+            {
+                Log.Logger.Information("Player is not yet in game.");
+                return;
+            }
+            MoneybagsOptions moneybagsOption = (MoneybagsOptions)int.Parse(Client.Options?.GetValueOrDefault("moneybags_settings", "0").ToString());
+            if (moneybagsOption != MoneybagsOptions.Vanilla)
+            {
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.SheilaUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.SheilaUnlock, 65536);
+                    Memory.WriteByte(Addresses.SheilaCutscene, 1);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.SgtByrdUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.SgtByrdUnlock, 65536);
+                    Memory.WriteByte(Addresses.ByrdCutscene, 1);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.BentleyUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.BentleyUnlock, 65536);
+                    Memory.WriteByte(Addresses.BentleyCutscene, 1);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.Agent9Unlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.Agent9Unlock, 65536);
+                    Memory.WriteByte(Addresses.Agent9Cutscene, 1);
+                }
+            }
+            if (moneybagsOption == MoneybagsOptions.Moneybagssanity)
+            {
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Cloud Spires Bellows").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.CloudBellowsUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.CloudBellowsUnlock, 65536);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.SpookyDoorUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.SpookyDoorUnlock, 65536);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Icy Peak Nancy Door").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.IcyNancyUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.IcyNancyUnlock, 65536);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Molten Crater Thieves Door").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.MoltenThievesUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.MoltenThievesUnlock, 65536);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Charmed Ridge Stairs").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.CharmedStairsUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.CharmedStairsUnlock, 65536);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Desert Ruins Door").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.DesertDoorUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.DesertDoorUnlock, 65536);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Frozen Altars Cat Hockey Door").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.FrozenHockeyUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.FrozenHockeyUnlock, 65536);
+                }
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Crystal Islands Bridge").Count() ?? 0) == 0)
+                {
+                    Memory.Write(Addresses.CrystalBridgeUnlock, 20001);
+                }
+                else
+                {
+                    Memory.Write(Addresses.CrystalBridgeUnlock, 65536);
+                }
+            }
+            loadGameTimer.Enabled = false;
         }
         private static void CheckGoalCondition()
         {
@@ -412,19 +715,40 @@ namespace S3AP
 
         private void Client_MessageReceived(object? sender, Archipelago.Core.Models.MessageReceivedEventArgs e)
         {
-            if (e.Message.Parts.Any(x => x.Text == "[Hint]: "))
+            // If the player requests it, don't show "found" hints in the main client.
+            if (e.Message.Parts.Any(x => x.Text == "[Hint]: ") && (!useQuietHints || !e.Message.Parts.Any(x => x.Text.Trim() == "(found)")))
             {
                 LogHint(e.Message);
             }
-            Log.Logger.Information(JsonConvert.SerializeObject(e.Message));
+            if (!e.Message.Parts.Any(x => x.Text == "[Hint]: ") || !useQuietHints || !e.Message.Parts.Any(x => x.Text.Trim() == "(found)"))
+            {
+                Log.Logger.Information(JsonConvert.SerializeObject(e.Message));
+            }
         }
         private static void LogHint(LogMessage message)
         {
             var newMessage = message.Parts.Select(x => x.Text);
 
-            if (Context.HintList.Any(x => x.TextSpans.Select(y => y.Text) == newMessage))
+            foreach (var hint in Context.HintList)
             {
-                return; //Hint already in list
+                IEnumerable<string> hintText = hint.TextSpans.Select(y => y.Text);
+                if (newMessage.Count() != hintText.Count())
+                {
+                    continue;
+                }
+                bool isMatch = true;
+                for (int i = 0; i < hintText.Count(); i++)
+                {
+                    if (newMessage.ElementAt(i) != hintText.ElementAt(i))
+                    {
+                        isMatch = false;
+                        break;
+                    }
+                }
+                if (isMatch)
+                {
+                    return; //Hint already in list
+                }
             }
             List<TextSpan> spans = new List<TextSpan>();
             foreach (var part in message.Parts)
@@ -461,119 +785,44 @@ namespace S3AP
         {
             Log.Logger.Information("Connected to Archipelago");
             Log.Logger.Information($"Playing {Client.CurrentSession.ConnectionInfo.Game} as {Client.CurrentSession.Players.GetPlayerName(Client.CurrentSession.ConnectionInfo.Slot)}");
-            // Note: The player must be in game for this to work.
-            MoneybagsOptions moneybagsOption = (MoneybagsOptions)int.Parse(Client.Options?.GetValueOrDefault("moneybags_settings", "0").ToString());
-            if (moneybagsOption != MoneybagsOptions.Vanilla)
-            {
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.SheilaUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.SheilaUnlock, 65536);
-                    Memory.WriteByte(Addresses.SheilaCutscene, 1);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.SgtByrdUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.SgtByrdUnlock, 65536);
-                    Memory.WriteByte(Addresses.ByrdCutscene, 1);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.BentleyUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.BentleyUnlock, 65536);
-                    Memory.WriteByte(Addresses.BentleyCutscene, 1);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.Agent9Unlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.Agent9Unlock, 65536);
-                    Memory.WriteByte(Addresses.Agent9Cutscene, 1);
-                }
-            }
-            if (moneybagsOption == MoneybagsOptions.Moneybagssanity)
-            {
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Cloud Spires Bellows").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.CloudBellowsUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.CloudBellowsUnlock, 65536);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.SpookyDoorUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.SpookyDoorUnlock, 65536);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Icy Peak Nancy Door").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.IcyNancyUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.IcyNancyUnlock, 65536);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Molten Crater Thieves Door").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.MoltenThievesUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.MoltenThievesUnlock, 65536);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Charmed Ridge Stairs").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.CharmedStairsUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.CharmedStairsUnlock, 65536);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Desert Ruins Door").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.DesertDoorUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.DesertDoorUnlock, 65536);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Frozen Altars Cat Hockey Door").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.FrozenHockeyUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.FrozenHockeyUnlock, 65536);
-                }
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Crystal Islands Bridge").Count() ?? 0) == 0)
-                {
-                    Memory.Write(Addresses.CrystalBridgeUnlock, 20001);
-                }
-                else
-                {
-                    Memory.Write(Addresses.CrystalBridgeUnlock, 65536);
-                }
-            }
+
+            loadGameTimer = new System.Timers.Timer();
+            loadGameTimer.Elapsed += new ElapsedEventHandler(StartSpyroGame);
+            loadGameTimer.Interval = 5000;
+            loadGameTimer.Enabled = true;
 
             System.Timers.Timer cosmeticsTimer = new System.Timers.Timer();
             cosmeticsTimer.Elapsed += new ElapsedEventHandler(HandleCosmeticQueue);
             cosmeticsTimer.Interval = 5000;
             cosmeticsTimer.Enabled = true;
+
+            string[] easyModeOptions = [
+                "easy_skateboarding",
+                "easy_boxing",
+                "easy_sheila_bombing",
+                "easy_tanks",
+                "easy_subs",
+                "easy_bluto",
+                "easy_sleepyhead",
+                "easy_shark_riders",
+                "easy_whackamole",
+                "easy_tunnels"
+            ];
+            foreach (string optionName in easyModeOptions)
+            {
+                int isOptionOn = int.Parse(Client.Options?.GetValueOrDefault(optionName, "0").ToString());
+                if (isOptionOn != 0)
+                {
+                    easyChallenges.Add(optionName);
+                }
+            }
+            if (easyChallenges.Count > 0)
+            {
+                System.Timers.Timer minigamesTimer = new System.Timers.Timer();
+                minigamesTimer.Elapsed += new ElapsedEventHandler(HandleMinigames);
+                minigamesTimer.Interval = 100;
+                minigamesTimer.Enabled = true;
+            }
 
             ProgressiveSparxHealthOptions sparxOption = (ProgressiveSparxHealthOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_progressive_sparx_health", "0").ToString());
             if (sparxOption != ProgressiveSparxHealthOptions.Off)
@@ -592,13 +841,26 @@ namespace S3AP
                 sparxTimer.Interval = 500;
                 sparxTimer.Enabled = true;
             }
+
+            // Repopulate hint list.  There is likely a better way to do this using the Get network protocol
+            // with keys=[$"hints_{team}_{slot}"].
+            Client?.SendMessage("!hint");
         }
 
         private static void OnDisconnected(object sender, EventArgs args)
         {
             Log.Logger.Information("Disconnected from Archipelago");
-            // Avoid queued cosmetic effects impacting another game.
+            // Avoid ongoing timers affecting a new game.
+            if (loadGameTimer != null)
+            {
+                loadGameTimer.Enabled = false;
+            }
             CosmeticEffects = new Queue<string>();
+            if (sparxTimer != null)
+            {
+                sparxTimer.Enabled = false;
+            }
+            easyChallenges = new List<string>();
         }
         protected override Microsoft.Maui.Controls.Window CreateWindow(IActivationState activationState)
         {
