@@ -241,7 +241,7 @@ class Spyro3World(World):
                         (self.options.goal.value in [GoalOptions.ALL_SKILLPOINTS, GoalOptions.EPILOGUE] and location.category == Spyro3LocationCategory.SKILLPOINT_GOAL) or \
                         (self.options.goal.value in [GoalOptions.SORCERESS_ONE, GoalOptions.EPILOGUE] and location.name == "Sorceress's Lair: Defeat the Sorceress? (George)") or \
                         (self.options.goal.value == GoalOptions.EGG_FOR_SALE and location.name == "Midnight Mountain Home: Egg for sale. (Al)") or \
-                        (self.options.goal.value == GoalOptions.SORCERESS_TWO and location.name == "Super Bonus Round: Woo, a secret egg. (Yin Yang)"): #or \
+                        (self.options.goal.value == GoalOptions.SORCERESS_TWO and location.name == "Super Bonus Round: Woo, a secret egg. (Yin Yang)"):
                     #print(f"Adding vanilla item/event {location.default_item_name} to {location.name}")
                     item = self.create_item(location.default_item_name)
                     self.multiworld.get_location(location.name, self.player).place_locked_item(item)
