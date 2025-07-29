@@ -85,7 +85,11 @@
         public const uint SeashellHoverZoeAddress = 0x0018a931;
         public const uint SheilaControlsZoeAddress = 0x0016796d;
 
-        // Something is wrong about these assumptions.
+        public const uint SheilaCutscene = 0x007166A;
+        public const uint ByrdCutscene = 0x0071661;
+        public const uint BentleyCutscene = 0x0071662;
+        public const uint Agent9Cutscene = 0x007165e;
+
         public const uint SunrisePondLifeBottleAddress = 0x0018fb96;
         public const uint SunriseSheilaLifeBottleAddress = 0x0018d3b6;
         public const uint SunnyFirstLifeBottleAddress = 0x00190812;

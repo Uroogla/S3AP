@@ -172,7 +172,7 @@ namespace S3AP
                     UnlockMoneybags(Addresses.SpookyDoorUnlock);
                     break;
                 case "Moneybags Unlock - Sheila":
-                    UnlockMoneybags(Addresses.SheilaUnlock);
+                    UnlockMoneybags(Addresses.SheilaUnlock, Addresses.SheilaCutscene);
                     break;
                 case "Moneybags Unlock - Icy Peak Nancy Door":
                     UnlockMoneybags(Addresses.IcyNancyUnlock);
@@ -184,16 +184,16 @@ namespace S3AP
                     UnlockMoneybags(Addresses.CharmedStairsUnlock);
                     break;
                 case "Moneybags Unlock - Sgt. Byrd":
-                    UnlockMoneybags(Addresses.SgtByrdUnlock);
+                    UnlockMoneybags(Addresses.SgtByrdUnlock, Addresses.ByrdCutscene);
                     break;
                 case "Moneybags Unlock - Bentley":
-                    UnlockMoneybags(Addresses.BentleyUnlock);
+                    UnlockMoneybags(Addresses.BentleyUnlock, Addresses.BentleyCutscene);
                     break;
                 case "Moneybags Unlock - Desert Ruins Door":
                     UnlockMoneybags(Addresses.DesertDoorUnlock);
                     break;
                 case "Moneybags Unlock - Agent 9":
-                    UnlockMoneybags(Addresses.Agent9Unlock);
+                    UnlockMoneybags(Addresses.Agent9Unlock, Addresses.Agent9Cutscene);
                     break;
                 case "Moneybags Unlock - Frozen Altars Cat Hockey Door":
                     UnlockMoneybags(Addresses.FrozenHockeyUnlock);
@@ -262,7 +262,7 @@ namespace S3AP
         {
             // Avoid overwhelming the game when many cosmetic effects are received at once by processing only 1
             // every 5 seconds.  This also lets the user see effects when logging in asynchronously.
-            if (CosmeticEffects.Count > 0)
+            if (CosmeticEffects.Count > 0 && Memory.ReadShort(Addresses.GameStatus) == (short)GameStatus.InGame)
             {
                 string effect = CosmeticEffects.Dequeue();
                 switch (effect)
@@ -383,8 +383,13 @@ namespace S3AP
                 Memory.Write(Addresses.InvincibilityDurationAddress, (short)seconds);
             });
         }
-        private static async void UnlockMoneybags(uint address)
+        private static async void UnlockMoneybags(uint address, uint cutsceneTriggerAddress = 0x00)
         {
+            // Flag the cutscene as completed to avoid issues with warping softlocks.
+            if (cutsceneTriggerAddress != 0x00)
+            {
+                Memory.WriteByte(cutsceneTriggerAddress, 1);
+            }
             // Flag the check as paid for, and set the price to 0.  Otherwise, we'll get back too many gems during the chase.
             Memory.Write(address, 65536);
             Log.Logger.Information("If you are in the same zone as Moneybags, you can talk to him to complete the unlock for free.");
@@ -467,10 +472,12 @@ namespace S3AP
                 else
                 {
                     Memory.Write(Addresses.SheilaUnlock, 65536);
+                    Memory.WriteByte(Addresses.SheilaCutscene, 1);
                 }
                 if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
                 {
                     Memory.Write(Addresses.SgtByrdUnlock, 20001);
+                    Memory.WriteByte(Addresses.ByrdCutscene, 1);
                 }
                 else
                 {
@@ -479,6 +486,7 @@ namespace S3AP
                 if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
                 {
                     Memory.Write(Addresses.BentleyUnlock, 20001);
+                    Memory.WriteByte(Addresses.BentleyCutscene, 1);
                 }
                 else
                 {
@@ -487,6 +495,7 @@ namespace S3AP
                 if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
                 {
                     Memory.Write(Addresses.Agent9Unlock, 20001);
+                    Memory.WriteByte(Addresses.Agent9Cutscene, 1);
                 }
                 else
                 {
