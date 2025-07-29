@@ -477,29 +477,29 @@ namespace S3AP
                 if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
                 {
                     Memory.Write(Addresses.SgtByrdUnlock, 20001);
-                    Memory.WriteByte(Addresses.ByrdCutscene, 1);
                 }
                 else
                 {
                     Memory.Write(Addresses.SgtByrdUnlock, 65536);
+                    Memory.WriteByte(Addresses.ByrdCutscene, 1);
                 }
                 if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
                 {
                     Memory.Write(Addresses.BentleyUnlock, 20001);
-                    Memory.WriteByte(Addresses.BentleyCutscene, 1);
                 }
                 else
                 {
                     Memory.Write(Addresses.BentleyUnlock, 65536);
+                    Memory.WriteByte(Addresses.BentleyCutscene, 1);
                 }
                 if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
                 {
                     Memory.Write(Addresses.Agent9Unlock, 20001);
-                    Memory.WriteByte(Addresses.Agent9Cutscene, 1);
                 }
                 else
                 {
                     Memory.Write(Addresses.Agent9Unlock, 65536);
+                    Memory.WriteByte(Addresses.Agent9Cutscene, 1);
                 }
             }
             if (moneybagsOption == MoneybagsOptions.Moneybagssanity)
