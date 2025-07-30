@@ -129,7 +129,7 @@ namespace S3AP
                         await Task.Delay(3000);
                         currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
                         // Going too high creates too many particles for the game to handle.
-                        Memory.Write(Addresses.PlayerHealth, (byte)(Math.Min(4, currentHealth + 1)));
+                        Memory.WriteByte(Addresses.PlayerHealth, (byte)(Math.Min(4, currentHealth + 1)));
                     });
                     break;
                 case "Damage Sparx Trap":
@@ -138,7 +138,7 @@ namespace S3AP
                     {
                         await Task.Delay(3000);
                         currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
-                        Memory.Write(Addresses.PlayerHealth, Byte.Max((byte)(currentHealth - 1), 0));
+                        Memory.WriteByte(Addresses.PlayerHealth, (byte)(Math.Max(currentHealth - 1, 0)));
                     });
                     break;
                 case "Sparxless Trap":
@@ -146,7 +146,7 @@ namespace S3AP
                     await Task.Run(async () =>
                     {
                         await Task.Delay(3000);
-                        Memory.Write(Addresses.PlayerHealth, (byte)(0));
+                        Memory.WriteByte(Addresses.PlayerHealth, (byte)(0));
                     });
                     break;
                 case "Big Head Mode":
@@ -354,16 +354,16 @@ namespace S3AP
         }
         private static async void ActivateBigHeadMode()
         {
-            Memory.Write(Addresses.SpyroHeight, (byte)(32));
-            Memory.Write(Addresses.SpyroLength, (byte)(32));
-            Memory.Write(Addresses.SpyroWidth, (byte)(32));
+            Memory.WriteByte(Addresses.SpyroHeight, (byte)(32));
+            Memory.WriteByte(Addresses.SpyroLength, (byte)(32));
+            Memory.WriteByte(Addresses.SpyroWidth, (byte)(32));
             Memory.Write(Addresses.BigHeadMode, (short)(1));
         }
         private static async void ActivateFlatSpyroMode()
         {
-            Memory.Write(Addresses.SpyroHeight, (byte)(16));
-            Memory.Write(Addresses.SpyroLength, (byte)(16));
-            Memory.Write(Addresses.SpyroWidth, (byte)(2));
+            Memory.WriteByte(Addresses.SpyroHeight, (byte)(16));
+            Memory.WriteByte(Addresses.SpyroLength, (byte)(16));
+            Memory.WriteByte(Addresses.SpyroWidth, (byte)(2));
             Memory.Write(Addresses.BigHeadMode, (short)(256));
         }
         private static async void TurnSpyroColor(SpyroColor colorEnum)
