@@ -2,6 +2,7 @@ from enum import IntEnum
 from typing import NamedTuple
 from BaseClasses import Item
 from .Options import MoneybagsOptions, SparxUpgradeOptions
+from Options import OptionError
 
 
 class Spyro3ItemCategory(IntEnum):
@@ -165,7 +166,7 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
 
 
     if remaining_count < 0:
-        raise Exception(f"The options you have selected require at least {remaining_count * -1} more checks to be enabled.")
+        raise OptionError(f"The options you have selected require at least {remaining_count * -1} more checks to be enabled.")
 
     # Build a weighted list of allowed filler items.  Make changing Spyro's color in general the same weight as other items.
     allowed_filler_items = []
@@ -193,9 +194,9 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
             allowed_trap_items.append(item)
 
     if remaining_count > 0 and options.trap_filler_percent.value > 0 and len(allowed_trap_items) == 0:
-        raise Exception(f"Trap percentage is set to {options.trap_filler_percent.value}, but none have been turned on.")
+        raise OptionError(f"Trap percentage is set to {options.trap_filler_percent.value}, but none have been turned on.")
     if remaining_count > 0 and options.trap_filler_percent.value < 100 and len(allowed_misc_items) == 0:
-        raise Exception(f"{100 - options.trap_filler_percent.value} percent of filler items are meant to be non-traps, but no non-trap items have been turned on.")
+        raise OptionError(f"{100 - options.trap_filler_percent.value} percent of filler items are meant to be non-traps, but no non-trap items have been turned on.")
 
     # Get the correct blend of traps and filler items.
     for i in range(remaining_count):
