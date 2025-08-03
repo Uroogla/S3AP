@@ -151,14 +151,11 @@ stages:
           
           # Set version for later tasks
           Write-Host "##vso[task.setvariable variable=newVersion;isOutput=true]$newVersion"
-
-    - task: VSBuild@1
+    - task: DotNetCoreCLI@2
       inputs:
-        solution: '$(solution)'
-        platform: '$(buildPlatform)'
-        configuration: '$(buildConfiguration)'
-        msbuildArgs: "/t:$(projectName).Desktop;Rebuild"
-
+        command: 'build'
+        projects: '$(project)'
+        arguments: '--configuration $(buildConfiguration) --verbosity normal /p:Platform="$(buildPlatform)"'
     - task: PowerShell@2
       name: CommitVersionUpdate
       condition: ne('${{ parameters.versionIncrement }}', 'none')
