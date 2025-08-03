@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <!--If you are willing to use Windows/MacOS native APIs you will need to create 3 projects.
@@ -9,30 +9,26 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-
     <!-- Display name -->
     <ApplicationTitle>S3AP</ApplicationTitle>
     <!-- App Identifier -->
     <ApplicationId>com.arsonassassin.s3ap</ApplicationId>
     <!-- Versions -->
-    <ApplicationDisplayVersion>0.3.0</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>0.3.1</ApplicationDisplayVersion>
     <ApplicationVersion>0.3.0</ApplicationVersion>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <!-- Single File Publishing Properties -->
     <PublishSingleFile>true</PublishSingleFile>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <SelfContained>true</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-
     <!-- Windows specific settings -->
     <UseWindowsForms>false</UseWindowsForms>
     <UseWPF>false</UseWPF>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\S3AP\S3AP.csproj" />
   </ItemGroup>
