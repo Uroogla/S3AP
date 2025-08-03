@@ -55,7 +55,7 @@ stages:
         script: |
           # Remove __pycache__ directories
           Get-ChildItem -Path "$(sourcePath)/$projectName" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
-          Get-ChildItem -Path "$(sourcePath)/$(projectName).Desktop" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
+          Get-ChildItem -Path "$(sourcePath)/$projectName.Desktop" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
           
           # Create zip file
           $projectName = "$(FindSourceDirectory.folderName)"
