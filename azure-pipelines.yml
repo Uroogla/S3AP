@@ -36,6 +36,7 @@ stages:
         targetType: 'inline'
         script: |
           $slnFile = Get-ChildItem -Path "$(Build.SourcesDirectory)/source" -Filter "*.sln" -Recurse | Select-Object -First 1
+          Write-Host "Solution name: $slnFile"
           $projectName = [System.IO.Path]::GetFileNameWithoutExtension($slnFile.Name)
           Write-Host "Project name: $projectName"
           Write-Host "##vso[task.setvariable variable=projectName]$projectName"
