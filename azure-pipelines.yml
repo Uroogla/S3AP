@@ -227,7 +227,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          $publishDir = "$projectName.Desktop/bin/release/net8.0/win-x64/publish"
+          $publishDir = "$(projectName).Desktop/bin/release/net8.0/win-x64/publish"
           Write-Host "Enumerating files in $(Build.SourcesDirectory)/source/$publishDir"
           Get-Childitem -Path "$(Build.SourcesDirectory)/source" -Recurse | ForEach-Object { Write-Host $_.FullName }
           $files = Get-ChildItem -Path "$(Build.SourcesDirectory)/source/$publishDir" -Include "*.exe", "*.pdb" -Recurse
