@@ -63,21 +63,21 @@ stages:
         targetType: 'inline'
         script: |
           # Remove __pycache__ directories
-          Get-ChildItem -Path "$(sourcePath)/$projectName" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
-          Get-ChildItem -Path "$(sourcePath)/$projectName.Desktop" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
+          Get-ChildItem -Path "$(sourcePath)/$(projectName)" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
+          Get-ChildItem -Path "$(sourcePath)/$(projectName).Desktop" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
           
           # Create zip file
-          $tempZipPath = "$(Build.ArtifactStagingDirectory)/$projectName.zip"
-          $finalPath = "$(Build.ArtifactStagingDirectory)/$projectName.apworld"
+          $tempZipPath = "$(Build.ArtifactStagingDirectory)/$(projectName).zip"
+          $finalPath = "$(Build.ArtifactStagingDirectory)/$(projectName).apworld"
           
           # Create the zip file first
           #DO NOT USE powershell adds incorrect slashes for linux filesystems
           ##Compress-Archive -Path "$(sourcePath)" -DestinationPath $tempZipPath
           Write-Host "TempZipPath: $tempZipPath"
-          Write-Host "projectName: $projectName"
+          Write-Host "projectName: $(projectName)"
           Write-Host "sourcePath: $(sourcePath)"
 
-          tar -v -a -c -f $tempZipPath -C "$(Build.SourcesDirectory)/apworld" "$projectName"
+          tar -v -a -c -f $tempZipPath -C "$(Build.SourcesDirectory)/apworld" "$(projectName)"
           Write-Host "##vso[task.setvariable variable=projectName]$projectName"
           # Rename to .apworld
           Move-Item -Path $tempZipPath -Destination $finalPath -Force
@@ -99,7 +99,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          Write-Host "Searching in: $(Build.SourcesDirectory)\source\$projectName.Desktop"
+          Write-Host "Searching in: $(Build.SourcesDirectory)\source\$(projectName).Desktop"
           $csprojPath = Get-ChildItem -Path "$(Build.SourcesDirectory)\source" -Filter "*.csproj" -Recurse | Select-Object -First 1
           
           if ($null -eq $csprojPath) {
@@ -159,7 +159,7 @@ stages:
         solution: '$(solution)'
         platform: '$(buildPlatform)'
         configuration: '$(buildConfiguration)'
-        msbuildArgs: "/t:$projectName.Desktop;Rebuild"
+        msbuildArgs: "/t:$(projectName).Desktop;Rebuild"
 
     - task: PowerShell@2
       name: CommitVersionUpdate
