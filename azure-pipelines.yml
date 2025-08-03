@@ -18,7 +18,7 @@ parameters:
     default: false
 
 variables:
-  solution: '**/source/S3AP.sln'
+  solution: '**/source/S3AP/S3AP.sln'
   project: '**/source/S3AP.Desktop.csproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
@@ -55,6 +55,7 @@ stages:
         script: |
           # Remove __pycache__ directories
           Get-ChildItem -Path "$(sourcePath)/$projectName" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
+          Get-ChildItem -Path "$(sourcePath)/$(projectName).Desktop" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
           
           # Create zip file
           $projectName = "$(FindSourceDirectory.folderName)"
@@ -233,7 +234,7 @@ stages:
       inputs:
         targetType: 'inline'
         script: |
-          $publishDir = "S3AP.Desktop/bin/release/net8.0/win-x64/publish"
+          $publishDir = "$projectName.Desktop/bin/release/net8.0/win-x64/publish"
           Write-Host "Enumerating files in $(Build.SourcesDirectory)/source/$publishDir"
           Get-Childitem -Path "$(Build.SourcesDirectory)/source" -Recurse | ForEach-Object { Write-Host $_.FullName }
           $files = Get-ChildItem -Path "$(Build.SourcesDirectory)/source/$publishDir" -Include "*.exe", "*.pdb" -Recurse
