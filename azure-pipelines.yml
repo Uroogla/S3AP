@@ -19,7 +19,7 @@ parameters:
 
 variables:
   solution: '**/source/S3AP/S3AP.sln'
-  project: '**/source/S3AP.Desktop.csproj'
+  project: '**/source/S3AP.Desktop/S3AP.Desktop.csproj'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
