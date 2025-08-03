@@ -63,22 +63,20 @@ stages:
         targetType: 'inline'
         script: |
           # Remove __pycache__ directories
-          Get-ChildItem -Path "$(sourcePath)/$(projectName)" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
-          Get-ChildItem -Path "$(sourcePath)/$(projectName).Desktop" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
+          Get-ChildItem -Path "$(sourcePath)/$(folderName)" -Filter "__pycache__" -Recurse | Remove-Item -Force -Recurse
           
           # Create zip file
-          $tempZipPath = "$(Build.ArtifactStagingDirectory)/$(projectName).zip"
-          $finalPath = "$(Build.ArtifactStagingDirectory)/$(projectName).apworld"
+          $tempZipPath = "$(Build.ArtifactStagingDirectory)/$(folderName).zip"
+          $finalPath = "$(Build.ArtifactStagingDirectory)/$(folderName).apworld"
           
           # Create the zip file first
           #DO NOT USE powershell adds incorrect slashes for linux filesystems
           ##Compress-Archive -Path "$(sourcePath)" -DestinationPath $tempZipPath
           Write-Host "TempZipPath: $tempZipPath"
-          Write-Host "projectName: $(projectName)"
+          Write-Host "folderName: $(folderName)"
           Write-Host "sourcePath: $(sourcePath)"
 
-          tar -v -a -c -f $tempZipPath -C "$(Build.SourcesDirectory)/apworld" "$(projectName)"
-          Write-Host "##vso[task.setvariable variable=projectName]$projectName"
+          tar -v -a -c -f $tempZipPath -C "$(Build.SourcesDirectory)/apworld" "$(folderName)"
           # Rename to .apworld
           Move-Item -Path $tempZipPath -Destination $finalPath -Force
           
