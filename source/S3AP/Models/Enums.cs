@@ -61,5 +61,50 @@
             EggForSale = 1257005,
             SuperBonusRoundEgg = 1266000
         }
+
+        public enum LevelInGameIDs : byte
+        {
+            SunriseSpring = 10,
+            SunnyVilla = 11,
+            CloudSpires = 12,
+            MoltenCrater = 13,
+            SeashellShore = 14,
+            MushroomSpeedway = 15,
+            SheilasAlp = 16,
+            BuzzsDungeon = 17,
+            CrawdadFarm = 18,
+            // 19 is skipped
+            MiddayGardens = 20,
+            IcyPeak = 21,
+            EnchantedTowers = 22,
+            SpookySwamp = 23,
+            BambooTerrace = 24,
+            CountrySpeedway = 25,
+            SgtByrdsBase = 26,
+            SpikesArena = 27,
+            SpiderTown = 28,
+            // 29 is skipped
+            EveningLake = 30,
+            FrozenAltars = 31,
+            LostFleet = 32,
+            FireworksFactory = 33,
+            CharmedRidge = 34,
+            HoneySpeedway = 35,
+            BentleysOutpost = 36,
+            ScorchsPit = 37,
+            StarfishReef = 38,
+            // 39 is skipped
+            MidnightMountain = 40,
+            CrystalIslands = 41,
+            DesertRuins = 42,
+            HauntedTomb = 43,
+            DinoMines = 44,
+            HarborSpeedway = 45,
+            Agent9sLab = 46,
+            SorceressLair = 47,
+            BugbotFactory = 48,
+            // 49 is skipped
+            SuperBonusRound = 50
+        }
     }
 }

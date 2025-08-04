@@ -26,7 +26,7 @@ hint_location_names = [
 ]
 
 
-def generateHints(multiworld, player_slot, number_of_hints):
+def generateHints(player_slot, number_of_hints, s3_world):
     hints = {}
     location_hints = []
     progression_hints = []
@@ -63,13 +63,17 @@ def generateHints(multiworld, player_slot, number_of_hints):
         "Zoe says that the maximum flying speed is different in each speedway."
     ]
 
-    for location in multiworld.get_filled_locations():
+    for location in s3_world.multiworld.get_filled_locations():
         if location.player == player_slot:
             # we are the sender of the location check
             if location.name in hint_location_names:
                 location_hints.append((f"Zoe says that '{location.name}' contains a {location.item.name} for player {location.item.player}", location.address))
-            # Remove progression events, since "Sunny Villa Complete: Sunny Villa Complete" is not a helpful (or valid) hint.
-            elif location.item.classification == ItemClassification.progression and 'Complete' not in location.item.name and 'Defeated' not in location.item.name:
+            # Remove progression events and fixed goal items, since "Sunny Villa Complete: Sunny Villa Complete"
+            # is not a helpful (or valid) hint.
+            elif location.item.classification == ItemClassification.progression and \
+                    'Complete' not in location.item.name and \
+                    'Defeated' not in location.item.name and \
+                    location.item.name != 'Skill Point':
                 progression_hints.append((f"Zoe says that '{location.name}' contains a {location.item.name} for player {location.item.player}", location.address))
 
     # Generate 3 types of hints - hints around difficult/slow/annoying checks, hints around progression items, and joke hints.
@@ -77,11 +81,11 @@ def generateHints(multiworld, player_slot, number_of_hints):
     # If number_of_hints is 11, the distribution is always 4-4-3.
     # In the future, we may consider rebalancing or allowing players to change the distribution, as in Ocarina of Time.
     for i in range(int(number_of_hints / 3)):
-        location_hint = multiworld.per_slot_randoms[player_slot].choice(location_hints)
+        location_hint = s3_world.random.choice(location_hints)
         location_hints.remove(location_hint)
-        progression_hint = multiworld.per_slot_randoms[player_slot].choice(progression_hints)
+        progression_hint = s3_world.random.choice(progression_hints)
         progression_hints.remove(progression_hint)
-        joke_hint = multiworld.per_slot_randoms[player_slot].choice(joke_hints)
+        joke_hint = s3_world.random.choice(joke_hints)
         joke_hints.remove(joke_hint)
         # The client expects each hint to have 2 parts - text to display, plus the ID of the location to
         # generate a free hint for (or -1 if no hint is needed)
@@ -93,12 +97,12 @@ def generateHints(multiworld, player_slot, number_of_hints):
         hints[f"Hint {3 * i + 3} ID"] = "-1"
 
     if number_of_hints % 3 != 0:
-        location_hint = multiworld.per_slot_randoms[player_slot].choice(location_hints)
+        location_hint = s3_world.random.choice(location_hints)
         location_hints.remove(location_hint)
         hints[f"Hint {int(number_of_hints / 3) * 3 + 1} Text"] = location_hint[0]
         hints[f"Hint {int(number_of_hints / 3) * 3 + 1} ID"] = f"{location_hint[1]}"
     if number_of_hints % 3 == 2:
-        progression_hint = multiworld.per_slot_randoms[player_slot].choice(progression_hints)
+        progression_hint = s3_world.random.choice(progression_hints)
         progression_hints.remove(progression_hint)
         hints[f"Hint {int(number_of_hints / 3) * 3 + 2} Text"] = progression_hint[0]
         hints[f"Hint {int(number_of_hints / 3) * 3 + 2} ID"] = f"{progression_hint[1]}"
