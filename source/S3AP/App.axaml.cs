@@ -178,7 +178,7 @@ public partial class App : Application
 
     private async void ItemReceived(object? o, ItemReceivedEventArgs args)
     {
-        Log.Logger.Information($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
+        Log.Logger.Debug($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
         int currentHealth;
         switch (args.Item.Name)
         {
@@ -875,8 +875,8 @@ public partial class App : Application
         // Not supported at this time.
         /*var messageToLog = new LogListItem(new List<TextSpan>()
             {
-                new TextSpan(){Text = $"[{item.Id.ToString()}] -", TextColor = IBrush.FromRgb(255, 255, 255)},
-                new TextSpan(){Text = $"{item.Name}", TextColor = .FromRgb(200, 255, 200)}
+                new TextSpan(){Text = $"[{item.Id.ToString()}] -", TextColor = new SolidColorBrush(Color.FromRgb(255, 255, 255))},
+                new TextSpan(){Text = $"{item.Name}", TextColor = new SolidColorBrush(Color.FromRgb(200, 255, 200))}
             });
         lock (_lockObject)
         {
