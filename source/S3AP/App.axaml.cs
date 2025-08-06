@@ -927,7 +927,10 @@ public partial class App : Application
         List<TextSpan> spans = new List<TextSpan>();
         foreach (var part in message.Parts)
         {
-            spans.Add(new TextSpan() { Text = part.Text, TextColor = new SolidColorBrush(Color.FromRgb(part.Color.R, part.Color.G, part.Color.B)) });
+            RxApp.MainThreadScheduler.Schedule(() =>
+            {
+                spans.Add(new TextSpan() { Text = part.Text, TextColor = new SolidColorBrush(Color.FromRgb(part.Color.R, part.Color.G, part.Color.B)) });
+            });
         }
         lock (_lockObject)
         {
