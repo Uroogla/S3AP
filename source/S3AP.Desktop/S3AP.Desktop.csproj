@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <!--If you are willing to use Windows/MacOS native APIs you will need to create 3 projects.
@@ -14,9 +14,9 @@
     <!-- App Identifier -->
     <ApplicationId>com.arsonassassin.s3ap</ApplicationId>
     <!-- Versions -->
-    <ApplicationDisplayVersion>0.5.2</ApplicationDisplayVersion>
+    <ApplicationDisplayVersion>1.0.0</ApplicationDisplayVersion>
     <ApplicationVersion>0.5.2</ApplicationVersion>
-    <Version>0.5.2</Version>
+    <Version>1.0.0</Version>
     <!-- Single File Publishing Properties -->
     <PublishSingleFile>true</PublishSingleFile>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
