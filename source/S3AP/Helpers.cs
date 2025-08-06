@@ -126,7 +126,7 @@ namespace S3AP
                     processedEggs++;
                     locationOffset++;
                 }
-                if (!level.IsHomeworld && !level.IsBoss)
+                if (!level.IsHomeworld && !level.IsBoss && !level.Name.Contains("Speedway"))
                 {
                     // Level Completed (first egg)
                     Location location = new Location()
@@ -265,43 +265,70 @@ namespace S3AP
                 }
                 for (int i = 0; i < level.ZoeHintAddresses.Length; i++)
                 {
-                    Location hintLocation = new Location()
+                    // The current level variable starts at 10 and skips 19, 29, 39, and 49.
+                    // Convert our internal IDs to this system.
+                    int currentLevelID = 9 + level.LevelId + ((level.LevelId - 1) / 9);
+                    List<ILocation> conditionsList = new List<ILocation>();
+                    Location memoryLocation = new Location()
                     {
                         Name = $"Hint {hintID}",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        Id = -1,
                         CheckType = LocationCheckType.Byte,
                         Address = level.ZoeHintAddresses[i],
                         CompareType = LocationCheckCompareType.Match,
-                        CheckValue = "7",
+                        CheckValue = "7"
+                    };
+                    Location levelLocation = new Location()
+                    {
+                        Name = $"Hint {hintID} level check",
+                        Id = -1,
+                        CheckType = LocationCheckType.Byte,
+                        Address = Addresses.CurrentLevelAddress,
+                        CompareType = LocationCheckCompareType.Match,
+                        CheckValue = $"{currentLevelID}",
+                    };
+                    Location sublevelLocation = new Location()
+                    {
+                        Name = $"Hint {hintID} sublevel check",
+                        Id = -1,
+                        CheckType = LocationCheckType.Byte,
+                        Address = Addresses.CurrentSubareaAddress,
+                        CompareType = LocationCheckCompareType.Match,
+                        CheckValue = "0",
+                    };
+                    Location gameStateLocation = new Location()
+                    {
+                        Name = $"Hint {hintID} state check",
+                        Id = -1,
+                        CheckType = LocationCheckType.Byte,
+                        Address = Addresses.GameStatus,
+                        CompareType = LocationCheckCompareType.Match,
+                        CheckValue = $"{(int)GameStatus.Talking}"
+                    };
+                    conditionsList.Add(memoryLocation);
+                    conditionsList.Add(levelLocation);
+                    conditionsList.Add(sublevelLocation);
+                    conditionsList.Add(gameStateLocation);
+
+                    CompositeLocation hintLocation = new CompositeLocation()
+                    {
+                        Name = $"Hint {hintID}",
+                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
+                        CheckType = LocationCheckType.AND,
+                        Conditions = conditionsList,
                         Category = "Hint"
                     };
                     locations.Add(hintLocation);
                     locationOffset++;
                     hintID++;
                 }
-                for (int i = 0; i < level.LifeBottles.Length; i++)
-                {
-                    Location lifeBottleLocation = new Location()
-                    {
-                        Name = $"Life Bottle {lifeBottleID}",
-                        Id = baseId + (levelOffset * (level.LevelId - 1)) + locationOffset,
-                        CheckType = LocationCheckType.Byte,
-                        Address = Addresses.CloudGlideZoeAddress,
-                        CompareType = LocationCheckCompareType.Match,
-                        CheckValue = "7",
-                        Category = "Life Bottle"
-                    };
-
-                    locations.Add(lifeBottleLocation);
-                    locationOffset++;
-                    lifeBottleID++;
-                }
                 // Life bottle checks are mostly ready, but a few memory addresses are wrong still.
-                /*// Life bottle RAM gets wiped when you enter a new level, so there needs to be a
+                // Life bottle RAM gets wiped when you enter a new level, so there needs to be a
                 // complex check confirming which level you're in as well.
                 for (int i = 0; i < level.LifeBottles.Length; i++)
                 {
                     List<ILocation> conditionsList = new List<ILocation>();
+                    // 1 is flame/rocket, 2 is charge/headbash/kick, 4 is Bentley smash
                     Location bottleLocation = new Location()
                     {
                         Name = $"Life Bottle {lifeBottleID} break check",
@@ -310,7 +337,7 @@ namespace S3AP
                         Address = level.LifeBottles[i],
                         CompareType = LocationCheckCompareType.Range,
                         RangeStartValue = "1",
-                        RangeEndValue = "2"
+                        RangeEndValue = "4"
                     };
                     // The current level variable starts at 10 and skips 19, 29, 39, and 49.
                     // Convert our internal IDs to this system.
@@ -331,12 +358,32 @@ namespace S3AP
                         Id = -1,
                         CheckType = LocationCheckType.Byte,
                         Address = Addresses.GameStatus,
-                        CompareType = LocationCheckCompareType.Match,
-                        CheckValue = $"{(int)GameStatus.InGame}"
+                        CompareType = LocationCheckCompareType.Range,
+                        RangeStartValue = $"{(int)GameStatus.InGame}",
+                        RangeEndValue = $"{(int)GameStatus.Talking}"
                     };
+                    // Make sure we're in the right sub-area.
+                    int subarea = 0;
+                    if (
+                        level.LifeBottles[i] == Addresses.BambooBentleyLifeBottleAddress ||
+                        level.LifeBottles[i] == Addresses.FireworksAgentLifeBottleAddress
+                    )
+                    {
+                        subarea = 2;
+                    }
+                        Location subareaLocation = new Location()
+                        {
+                            Name = $"Life Bottle {lifeBottleID} sub-area check",
+                            Id = -1,
+                            CheckType = LocationCheckType.Byte,
+                            Address = Addresses.CurrentSubareaAddress,
+                            CompareType = LocationCheckCompareType.Match,
+                            CheckValue = $"{subarea}"
+                        };
                     conditionsList.Add(bottleLocation);
                     conditionsList.Add(levelLocation);
                     conditionsList.Add(gameStateLocation);
+                    conditionsList.Add(subareaLocation);
 
                     CompositeLocation lifeBottleLocation = new CompositeLocation()
                     {
@@ -350,7 +397,7 @@ namespace S3AP
                     locations.Add(lifeBottleLocation);
                     locationOffset++;
                     lifeBottleID++;
-                }*/
+                }
                 currentAddress++;
             }
             baseId = 1267000;

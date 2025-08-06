@@ -1,7 +1,7 @@
 from enum import IntEnum
 from typing import NamedTuple
 from BaseClasses import Item
-from .Options import MoneybagsOptions, SparxUpgradeOptions
+from .Options import MoneybagsOptions, SparxUpgradeOptions, GemsanityOptions
 from Options import OptionError
 
 
@@ -13,7 +13,11 @@ class Spyro3ItemCategory(IntEnum):
     TRAP = 4,
     SKILLPOINT_GOAL = 5,
     MONEYBAGS = 6,
-    HINT = 7
+    HINT = 7,
+    # Numbering allows for logical adding of other gem types.
+    PINK_GEM = 12,
+    SPARX_POWERUP = 13,
+    WORLD_KEY = 14
 
 
 class Spyro3ItemData(NamedTuple):
@@ -91,6 +95,11 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("(Over)heal Sparx", 1016, Spyro3ItemCategory.MISC),
     ("Progressive Sparx Health Upgrade", 1017, Spyro3ItemCategory.MISC),
     ("Skill Point", 1018, Spyro3ItemCategory.SKILLPOINT_GOAL),
+    ("Increased Sparx Range", 1019, Spyro3ItemCategory.SPARX_POWERUP),
+    ("Sparx Gem Finder", 1020, Spyro3ItemCategory.SPARX_POWERUP),
+    ("Extra Hit Point", 1021, Spyro3ItemCategory.SPARX_POWERUP),
+    ("Progressive Sparx Basket Break", 1022, Spyro3ItemCategory.SPARX_POWERUP),
+    ("World Key", 1023, Spyro3ItemCategory.WORLD_KEY),
 
     ("Moneybags Unlock - Cloud Spires Bellows", 3000, Spyro3ItemCategory.MONEYBAGS),
     ("Moneybags Unlock - Spooky Swamp Door", 3001, Spyro3ItemCategory.MONEYBAGS),
@@ -116,6 +125,26 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Hint 9", 4008, Spyro3ItemCategory.HINT),
     ("Hint 10", 4009, Spyro3ItemCategory.HINT),
     ("Hint 11", 4010, Spyro3ItemCategory.HINT),
+
+    # Numbering allows for logically adding other gem types.
+    # Final digit is zero-indexed gem type, middle 2 digits are zero-indexed level ID.
+    ("Mushroom Speedway Pink Gem", 5054, Spyro3ItemCategory.PINK_GEM),
+    ("Sheila's Alp Pink Gem", 5064, Spyro3ItemCategory.PINK_GEM),
+    ("Crawdad Farm Pink Gem", 5084, Spyro3ItemCategory.PINK_GEM),
+    ("Spooky Swamp Pink Gem", 5124, Spyro3ItemCategory.PINK_GEM),
+    ("Country Speedway Pink Gem", 5144, Spyro3ItemCategory.PINK_GEM),
+    ("Sgt. Byrd's Base Pink Gem", 5154, Spyro3ItemCategory.PINK_GEM),
+    ("Frozen Altars Pink Gem", 5194, Spyro3ItemCategory.PINK_GEM),
+    ("Charmed Ridge Pink Gem", 5224, Spyro3ItemCategory.PINK_GEM),
+    ("Honey Speedway Pink Gem", 5234, Spyro3ItemCategory.PINK_GEM),
+    ("Bentley's Outpost Pink Gem", 5244, Spyro3ItemCategory.PINK_GEM),
+    ("Crystal Islands Pink Gem", 5284, Spyro3ItemCategory.PINK_GEM),
+    ("Desert Ruins Pink Gem", 5294, Spyro3ItemCategory.PINK_GEM),
+    ("Haunted Tomb Pink Gem", 5304, Spyro3ItemCategory.PINK_GEM),
+    ("Dino Mines Pink Gem", 5310, Spyro3ItemCategory.PINK_GEM),
+    ("Harbor Speedway Pink Gem", 5324, Spyro3ItemCategory.PINK_GEM),
+    ("Agent 9's Lab Pink Gem", 5334, Spyro3ItemCategory.PINK_GEM),
+    ("Super Bonus Round Pink Gem", 5364, Spyro3ItemCategory.PINK_GEM),
 ]]
 
 item_descriptions = {}
@@ -164,12 +193,58 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
         item_pool.append(item_dictionary["Progressive Sparx Health Upgrade"])
         remaining_count = remaining_count - 1
 
+    if options.sparx_power_settings.value:
+        item_pool.append(item_dictionary["Increased Sparx Range"])
+        item_pool.append(item_dictionary["Sparx Gem Finder"])
+        item_pool.append(item_dictionary["Extra Hit Point"])
+        item_pool.append(item_dictionary["Progressive Sparx Basket Break"])
+        item_pool.append(item_dictionary["Progressive Sparx Basket Break"])
+        remaining_count = remaining_count - 5
+
+    if options.enable_world_keys.value:
+        for i in range(3):
+            item_pool.append(item_dictionary["World Key"])
+        remaining_count = remaining_count - 3
+
+
+    #if options.enable_gemsanity_checks.value == GemsanityOptions.PINK_GEMS:
+    #    for i in range(8):
+    #        item_pool.append(item_dictionary["Mushroom Speedway Pink Gem"])
+    #    item_pool.append(item_dictionary["Sheila's Alp Pink Gem"])
+    #    item_pool.append(item_dictionary["Crawdad Farm Pink Gem"])
+    #    for i in range(2):
+    #        item_pool.append(item_dictionary["Spooky Swamp Pink Gem"])
+    #    for i in range(8):
+    #        item_pool.append(item_dictionary["Country Speedway Pink Gem"])
+    #    item_pool.append(item_dictionary["Sgt. Byrd's Base Pink Gem"])
+    #    for i in range(2):
+    #        item_pool.append(item_dictionary["Frozen Altars Pink Gem"])
+    #    for i in range(2):
+    #        item_pool.append(item_dictionary["Charmed Ridge Pink Gem"])
+    #    for i in range(8):
+    #        item_pool.append(item_dictionary["Honey Speedway Pink Gem"])
+    #    for i in range(2):
+    #        item_pool.append(item_dictionary["Bentley's Outpost Pink Gem"])
+    #    for i in range(3):
+    #        item_pool.append(item_dictionary["Crystal Islands Pink Gem"])
+    #    for i in range(3):
+    #        item_pool.append(item_dictionary["Desert Ruins Pink Gem"])
+    #    for i in range(4):
+    #        item_pool.append(item_dictionary["Haunted Tomb Pink Gem"])
+    #    item_pool.append(item_dictionary["Dino Mines Pink Gem"])
+    #    for i in range(8):
+    #        item_pool.append(item_dictionary["Harbor Speedway Pink Gem"])
+    #    for i in range(5):
+    #        item_pool.append(item_dictionary["Agent 9's Lab Pink Gem"])
+    #    for i in range(5):
+    #        item_pool.append(item_dictionary["Super Bonus Round Pink Gem"])
+    #    remaining_count = remaining_count - 64
 
     if remaining_count < 0:
         raise OptionError(f"The options you have selected require at least {remaining_count * -1} more checks to be enabled.")
 
-    # Build a weighted list of allowed filler items.  Make changing Spyro's color in general the same weight as other items.
-    allowed_filler_items = []
+    # Build a weighted list of allowed filler items.
+    # Make changing Spyro's color in general the same weight as other items.
     allowed_misc_items = []
     allowed_trap_items = []
 
@@ -191,6 +266,8 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
         elif item.name == 'Damage Sparx Trap' and options.enable_trap_damage_sparx:
             allowed_trap_items.append(item)
         elif item.name == 'Sparxless Trap' and options.enable_trap_sparxless:
+            allowed_trap_items.append(item)
+        elif item.name == 'Lag Trap' and options.enable_trap_lag:
             allowed_trap_items.append(item)
 
     if remaining_count > 0 and options.trap_filler_percent.value > 0 and len(allowed_trap_items) == 0:
