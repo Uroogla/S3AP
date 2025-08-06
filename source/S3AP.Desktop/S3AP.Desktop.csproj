@@ -9,6 +9,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <!-- Display name -->
     <ApplicationTitle>S3AP</ApplicationTitle>
     <!-- App Identifier -->
@@ -28,6 +29,10 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.8" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\S3AP\S3AP.csproj" />
