@@ -267,8 +267,8 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
             allowed_trap_items.append(item)
         elif item.name == 'Sparxless Trap' and options.enable_trap_sparxless:
             allowed_trap_items.append(item)
-        elif item.name == 'Lag Trap' and options.enable_trap_lag:
-            allowed_trap_items.append(item)
+        #elif item.name == 'Lag Trap' and options.enable_trap_lag:
+        #    allowed_trap_items.append(item)
 
     if remaining_count > 0 and options.trap_filler_percent.value > 0 and len(allowed_trap_items) == 0:
         raise OptionError(f"Trap percentage is set to {options.trap_filler_percent.value}, but none have been turned on.")

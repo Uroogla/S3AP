@@ -44,6 +44,9 @@ public partial class App : Application
     private static int _worldKeys { get; set; }
     private static Timer _worldKeysTimer { get; set; }
     private static int _progressiveBasketBreaks { get; set; }
+    private static Timer _cosmeticsTimer { get; set; }
+    private static Timer _minigamesTimer { get; set; }
+    private static Timer _sparxPowerTimer { get; set; }
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -194,7 +197,7 @@ public partial class App : Application
                 Memory.Write(Addresses.PlayerLives, (short)(Math.Min(99, currentLives + 1)));
                 break;
             case "Lag Trap":
-                RunLagTrap();
+                //RunLagTrap();
                 break;
             case "(Over)heal Sparx":
                 // Collecting a skill point provides a full heal, so wait for that to complete first.
@@ -460,20 +463,29 @@ public partial class App : Application
             Memory.Write(Addresses.SparxRange, (short)2062);
             Memory.Write(Addresses.SparxRangeHelper1, (short)350);
             Memory.Write(Addresses.SparxRangeHelper2, (short)640);
+        } else
+        {
+            Memory.Write(Addresses.SparxRange, (short)3072);
+            Memory.Write(Addresses.SparxRangeHelper1, (short)525);
+            Memory.Write(Addresses.SparxRangeHelper2, (short)960);
         }
         if (gemFinder == 0)
         {
             Memory.WriteByte(Addresses.SparxGemFinder, 0);
+        } else
+        {
+            Memory.WriteByte(Addresses.SparxGemFinder, 1);
         }
         if (extraHitPoint == 0)
         {
             Memory.WriteByte(Addresses.PlayerMaxHealth, 3);
             Memory.WriteByte(Addresses.PlayerMaxHealthIsModded, 0);
-        }
-        if (_progressiveBasketBreaks != 2)
+        } else
         {
-            Memory.WriteByte(Addresses.SparxBreakBaskets, (byte)_progressiveBasketBreaks);
+            Memory.WriteByte(Addresses.PlayerMaxHealth, 4);
+            Memory.WriteByte(Addresses.PlayerMaxHealthIsModded, 1);
         }
+        Memory.WriteByte(Addresses.SparxBreakBaskets, (byte)_progressiveBasketBreaks);
     }
     private static void HandleMinigames(object source, ElapsedEventArgs e)
     {
@@ -768,7 +780,6 @@ public partial class App : Application
                 Memory.Write(Addresses.CrystalBridgeUnlock, 65536);
             }
         }
-        _loadGameTimer.Enabled = false;
     }
     private static void CheckGoalCondition()
     {
@@ -972,10 +983,10 @@ public partial class App : Application
         _loadGameTimer.Interval = 5000;
         _loadGameTimer.Enabled = true;
 
-        Timer cosmeticsTimer = new Timer();
-        cosmeticsTimer.Elapsed += new ElapsedEventHandler(HandleCosmeticQueue);
-        cosmeticsTimer.Interval = 5000;
-        cosmeticsTimer.Enabled = true;
+        _cosmeticsTimer = new Timer();
+        _cosmeticsTimer.Elapsed += new ElapsedEventHandler(HandleCosmeticQueue);
+        _cosmeticsTimer.Interval = 5000;
+        _cosmeticsTimer.Enabled = true;
 
         string[] easyModeOptions = [
             "easy_skateboarding",
@@ -999,15 +1010,16 @@ public partial class App : Application
         }
         if (_easyChallenges.Count > 0)
         {
-            Timer minigamesTimer = new Timer();
-            minigamesTimer.Elapsed += new ElapsedEventHandler(HandleMinigames);
-            minigamesTimer.Interval = 100;
-            minigamesTimer.Enabled = true;
+            _minigamesTimer = new Timer();
+            _minigamesTimer.Elapsed += new ElapsedEventHandler(HandleMinigames);
+            _minigamesTimer.Interval = 100;
+            _minigamesTimer.Enabled = true;
         }
 
         int isWorldKeysOn = int.Parse(Client.Options?.GetValueOrDefault("enable_world_keys", "0").ToString());
         if (isWorldKeysOn != 0)
         {
+            _worldKeys = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "World Key").Count() ?? 0);
             _worldKeysTimer = new Timer();
             _worldKeysTimer.Elapsed += new ElapsedEventHandler(HandleWorldKeys);
             _worldKeysTimer.Interval = 100; // Critical to update quickly enough to prevent loading crashes.
@@ -1017,10 +1029,11 @@ public partial class App : Application
         int isSparxSanityOn = int.Parse(Client.Options?.GetValueOrDefault("sparx_power_settings", "0").ToString());
         if (isSparxSanityOn != 0)
         {
-            Timer sparxPowerTimer = new Timer();
-            sparxPowerTimer.Elapsed += new ElapsedEventHandler(HandleSparxPowers);
-            sparxPowerTimer.Interval = 500;
-            sparxPowerTimer.Enabled = true;
+            _progressiveBasketBreaks = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Basket Break").Count() ?? 0);
+            _sparxPowerTimer = new Timer();
+            _sparxPowerTimer.Elapsed += new ElapsedEventHandler(HandleSparxPowers);
+            _sparxPowerTimer.Interval = 500;
+            _sparxPowerTimer.Enabled = true;
         }
 
         ProgressiveSparxHealthOptions sparxOption = (ProgressiveSparxHealthOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_progressive_sparx_health", "0").ToString());
@@ -1050,20 +1063,46 @@ public partial class App : Application
     {
         Log.Logger.Information("Disconnected from Archipelago");
         // Avoid ongoing timers affecting a new game.
+        _hintsList = null;
+        _sparxUpgrades = 0;
+        _hasSubmittedGoal = false;
+        _useQuietHints = true;
+        _easyChallenges = new List<string>();
+        _worldKeys = 0;
+        _progressiveBasketBreaks = 0;
+        Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U 1.1 release of Spyro 3 (North America Greatest Hits version).");
+        Log.Logger.Information("Trying to play with a different version will not work and may release all of your locations at the start.");
+
         if (_loadGameTimer != null)
         {
             _loadGameTimer.Enabled = false;
+            _loadGameTimer = null;
         }
         _cosmeticEffects = new Queue<string>();
+        if (_cosmeticsTimer != null)
+        {
+            _cosmeticsTimer.Enabled = false;
+            _cosmeticsTimer = null;
+        }
         if (_sparxTimer != null)
         {
             _sparxTimer.Enabled = false;
+            _sparxTimer = null;
         }
-        _easyChallenges = new List<string>();
-        _worldKeys = 0;
         if (_worldKeysTimer != null)
         {
             _worldKeysTimer.Enabled = false;
+            _worldKeysTimer = null;
+        }
+        if (_minigamesTimer != null)
+        {
+            _minigamesTimer.Enabled = false;
+            _minigamesTimer = null;
+        }
+        if (_sparxPowerTimer != null)
+        {
+            _sparxPowerTimer.Enabled = false;
+            _sparxPowerTimer = null;
         }
     }
 }

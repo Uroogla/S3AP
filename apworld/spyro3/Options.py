@@ -174,9 +174,9 @@ class EnableTrapSparxless(Toggle):
     """Allows filler items to include removing Sparx."""
     display_name = "Enable Sparxless Trap"
 
-class EnableTrapLag(Toggle):
-    """Allows filler items to include traps that simulate lag in Duckstation."""
-    display_name = "Enable Lag Trap"
+#class EnableTrapLag(Toggle):
+#    """Allows filler items to include traps that simulate lag in Duckstation."""
+#    display_name = "Enable Lag Trap"
 
 class EnableProgressiveSparxHealth(Choice):
     """Start the game with lower max health and add items to the pool to increase your max health.
@@ -434,7 +434,7 @@ class Spyro3Option(PerGameCommonOptions):
     trap_filler_percent: TrapFillerPercent
     enable_trap_damage_sparx: EnableTrapDamageSparx
     enable_trap_sparxless: EnableTrapSparxless
-    enable_trap_lag: EnableTrapLag
+    #enable_trap_lag: EnableTrapLag
     enable_progressive_sparx_health: EnableProgressiveSparxHealth
     enable_progressive_sparx_logic: ProgressiveSparxHealthLogic
     zoe_gives_hints: ZoeGivesHints
