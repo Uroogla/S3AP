@@ -366,7 +366,9 @@ namespace S3AP
                     int subarea = 0;
                     if (
                         level.LifeBottles[i] == Addresses.BambooBentleyLifeBottleAddress ||
-                        level.LifeBottles[i] == Addresses.FireworksAgentLifeBottleAddress
+                        level.LifeBottles[i] == Addresses.FireworksAgentLifeBottleAddress ||
+                        level.LifeBottles[i] == Addresses.FleetSkateboardingLifeBottleAddress ||
+                        level.LifeBottles[i] == Addresses.MoltenLifeBottleAddress
                     )
                     {
                         subarea = 2;

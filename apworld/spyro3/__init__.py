@@ -1240,7 +1240,7 @@ class Spyro3World(World):
                 "trap_filler_percent": self.options.trap_filler_percent.value,
                 "enable_trap_damage_sparx": self.options.enable_trap_damage_sparx.value,
                 "enable_trap_sparxless": self.options.enable_trap_sparxless.value,
-                "enable_trap_lag": self.options.enable_trap_lag.value,
+                #"enable_trap_lag": self.options.enable_trap_lag.value,
                 "enable_progressive_sparx_health": self.options.enable_progressive_sparx_health.value,
                 "enable_progressive_sparx_logic": self.options.enable_progressive_sparx_logic.value,
                 "zoe_gives_hints": self.options.zoe_gives_hints.value,
