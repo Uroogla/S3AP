@@ -11,7 +11,7 @@ Important: As the mandatory client runs only on Windows, no other systems are su
 
 - [Duckstation](https://www.duckstation.org) - Detailed installation instructions for Duckstation can be found at the above link.
 - Archipelago version 0.6.1 or later.
-- The [Spyro 3 Archipelago Client and .apworld](https://github.com/ArsonAssassin/S3AP/releases)
+- The [Spyro 3 Archipelago Client and .apworld](https://github.com/Uroogla/S3AP/releases)
 - A legal US Spyro: Year of the Dragon v1.1 ROM.  We cannot help with this step.
 ### Create a Config (.yaml) File
 
@@ -112,3 +112,7 @@ If playing on a new save file, you will still need to get to the end of each lev
 ## Known Issues
 
 - Companionsanity and Moneybagssanity can very rarely result in softlocks in a few places.
+
+## Credits
+
+ArsonAssassin built a significant portion of this randomizer, as well as the Memory and Client frameworks it uses.  This project would not be possible without them.
