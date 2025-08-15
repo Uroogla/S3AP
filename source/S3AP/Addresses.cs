@@ -108,6 +108,7 @@
         public const uint BuzzDefeated = 0x007166c;
         public const uint SpikeDefeated = 0x007166d;
         public const uint ScorchDefeated = 0x007166e;
+        public const uint HunterRescuedCutscene = 0x7169a;
         public const uint ByrdCutscene = 0x0071661;
         public const uint BentleyCutscene = 0x0071662;
         public const uint Agent9Cutscene = 0x007165e;

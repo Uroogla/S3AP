@@ -419,7 +419,7 @@ public partial class App : Application
         {
             Memory.WriteByte(Addresses.NextWarpAddress, (byte)LevelInGameIDs.EveningLake);
         }
-        else if (transportWarpLocation == 20 && _worldKeys < 1)
+        if (transportWarpLocation == 20 && _worldKeys < 1)
         {
             byte isBuzzDefeated = Memory.ReadByte(Addresses.BuzzDefeated);
             if (isBuzzDefeated == 1)
@@ -435,11 +435,12 @@ public partial class App : Application
                 Memory.WriteByte(Addresses.TransportMenuAddress, (byte)LevelInGameIDs.MiddayGardens);
             }
         }
-        else if (transportWarpLocation == 30 && _worldKeys < 3)
+        else if (transportWarpLocation == 40 && _worldKeys < 3)
         {
             byte isScorchDefeated = Memory.ReadByte(Addresses.ScorchDefeated);
             if (isScorchDefeated == 1)
             {
+                Memory.WriteByte(Addresses.HunterRescuedCutscene, 1);
                 Memory.WriteByte(Addresses.TransportMenuAddress, (byte)LevelInGameIDs.EveningLake);
             }
         }
