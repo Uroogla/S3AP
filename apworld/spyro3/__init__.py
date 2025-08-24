@@ -8,7 +8,8 @@ from worlds.generic.Rules import set_rule, add_rule, add_item_rule, forbid_item
 
 from .Items import Spyro3Item, Spyro3ItemCategory, item_dictionary, key_item_names, item_descriptions, BuildItemPool
 from .Locations import Spyro3Location, Spyro3LocationCategory, location_tables, location_dictionary, hint_locations
-from .Options import Spyro3Option, GoalOptions, LifeBottleOptions, MoneybagsOptions, SparxUpgradeOptions, GemsanityOptions, spyro_options_groups
+from .Options import Spyro3Option, GoalOptions, LifeBottleOptions, MoneybagsOptions, SparxUpgradeOptions, \
+    SparxForGemsOptions, GemsanityOptions, spyro_options_groups
 from .Hints import generateHints
 
 class Spyro3Web(WebWorld):
@@ -53,6 +54,45 @@ class Spyro3World(World):
         "Evening Lake","Frozen Altars","Lost Fleet","Fireworks Factory","Charmed Ridge","Honey Speedway","Bentley's Outpost","Scorch","Starfish Reef",
         "Midnight Mountain","Crystal Islands","Desert Ruins","Haunted Tomb","Dino Mines","Harbor Speedway","Agent 9's Lab","Sorceress","Bugbot Factory","Super Bonus Round"
     ]
+    level_gems = {
+        "Sunrise Spring": 400,
+        "Sunny Villa": 400,
+        "Cloud Spires": 400,
+        "Molten Crater": 400,
+        "Seashell Shore": 400,
+        "Mushroom Speedway": 400,
+        "Sheila's Alp": 400,
+        "Buzz": 0,
+        "Crawdad Farm": 200,
+        "Midday Gardens": 400,
+        "Icy Peak": 500,
+        "Enchanted Towers": 500,
+        "Spooky Swamp": 500,
+        "Bamboo Terrace": 500,
+        "Country Speedway": 400,
+        "Sgt. Byrd's Base": 500,
+        "Spike": 0,
+        "Spider Town": 200,
+        "Evening Lake": 400,
+        "Frozen Altars": 600,
+        "Lost Fleet": 600,
+        "Fireworks Factory": 600,
+        "Charmed Ridge": 600,
+        "Honey Speedway": 400,
+        "Bentley's Outpost": 600,
+        "Scorch": 0,
+        "Starfish Reef": 200,
+        "Midnight Mountain": 400,
+        "Crystal Islands": 700,
+        "Desert Ruins": 700,
+        "Haunted Tomb": 700,
+        "Dino Mines": 700,
+        "Harbor Speedway": 400,
+        "Agent 9's Lab": 700,
+        "Sorceress": 0,
+        "Bugbot Factory": 200,
+        "Super Bonus Round": 5000
+    }
 
 
     def __init__(self, multiworld: MultiWorld, player: int):
@@ -191,18 +231,14 @@ class Spyro3World(World):
                 )
                 new_region.locations.append(new_location)
             elif location.category == Spyro3LocationCategory.EVENT:
-                # Remove non-randomized progression items as checks because of the use of a "filler" fake item.
-                # Replace events with event items for spoiler log readability.
                 event_item = self.create_item(location.default_item)
-                #if event_item.classification != ItemClassification.progression:
-                #    continue
                 #print("Adding Location: " + location.name + " as an event with default item " + location.default_item)
                 new_location = Spyro3Location(
                     self.player,
                     location.name,
                     location.category,
                     location.default_item,
-                    None,
+                    self.location_name_to_id[location.name],
                     new_region
                 )
                 event_item.code = None
@@ -240,15 +276,10 @@ class Spyro3World(World):
                     self.multiworld.get_location(location.name, self.player).place_locked_item(item)
                 elif item_data.category in [Spyro3ItemCategory.SKIP] or \
                         location.category in [Spyro3LocationCategory.EVENT] or \
-                        (self.options.goal.value in [GoalOptions.ALL_SKILLPOINTS, GoalOptions.EPILOGUE] and location.category == Spyro3LocationCategory.SKILLPOINT_GOAL) or \
-                        (self.options.goal.value in [GoalOptions.SORCERESS_ONE, GoalOptions.EPILOGUE] and location.name == "Sorceress's Lair: Defeat the Sorceress? (George)") or \
-                        (self.options.goal.value == GoalOptions.EGG_FOR_SALE and location.name == "Midnight Mountain Home: Egg for sale. (Al)") or \
-                        (self.options.goal.value == GoalOptions.SORCERESS_TWO and location.name == "Super Bonus Round: Woo, a secret egg. (Yin Yang)"):
+                        (self.options.goal.value in [GoalOptions.ALL_SKILLPOINTS, GoalOptions.EPILOGUE] and location.category == Spyro3LocationCategory.SKILLPOINT_GOAL):
                     #print(f"Adding vanilla item/event {location.default_item_name} to {location.name}")
                     item = self.create_item(location.default_item_name)
                     self.multiworld.get_location(location.name, self.player).place_locked_item(item)
-                    if location.default_item_name == 'Egg':
-                        placedEggs = placedEggs + 1
                 elif location.category in self.enabled_location_categories:
                     #print("Adding item: " + location.default_item_name)
                     itempoolSize += 1
@@ -278,11 +309,29 @@ class Spyro3World(World):
 
         if name in key_item_names or item_dictionary[name].category == Spyro3ItemCategory.EGG \
                 or item_dictionary[name].category == Spyro3ItemCategory.EVENT \
-                or item_dictionary[name].category == Spyro3ItemCategory.MONEYBAGS \
                 or item_dictionary[name].category == Spyro3ItemCategory.SKILLPOINT_GOAL \
                 or item_dictionary[name].category == Spyro3ItemCategory.WORLD_KEY \
-                or self.options.enable_progressive_sparx_logic.value and name == 'Progressive Sparx Health Upgrade':
+                or self.options.enable_progressive_sparx_logic.value and name == 'Progressive Sparx Health Upgrade' \
+                or self.options.require_sparx_for_max_gems.value == SparxForGemsOptions.SPARX_FINDER and name == 'Sparx Gem Finder':
             item_classification = ItemClassification.progression
+        elif item_dictionary[name].category == Spyro3ItemCategory.MONEYBAGS:
+            item_classification = ItemClassification.progression
+            # Moneybags unlocks the player says they don't need are useful, not progression.
+            # No way to skip into Agent 9 early, and skipping into Nancy is missable.
+            if name == "Moneybags Unlock - Sheila" and self.options.logic_sheila_early or \
+                    name == "Moneybags Unlock - Sgt. Byrd" and self.options.logic_byrd_early or \
+                    name == "Moneybags Unlock - Bentley" and self.options.logic_bentley_early and not self.options.enable_hwd_randomizer or \
+                    name == "Moneybags Unlock - Cloud Spires Bellows" and self.options.logic_cloud_backwards or \
+                    name == "Moneybags Unlock - Spooky Swamp Door" and self.options.logic_spooky_no_moneybags or \
+                    name == "Moneybags Unlock - Molten Crater Thieves Door" and self.options.logic_molten_thieves_no_moneybags or \
+                    name == "Moneybags Unlock - Charmed Ridge Stairs" and self.options.logic_charmed_no_moneybags or \
+                    name == "Moneybags Unlock - Desert Ruins Door" and self.options.logic_desert_no_moneybags or \
+                    name == "Moneybags Unlock - Frozen Altars Cat Hockey Door" and self.options.logic_frozen_cat_hockey_no_moneybags or \
+                    name == "Moneybags Unlock - Crystal Islands Bridge" and self.options.logic_crystal_no_moneybags:
+                item_classification = ItemClassification.useful
+            else:
+                item_classification = ItemClassification.progression
+            print(f"{name} - {item_classification}")
         elif item_dictionary[name].category in useful_categories \
                 or not self.options.enable_progressive_sparx_logic.value and name == 'Progressive Sparx Health Upgrade':
             item_classification = ItemClassification.useful
@@ -310,209 +359,228 @@ class Spyro3World(World):
         def has_world_keys(self, key_count, state):
             return state.count("World Key", self.player) >= key_count
 
+        def has_optional_moneybags_unlock(self, unlock, state):
+            if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY:
+                return True
+            print(f"{unlock} - {state.has(f'Moneybags Unlock - {unlock}', self.player) or is_boss_defeated(self, 'Sorceress', state)}")
+            return state.has(f"Moneybags Unlock - {unlock}", self.player) or is_boss_defeated(self, "Sorceress", state)
+
+        def are_gems_accessible(self, state):
+            if self.options.enable_progressive_sparx_health == SparxUpgradeOptions.TRUE_SPARXLESS:
+                return True
+            if self.options.require_sparx_for_max_gems.value == SparxForGemsOptions.GREEN_SPARX:
+                if self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state):
+                    return False
+            elif self.options.require_sparx_for_max_gems.value == SparxForGemsOptions.SPARX_FINDER:
+                if self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state):
+                    return False
+                elif self.options.sparx_power_settings.value and not state.has("Sparx Gem Finder", self.player):
+                    return False
+                elif not self.options.sparx_power_settings.value and not state.has("Spider Town Complete", self.player):
+                    return False
+            return True
+
         def get_gems_accessible_in_level(self, level, state):
             # TODO: It may be worth splitting this into some sort of standardized Logic framework,
             # especially once Gemsanity is added.  At present, some logic is duplicated between here
             # and location rules, but a framework to avoid this may be overkill.  Determine if it is
             # desirable to build a framework.
 
+            level_gems = 0
+            ignore_sparx_restrictions = False
             # Older versions of Python do not support switch statements, so use if/elif.
             if level == 'Sunrise Spring':
-                return 400
+                level_gems = 400
             elif level == 'Sunny Villa':
                 # Sheila's area has 89 gems, skateboarding has 92.  All skateboarding gems are available regardless of Hunter's state.
-                gems = 311
+                level_gems = 311
                 if self.options.logic_sunny_sheila_early.value or is_level_completed(self, "Sheila's Alp", state):
-                    gems += 89
-                return gems
+                    level_gems += 89
             elif level == 'Cloud Spires':
                 # 171 gems are available logically before the Bellows unlock, with an extra 5 being possible in easy mode, since an enemy's gem falls to the start of the level.
                 # All gems are available doing the level backwards.
-                gems = 171
+                level_gems = 171
                 if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_cloud_backwards.value or state.has("Moneybags Unlock - Cloud Spires Bellows", self.player):
-                    gems += 229
-                return gems
+                    level_gems += 229
             elif level == 'Molten Crater':
                 if not self.options.logic_molten_early.value and not state.has("Egg", self.player, 10):
                     return 0
                 # 109 gems in the Byrd subarea, 106 in thieves.
-                gems = 185
-                if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_molten_thieves_no_moneybags.value or state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player):
-                    gems += 106
+                level_gems = 185
+                if self.options.logic_molten_thieves_no_moneybags.value or has_optional_moneybags_unlock(self, "Molten Crater Thieves Door", state):
+                    level_gems += 106
                 if is_level_completed(self, "Sgt. Byrd's Base", state) or self.options.logic_molten_byrd_early.value:
-                    gems += 109
-                return gems
+                    level_gems += 109
             elif level == 'Seashell Shore':
                 if not self.options.logic_seashell_early.value and not state.has("Egg", self.player, 14):
                     return 0
                 # 105 gems in the Sheila sub area.
-                gems = 295
-                if is_level_completed(self, "Sheila's Alp", state):
-                    gems += 105
-                return gems
+                level_gems = 295
+                if self.options.logic_seashell_sheila_early.value or is_level_completed(self, "Sheila's Alp", state):
+                    level_gems += 105
             elif level == 'Mushroom Speedway':
                 if not self.options.logic_mushroom_early.value and not state.has("Egg", self.player, 20):
                     return 0
-                return 400
+                level_gems = 400
+                ignore_sparx_restrictions = True
             elif level == "Sheila's Alp":
                 if not self.options.logic_sheila_early.value and self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not state.has("Moneybags Unlock - Sheila", self.player):
                     return 0
-                return 400
+                level_gems = 400
             elif level == "Crawdad Farm":
-                if not is_boss_defeated(self, "Buzz", state):
+                if not is_boss_defeated(self, "Buzz", state) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state)):
                     return 0
-                return 200
+                level_gems = 200
+                ignore_sparx_restrictions = True
             elif level == 'Midday Gardens':
                 if not is_boss_defeated(self, "Buzz", state) or (self.options.enable_world_keys.value and not has_world_keys(self, 1, state)):
                     return 0
-                return 400
+                level_gems = 400
             elif level == 'Icy Peak':
                 if not is_boss_defeated(self, "Buzz", state) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state)) or (self.options.enable_world_keys.value and not has_world_keys(self, 1, state)):
                     return 0
-                return 500
+                level_gems = 500
             elif level == 'Enchanted Towers':
                 if not is_boss_defeated(self, "Buzz", state) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state)) or (self.options.enable_world_keys.value and not has_world_keys(self, 1, state)):
                     return 0
                 # Most Sgt. Byrd gems can be obtained by Spyro with varying levels of difficulty, but at least 75% of the level's gems are in logic with simple movement.
                 # TODO: Determine a better estimate for this.
-                gems = 375
+                level_gems = 375
                 if is_level_completed(self, "Sgt. Byrd's Base", state):
-                    gems += 125
-                return gems
+                    level_gems += 125
             elif level == 'Spooky Swamp':
                 if not is_boss_defeated(self, "Buzz", state) or (not self.options.logic_spooky_early.value and not state.has('Egg', self.player, 25)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state)) or (self.options.enable_world_keys.value and not has_world_keys(self, 1, state)):
                     return 0
                 # Sheila area has 174 gems but it is not possible to get here without Sheila.
                 # Enough gems are locked by Moneybags in vanilla logic to block 50% completion.
                 # TODO: Determine a better estimate for this.
-                gems = 125
+                level_gems = 125
                 if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_spooky_no_moneybags.value or state.has("Moneybags Unlock - Spooky Swamp Door", self.player):
-                    gems += 375
-                return gems
+                    level_gems += 375
             elif level == 'Bamboo Terrace':
                 if not is_boss_defeated(self, "Buzz", state) or (not self.options.logic_bamboo_early.value and not state.has('Egg', self.player, 30)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state)) or (self.options.enable_world_keys.value and not has_world_keys(self, 1, state)):
                     return 0
                 # Bentley's subarea has 189 gems.
-                gems = 311
+                level_gems = 311
                 if is_level_completed(self, "Bentley's Outpost", state) or self.options.logic_bamboo_bentley_early.value:
-                    gems += 189
-                return gems
+                    level_gems += 189
             elif level == 'Country Speedway':
                 if not is_boss_defeated(self, 'Buzz', state) or (not self.options.logic_country_early.value and not state.has('Egg', self.player, 36)) or (self.options.enable_world_keys.value and not has_world_keys(self, 1, state)):
                     return 0
-                return 400
+                level_gems = 400
+                ignore_sparx_restrictions = True
             elif level == "Sgt. Byrd's Base":
                 if not is_boss_defeated(self, 'Buzz', state) or \
                         not self.options.logic_byrd_early.value and self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not state.has("Moneybags Unlock - Sgt. Byrd", self.player) or \
                         (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state)) or \
                         (self.options.enable_world_keys.value and not has_world_keys(self, 1, state)):
                     return 0
-                return 500
+                level_gems = 500
             elif level == 'Spider Town':
                 if not is_boss_defeated(self, 'Spike', state):
                     return 0
-                return 200
+                level_gems = 200
+                ignore_sparx_restrictions = True
             elif level == 'Evening Lake':
                 if not is_boss_defeated(self, 'Spike', state) or (self.options.enable_world_keys.value and not has_world_keys(self, 2, state)):
                     return 0
-                return 400
+                level_gems = 400
             elif level == 'Frozen Altars':
                 if not is_boss_defeated(self, 'Spike', state) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 65) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Bentley', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 2, state)))) or (self.options.enable_world_keys.value and not has_world_keys(self, 2, state)):
                     return 0
-                return 600
+                level_gems = 600
             elif level == 'Lost Fleet':
                 if not is_boss_defeated(self, 'Spike', state) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 65) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Bentley', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 2, state)))) or (self.options.enable_world_keys.value and not has_world_keys(self, 2, state)):
                     return 0
                 # 100 gems in skateboarding area.  Of these, 13 are accessible easily without the skateboard.
                 # Roughly 19 require the skateboard, and the rest can be obtained with a medium difficulty jump onto the track, but these are not in logic.
-                gems = 513
+                level_gems = 513
                 if is_boss_defeated(self, 'Scorch', state):
-                    gems += 87
-                return gems
+                    level_gems += 87
             elif level == 'Fireworks Factory':
                 if not is_boss_defeated(self, "Spike", state) or (not self.options.logic_fireworks_early.value and not state.has('Egg', self.player, 50)) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 65) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Bentley', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 2, state)))) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 2, state)) or (self.options.enable_world_keys.value and not has_world_keys(self, 2, state)):
                     return 0
                 # 175 gems in the Agent 9 subarea.
-                gems = 425
+                level_gems = 425
                 if is_level_completed(self, "Agent 9's Lab", state) or self.options.logic_fireworks_agent_9_early.value:
-                    gems += 175
-                return gems
+                    level_gems += 175
             elif level == 'Charmed Ridge':
                 if not is_boss_defeated(self, "Spike", state) or (not self.options.logic_charmed_early.value and not state.has('Egg', self.player, 58)) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 65) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Bentley', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 2, state)))) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 2, state)) or (self.options.enable_world_keys.value and not has_world_keys(self, 2, state)):
                     return 0
                 # Moneybags blocks 472 gems.
-                gems = 128
+                level_gems = 128
                 if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_charmed_no_moneybags.value or state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player):
-                    gems += 472
-                return gems
+                    level_gems += 472
             elif level == 'Honey Speedway':
                 if not is_boss_defeated(self, 'Spike', state) or (not self.options.logic_honey_early.value and not state.has('Egg', self.player, 65)) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 65) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Bentley', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 2, state)))) or (self.options.enable_world_keys.value and not has_world_keys(self, 2, state)):
                     return 0
-                return 400
+                level_gems = 400
+                ignore_sparx_restrictions = True
             elif level == "Bentley's Outpost":
                 if not is_boss_defeated(self, 'Spike', state) or \
                         not self.options.logic_bentley_early.value and self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not state.has("Moneybags Unlock - Bentley", self.player) or \
                         (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 65) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 2, state)))) or \
                         (self.options.enable_world_keys.value and not has_world_keys(self, 2, state)):
                     return 0
-                return 600
+                level_gems = 600
             elif level == 'Starfish Reef':
                 if not is_boss_defeated(self, 'Scorch', state):
                     return 0
-                return 200
+                level_gems = 200
+                ignore_sparx_restrictions = True
             elif level == 'Midnight Mountain':
                 if not is_boss_defeated(self, 'Scorch', state):
                     return 0
-                return 400
+                level_gems = 400
             elif level == 'Crystal Islands':
                 if not is_boss_defeated(self, 'Scorch', state) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 90) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Agent 9', state) and not is_boss_defeated(self, 'Sorceress', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 3, state)))) or (self.options.enable_world_keys.value and not has_world_keys(self, 3, state)):
                     return 0
                 # Moneybags locks 475 gems.
-                gems = 225
-                if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_crystal_no_moneybags.value or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player) or is_boss_defeated(self, 'Sorceress', state):
-                    gems += 475
-                return gems
+                level_gems = 225
+                if self.options.logic_crystal_no_moneybags.value or has_optional_moneybags_unlock(self, "Crystal Islands Bridge", state):
+                    level_gems += 475
             elif level == 'Desert Ruins':
                 if not is_boss_defeated(self, 'Scorch', state) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 90) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Agent 9', state) and not is_boss_defeated(self, 'Sorceress', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 3, state)))) or (self.options.enable_world_keys.value and not has_world_keys(self, 3, state)):
                     return 0
                 # 252 gems are locked behind Moneybags.
-                gems = 448
-                if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_desert_no_moneybags.value or state.has("Moneybags Unlock - Desert Ruins Door", self.player) or is_boss_defeated(self, 'Sorceress', state):
-                    gems += 252
-                return gems
+                level_gems = 448
+                if self.options.logic_desert_no_moneybags.value or has_optional_moneybags_unlock(self, "Desert Ruins Door", state):
+                    level_gems += 252
             elif level == 'Haunted Tomb':
                 if not is_boss_defeated(self, 'Scorch', state) or not state.has('Egg', self.player, 70) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 90) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Agent 9', state) and not is_boss_defeated(self, 'Sorceress', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 3, state)))) or (self.options.enable_world_keys.value and not has_world_keys(self, 3, state)):
                     return 0
-                return 700
+                level_gems = 700
             elif level == 'Dino Mines':
                 if not is_boss_defeated(self, 'Scorch', state) or not state.has('Egg', self.player, 80) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 90) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Agent 9', state) and not is_boss_defeated(self, 'Sorceress', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 3, state)))) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 3, state)) or (self.options.enable_world_keys.value and not has_world_keys(self, 3, state)):
                     return 0
                 # 108 gems in Agent 9's subarea. This can be entered from out of bounds.
-                # TODO: Add trick logic for this.
-                gems = 592
-                if is_level_completed(self, "Agent 9's Lab", state):
-                    gems += 108
-                return gems
+                level_gems = 592
+                if self.options.logic_dino_agent_9_early.value or is_level_completed(self, "Agent 9's Lab", state):
+                    level_gems += 108
             elif level == 'Harbor Speedway':
                 if not is_boss_defeated(self, 'Scorch', state) or not state.has('Egg', self.player, 90) or (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 90) or (self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not is_companion_unlocked(self, 'Agent 9', state) and not is_boss_defeated(self, 'Sorceress', state)) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 3, state)))) or (self.options.enable_world_keys.value and not has_world_keys(self, 3, state)):
                     return 0
-                return 400
+                level_gems = 400
+                ignore_sparx_restrictions = True
             elif level == "Agent 9's Lab":
                 if not is_boss_defeated(self, 'Scorch', state) or \
                         self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not state.has("Moneybags Unlock - Agent 9", self.player) and not is_boss_defeated(self, 'Sorceress', state) or \
                         (self.options.enable_hwd_randomizer.value and (not state.has('Egg', self.player, 90) or (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 3, state)))) or \
                         (self.options.enable_world_keys.value and not has_world_keys(self, 3, state)):
                     return 0
-                return 700
+                level_gems = 700
             elif level == 'Bugbot Factory':
                 if not is_boss_defeated(self, 'Sorceress', state):
                     return 0
-                return 200
+                level_gems = 200
+                ignore_sparx_restrictions = True
             elif level == 'Super Bonus Round':
                 if not is_boss_defeated(self, 'Sorceress', state) or not state.has("Egg", self.player, 149) or not has_all_gems(self, state):
                     return 0
-                return 5000
-            return 0
+                level_gems = 5000
+            if not are_gems_accessible(self, state) and not ignore_sparx_restrictions:
+                level_gems = int(level_gems * 0.75)
+            return level_gems
 
         def has_total_accessible_gems(self, state, max_gems, include_sbr=True):
             accessible_gems = 0
@@ -607,8 +675,6 @@ class Spyro3World(World):
             set_rule(self.multiworld.get_location("Sunny Villa: Skateboard course record I (Skill Point)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
         if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
             set_rule(self.multiworld.get_location("Sunny Villa: Skateboard course record I (Goal)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Sunny Villa: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Sunny Villa", state) >= 400)
 
         # Cloud Spires Rules
         # Cloud Spires can be completed backwards, skipping Moneybags payment.
@@ -622,12 +688,6 @@ class Spyro3World(World):
             set_rule(self.multiworld.get_location("Cloud Spires Complete", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
             if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Cloud Spires: Life Bottle Past Whirlwind", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
-        if Spyro3LocationCategory.GEM_50 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Cloud Spires: 50% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Cloud Spires", state) >= 200)
-        if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Cloud Spires: 75% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Cloud Spires", state) >= 300)
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Cloud Spires: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Cloud Spires", state) >= 400)
 
         # Molten Crater Rules
         # This requires either a swim in air or getting onto the wall by Molten Crater.
@@ -642,32 +702,22 @@ class Spyro3World(World):
             if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Molten Crater: Assemble tiki heads (Goal)", self.player), lambda state: is_level_completed(self, "Sgt. Byrd's Base", state))
         if self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_molten_thieves_no_moneybags.value:
-            set_rule(self.multiworld.get_location("Molten Crater: Catch the thief. (Moira)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player))
-            set_rule(self.multiworld.get_location("Molten Crater: Supercharge after the thief. (Kermitt)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player))
+            set_rule(self.multiworld.get_location("Molten Crater: Catch the thief. (Moira)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or is_boss_defeated(self, "Sorceress", state))
+            set_rule(self.multiworld.get_location("Molten Crater: Supercharge after the thief. (Kermitt)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or is_boss_defeated(self, "Sorceress", state))
             if Spyro3LocationCategory.SKILLPOINT in self.enabled_location_categories:
-                set_rule(self.multiworld.get_location("Molten Crater: Supercharge the wall (Skill Point)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player))
+                set_rule(self.multiworld.get_location("Molten Crater: Supercharge the wall (Skill Point)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or is_boss_defeated(self, "Sorceress", state))
             if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
-                set_rule(self.multiworld.get_location("Molten Crater: Supercharge the wall (Goal)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player))
+                set_rule(self.multiworld.get_location("Molten Crater: Supercharge the wall (Goal)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or is_boss_defeated(self, "Sorceress", state))
             if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
-                set_rule(self.multiworld.get_location("Molten Crater: Life Bottle in Breakable Wall in Thief Area", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player))
-        if Spyro3LocationCategory.GEM_50 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Molten Crater: 50% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Molten Crater", state) >= 200)
-        if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Molten Crater: 75% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Molten Crater", state) >= 300)
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Molten Crater: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Molten Crater", state) >= 400)
+                set_rule(self.multiworld.get_location("Molten Crater: Life Bottle in Breakable Wall in Thief Area", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or is_boss_defeated(self, "Sorceress", state))
 
         # Seashell Shores Rules
         # This requires a swim in air.
         if not self.options.logic_seashell_early.value:
             set_indirect_rule(self, "Seashell Shore", lambda state: state.has("Egg", self.player, 14))
-        # This might be possible with a proxy or similar, but keep the vanilla logic for now.
-        set_rule(self.multiworld.get_location("Seashell Shore: Destroy the sand castle. (Mollie)", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state))
-        set_rule(self.multiworld.get_location("Seashell Shore: Hop to the secret cave. (Jared)", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state))
-        if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Seashell Shore: 75% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Seashell Shore", state) >= 300)
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Seashell Shore: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Seashell Shore", state) >= 400)
+        if not self.options.logic_seashell_sheila_early.value:
+            set_rule(self.multiworld.get_location("Seashell Shore: Destroy the sand castle. (Mollie)", self.player), lambda state: is_level_completed(self, "Sheila's Alp", state))
+            set_rule(self.multiworld.get_location("Seashell Shore: Hop to the secret cave. (Jared)", self.player), lambda state: is_level_completed(self, "Sheila's Alp", state))
 
         # Mushroom Speedway Rules
         # This requires a swim in air or getting onto the wall by Mushroom and Molten.
@@ -689,7 +739,10 @@ class Spyro3World(World):
                 is_level_completed(self,"Sheila's Alp", state))
 
         # Crawdad Farm Rules
-        set_indirect_rule(self, "Crawdad Farm", lambda state: is_boss_defeated(self,"Buzz", state))
+        if self.options.enable_progressive_sparx_logic.value:
+            set_indirect_rule(self, "Crawdad Farm", lambda state: is_boss_defeated(self, "Buzz", state) and has_sparx_health(self, 1, state))
+        else:
+            set_indirect_rule(self, "Crawdad Farm", lambda state: is_boss_defeated(self, "Buzz", state))
 
         # Midday Gardens Rules
         if self.options.enable_world_keys:
@@ -703,7 +756,7 @@ class Spyro3World(World):
         # This can be entered without paying Moneybags, but shooting the crystal you need to jump on with the cannon renders the skip impossible.
         if self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY:
             # No gems in Nancy area.
-            set_rule(self.multiworld.get_location("Icy Peak: Protect Nancy the skater. (Cerny)", self.player), lambda state: state.has("Moneybags Unlock - Icy Peak Nancy Door", self.player))
+            set_rule(self.multiworld.get_location("Icy Peak: Protect Nancy the skater. (Cerny)", self.player), lambda state: state.has("Moneybags Unlock - Icy Peak Nancy Door", self.player) or is_boss_defeated(self, "Sorceress", state))
 
         # Enchanted Towers Rules
         if self.options.enable_progressive_sparx_logic.value:
@@ -716,8 +769,6 @@ class Spyro3World(World):
             set_rule(self.multiworld.get_location("Enchanted Towers: Skateboard course record II (Skill Point)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
         if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
             set_rule(self.multiworld.get_location("Enchanted Towers: Skateboard course record II (Goal)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Enchanted Towers: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Enchanted Towers", state) >= 500)
         # Note: The life bottle does not require Sgt. Byrd.
 
         # Spooky Swamp Rules
@@ -745,12 +796,6 @@ class Spyro3World(World):
                 set_rule(self.multiworld.get_location("Spooky Swamp: Destroy all piranha signs (Skill Point)", self.player), lambda state: state.has("Moneybags Unlock - Spooky Swamp Door", self.player))
             if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Spooky Swamp: Destroy all piranha signs (Goal)", self.player), lambda state: state.has("Moneybags Unlock - Spooky Swamp Door", self.player))
-        if Spyro3LocationCategory.GEM_50 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Spooky Swamp: 50% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Spooky Swamp", state) >= 250)
-        if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Spooky Swamp: 75% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Spooky Swamp", state) >= 375)
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Spooky Swamp: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Spooky Swamp", state) >= 500)
 
         # Bamboo Terrace Rules
         # This requires a swim in air or a glide out of bounds.
@@ -765,10 +810,6 @@ class Spyro3World(World):
             set_rule(self.multiworld.get_location("Bamboo Terrace: Smash to the mountain top. (Brubeck)", self.player), lambda state: is_level_completed(self,"Bentley's Outpost", state))
             if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Bamboo Terrace: Life Bottle in Bentley Sub-Area", self.player), lambda state: is_level_completed(self, "Bentley's Outpost", state))
-        if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Bamboo Terrace: 75% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Bamboo Terrace", state) >= 375)
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Bamboo Terrace: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Bamboo Terrace", state) >= 500)
 
         # Country Speedway Rules
         # This requires a swim in air.
@@ -809,9 +850,9 @@ class Spyro3World(World):
         if self.options.enable_hwd_randomizer.value:
             if self.options.moneybags_settings.value != MoneybagsOptions.VANILLA:
                 if self.options.enable_progressive_sparx_logic.value:
-                    set_indirect_rule(self, "Frozen Altars", lambda state: has_sparx_health(self, 2, state) and state.has("Egg", self.player, 65) and state.has("Moneybags Unlock - Bentley", self.player))
+                    set_indirect_rule(self, "Frozen Altars", lambda state: has_sparx_health(self, 2, state) and state.has("Egg", self.player, 65) and is_companion_unlocked(self, "Bentley", state))
                 else:
-                    set_indirect_rule(self, "Frozen Altars", lambda state: state.has("Egg", self.player, 65) and state.has("Moneybags Unlock - Bentley", self.player))
+                    set_indirect_rule(self, "Frozen Altars", lambda state: state.has("Egg", self.player, 65) and is_companion_unlocked(self, "Bentley", state))
             else:
                 if self.options.enable_progressive_sparx_logic.value:
                     set_indirect_rule(self, "Frozen Altars", lambda state: has_sparx_health(self, 2, state) and state.has("Egg", self.player, 65))
@@ -830,7 +871,7 @@ class Spyro3World(World):
         # Requires a proxy.
         if self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_frozen_cat_hockey_no_moneybags:
             # 0 gems in cat hockey subarea.
-            set_rule(self.multiworld.get_location("Frozen Altars: Catch the ice cats. (Ba'ah)", self.player), lambda state: state.has("Moneybags Unlock - Frozen Altars Cat Hockey Door", self.player))
+            set_rule(self.multiworld.get_location("Frozen Altars: Catch the ice cats. (Ba'ah)", self.player), lambda state: state.has("Moneybags Unlock - Frozen Altars Cat Hockey Door", self.player) or is_boss_defeated(self, "Sorceress", state))
 
         # Lost Fleet Rules
         # In hwd's randomizer, any Evening Lake level can be in any portal, so require 65 eggs and Bentley access for
@@ -855,8 +896,6 @@ class Spyro3World(World):
             set_rule(self.multiworld.get_location("Lost Fleet: Skateboard record time (Goal)", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
         if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
             set_rule(self.multiworld.get_location("Lost Fleet: Life Bottle in Skateboarding Sub-Area", self.player), lambda state: is_boss_defeated(self, "Scorch", state))
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Lost Fleet: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Lost Fleet", state) >= 600)
 
         # Fireworks Factory Rules
         # In hwd's randomizer, any Evening Lake level can be in any portal, so require 65 eggs and Bentley access for
@@ -890,10 +929,6 @@ class Spyro3World(World):
                 set_rule(self.multiworld.get_location("Fireworks Factory: Find Agent 9's powerup (Goal)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
             if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Fireworks Factory: Life Bottle in Agent 9 Sub-Area", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
-        if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Fireworks Factory: 75% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Fireworks Factory", state) >= 450)
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Fireworks Factory: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Fireworks Factory", state) >= 600)
 
         # Charmed Ridge Rules
         # In hwd's randomizer, any Evening Lake level can be in any portal, so require 65 eggs and Bentley access for
@@ -938,14 +973,6 @@ class Spyro3World(World):
                 set_rule(self.multiworld.get_location("Charmed Ridge: Shoot the temple windows (Skill Point)", self.player), lambda state: is_level_completed(self, "Sgt. Byrd's Base", state))
             if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Charmed Ridge: Shoot the temple windows (Goal)", self.player), lambda state: is_level_completed(self, "Sgt. Byrd's Base", state))
-        if Spyro3LocationCategory.GEM_25 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Charmed Ridge: 25% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Charmed Ridge", state) >= 150)
-        if Spyro3LocationCategory.GEM_50 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Charmed Ridge: 50% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Charmed Ridge", state) >= 300)
-        if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Charmed Ridge: 75% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Charmed Ridge", state) >= 450)
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Charmed Ridge: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Charmed Ridge", state) >= 600)
 
         # Honey Speedway Rules
         # In hwd's randomizer, any Evening Lake level can be in any portal, so require 65 eggs and Bentley access for
@@ -974,9 +1001,9 @@ class Spyro3World(World):
         if self.options.enable_hwd_randomizer.value:
             if self.options.moneybags_settings.value != MoneybagsOptions.VANILLA:
                 if self.options.enable_progressive_sparx_logic.value:
-                    set_indirect_rule(self, "Bentley's Outpost", lambda state: has_sparx_health(self, 2, state) and state.has("Egg", self.player, 65) and state.has("Moneybags Unlock - Bentley", self.player))
+                    set_indirect_rule(self, "Bentley's Outpost", lambda state: has_sparx_health(self, 2, state) and state.has("Egg", self.player, 65) and is_companion_unlocked(self, "Bentley", state))
                 else:
-                    set_indirect_rule(self, "Bentley's Outpost", lambda state: state.has("Egg", self.player, 65) and state.has("Moneybags Unlock - Bentley", self.player))
+                    set_indirect_rule(self, "Bentley's Outpost", lambda state: state.has("Egg", self.player, 65) and is_companion_unlocked(self, "Bentley", state))
             else:
                 if self.options.enable_progressive_sparx_logic.value:
                     set_indirect_rule(self, "Bentley's Outpost", lambda state: has_sparx_health(self, 2, state) and state.has("Egg", self.player, 65))
@@ -1029,12 +1056,6 @@ class Spyro3World(World):
             set_rule(self.multiworld.get_location("Crystal Islands: Whack a mole. (Hank)", self.player), lambda state: is_level_completed(self, "Bentley's Outpost", state) and (is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)))
         else:
             set_rule(self.multiworld.get_location("Crystal Islands: Whack a mole. (Hank)", self.player), lambda state: is_level_completed(self,"Bentley's Outpost", state))
-        if Spyro3LocationCategory.GEM_50 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Crystal Islands: 50% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Crystal Islands", state) >= 350)
-        if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Crystal Islands: 75% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Crystal Islands", state) >= 525)
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Crystal Islands: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Crystal Islands", state) >= 700)
 
         # Desert Ruins Rules
         # In hwd's randomizer, any Midnight Mountain level can be in any portal, so require 90 eggs and Agent 9 access for
@@ -1064,10 +1085,6 @@ class Spyro3World(World):
                 set_rule(self.multiworld.get_location("Desert Ruins: Destroy all seaweed (Goal)", self.player), lambda state: is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
             if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Desert Ruins: Life Bottle near Sharks Sub-Area", self.player), lambda state: is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
-        if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Desert Ruins: 75% Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Desert Ruins", state) >= 525)
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Desert Ruins: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Desert Ruins", state) >= 700)
 
         # Haunted Tomb Rules
         # No known way to skip into Haunted Tomb.
@@ -1086,7 +1103,8 @@ class Spyro3World(World):
                     set_indirect_rule(self, "Haunted Tomb", lambda state: state.has("Egg", self.player, 90))
         else:
             set_indirect_rule(self, "Haunted Tomb", lambda state: state.has("Egg", self.player, 70))
-        set_rule(self.multiworld.get_location("Haunted Tomb: Clear the caves. (Roxy)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
+        if not self.options.logic_haunted_agent_9_early.value:
+            set_rule(self.multiworld.get_location("Haunted Tomb: Clear the caves. (Roxy)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
 
         # Dino Mines Rules
         # No known way to skip into Dino Mines.
@@ -1107,14 +1125,13 @@ class Spyro3World(World):
             set_indirect_rule(self, "Dino Mines", lambda state: has_sparx_health(self, 3, state) and state.has("Egg", self.player, 80))
         else:
             set_indirect_rule(self, "Dino Mines", lambda state: state.has("Egg", self.player, 80))
-        set_rule(self.multiworld.get_location("Dino Mines: Gunfight at the Jurassic Corral. (Sharon)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
-        set_rule(self.multiworld.get_location("Dino Mines: Take it to the bank. (Sergio)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state) and state.can_reach_location("Dino Mines: Gunfight at the Jurassic Corral. (Sharon)", self.player))
-        if Spyro3LocationCategory.SKILLPOINT in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Dino Mines: Hit the secret dino (Skill Point)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
-        if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Dino Mines: Hit the secret dino (Goal)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
-        if Spyro3LocationCategory.GEM in self.enabled_location_categories:
-            set_rule(self.multiworld.get_location("Dino Mines: All Gems", self.player), lambda state: get_gems_accessible_in_level(self, "Dino Mines", state) >= 700)
+        if not self.options.logic_dino_agent_9_early.value:
+            set_rule(self.multiworld.get_location("Dino Mines: Gunfight at the Jurassic Corral. (Sharon)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
+            set_rule(self.multiworld.get_location("Dino Mines: Take it to the bank. (Sergio)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state) and state.can_reach_location("Dino Mines: Gunfight at the Jurassic Corral. (Sharon)", self.player))
+            if Spyro3LocationCategory.SKILLPOINT in self.enabled_location_categories:
+                set_rule(self.multiworld.get_location("Dino Mines: Hit the secret dino (Skill Point)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
+            if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
+                set_rule(self.multiworld.get_location("Dino Mines: Hit the secret dino (Goal)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
 
         # Harbor Speedway Rules
         # No known way to skip into Harbor Speedway.
@@ -1170,6 +1187,32 @@ class Spyro3World(World):
             "Super Bonus Round",
             lambda state: is_boss_defeated(self, "Sorceress", state) and state.has("Egg", self.player, 149) and has_all_gems(self, state)
         )
+
+        # Level Gem Count rules
+        for level in self.all_levels:
+            if level in ["Buzz", "Spike", "Scorch", "Sorceress"]:
+                continue
+            max_gems = self.level_gems[level]
+            if Spyro3LocationCategory.GEM_25 in self.enabled_location_categories:
+                set_rule(
+                    self.multiworld.get_location(f"{level}: 25% Gems", self.player),
+                    lambda state, level=level, max_gems=max_gems: get_gems_accessible_in_level(self, level, state) >= max_gems / 4
+                )
+            if Spyro3LocationCategory.GEM_50 in self.enabled_location_categories:
+                set_rule(
+                    self.multiworld.get_location(f"{level}: 50% Gems", self.player),
+                    lambda state, level=level, max_gems=max_gems: get_gems_accessible_in_level(self, level, state) >= max_gems / 2
+                )
+            if Spyro3LocationCategory.GEM_75 in self.enabled_location_categories:
+                set_rule(
+                    self.multiworld.get_location(f"{level}: 75% Gems", self.player),
+                    lambda state, level=level, max_gems=max_gems: get_gems_accessible_in_level(self, level, state) >= 3 * max_gems / 4
+                )
+            if Spyro3LocationCategory.GEM in self.enabled_location_categories:
+                set_rule(
+                    self.multiworld.get_location(f"{level}: All Gems", self.player),
+                    lambda state, level=level, max_gems=max_gems: get_gems_accessible_in_level(self, level, state) >= max_gems
+                )
 
         # Inventory Rules
         if Spyro3LocationCategory.TOTAL_GEM in self.enabled_location_categories:
@@ -1243,6 +1286,7 @@ class Spyro3World(World):
                 #"enable_trap_lag": self.options.enable_trap_lag.value,
                 "enable_progressive_sparx_health": self.options.enable_progressive_sparx_health.value,
                 "enable_progressive_sparx_logic": self.options.enable_progressive_sparx_logic.value,
+                "require_sparx_for_max_gems": self.options.require_sparx_for_max_gems.value,
                 "zoe_gives_hints": self.options.zoe_gives_hints.value,
                 "enable_hwd_randomizer": self.options.enable_hwd_randomizer.value,
                 "easy_skateboarding": self.options.easy_skateboarding.value,
@@ -1255,12 +1299,14 @@ class Spyro3World(World):
                 "easy_shark_riders": self.options.easy_shark_riders.value,
                 "easy_whackamole": self.options.easy_whackamole.value,
                 "easy_tunnels": self.options.easy_tunnels.value,
+                "no_green_rockets": self.options.no_green_rockets.value,
                 "logic_sunny_sheila_early": self.options.logic_sunny_sheila_early.value,
                 "logic_cloud_backwards": self.options.logic_cloud_backwards.value,
                 "logic_molten_early": self.options.logic_molten_early.value,
                 "logic_molten_byrd_early": self.options.logic_molten_byrd_early.value,
                 "logic_molten_thieves_no_moneybags": self.options.logic_molten_thieves_no_moneybags.value,
                 "logic_seashell_early": self.options.logic_seashell_early.value,
+                "logic_seashell_sheila_early": self.options.logic_seashell_sheila_early.value,
                 "logic_mushroom_early": self.options.logic_mushroom_early.value,
                 "logic_sheila_early": self.options.logic_sheila_early.value,
                 "logic_spooky_early": self.options.logic_spooky_early.value,
@@ -1279,6 +1325,8 @@ class Spyro3World(World):
                 "logic_bentley_early": self.options.logic_bentley_early.value,
                 "logic_crystal_no_moneybags": self.options.logic_crystal_no_moneybags.value,
                 "logic_desert_no_moneybags": self.options.logic_desert_no_moneybags.value,
+                "logic_haunted_agent_9_early": self.options.logic_haunted_agent_9_early.value,
+                "logic_dino_agent_9_early": self.options.logic_dino_agent_9_early.value,
                 "logic_sorceress_early": self.options.logic_sorceress_early.value
             },
             "hints": hints,

@@ -54,14 +54,6 @@
             TrueSparxless = 4
         }
 
-        public enum ImportantLocationIDs : int
-        {
-            SunnyEndOfLevelEgg = 1231000,
-            SorceressEgg = 1264000,
-            EggForSale = 1257005,
-            SuperBonusRoundEgg = 1266000
-        }
-
         public enum LevelInGameIDs : byte
         {
             SunriseSpring = 10,

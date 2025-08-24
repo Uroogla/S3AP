@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reflection;
+using System.Security.Principal;
 using System.Threading.Tasks;
 using System.Timers;
 using static S3AP.Models.Enums;
@@ -35,10 +36,10 @@ public partial class App : Application
     private static readonly object _lockObject = new object();
     private static Queue<string> _cosmeticEffects { get; set; }
     private static Dictionary<string, string> _hintsList { get; set; }
-    private static byte _sparxUpgrades { get; set; }
     private static bool _hasSubmittedGoal { get; set; }
     private static bool _useQuietHints { get; set; }
     private static List<string> _easyChallenges { get; set; }
+    private static ProgressiveSparxHealthOptions _sparxOption {  get; set; }
     private static Timer _sparxTimer { get; set; }
     private static Timer _loadGameTimer { get; set; }
     private static int _worldKeys { get; set; }
@@ -50,6 +51,12 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+    }
+    private static bool IsRunningAsAdministrator()
+    {
+        var identity = WindowsIdentity.GetCurrent();
+        var principal = new WindowsPrincipal(identity);
+        return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -84,7 +91,6 @@ public partial class App : Application
         };
         Context.ConnectButtonEnabled = true;
         _hintsList = null;
-        _sparxUpgrades = 0;
         _hasSubmittedGoal = false;
         _useQuietHints = true;
         _easyChallenges = new List<string>();
@@ -92,9 +98,15 @@ public partial class App : Application
         _progressiveBasketBreaks = 0;
         Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U 1.1 release of Spyro 3 (North America Greatest Hits version).");
         Log.Logger.Information("Trying to play with a different version will not work and may release all of your locations at the start.");
+        if (!IsRunningAsAdministrator())
+        {
+            Log.Logger.Warning("You do not appear to be running this client as an administrator.");
+            Log.Logger.Warning("This may result in errors or crashes when trying to connect to Duckstation.");
+        }
     }
     private void HandleCommand(string command)
     {
+        if (Client == null || Client.GameState == null || Client.CurrentSession == null) return;
         switch (command)
         {
             case "clearSpyroGameState":
@@ -108,6 +120,32 @@ public partial class App : Application
             case "useVerboseHints":
                 Log.Logger.Information("Hints for found locations will be displayed.  Type 'useQuietHints' to show them.");
                 _useQuietHints = false;
+                break;
+            case "showGoal":
+                CompletionGoal goal = (CompletionGoal)(int.Parse(Client.Options?.GetValueOrDefault("goal", 0).ToString()));
+                string goalText = "";
+                switch (goal)
+                {
+                    case CompletionGoal.Sorceress1:
+                        goalText = "Collect 100 eggs and defeat the Sorceress in Sorceress' Lair";
+                        break;
+                    case CompletionGoal.EggForSale:
+                        goalText = "Chase Moneybags in Midnight Mountain";
+                        break;
+                    case CompletionGoal.Sorceress2:
+                        goalText = "Defeat the Sorceress in Super Bonus Round";
+                        break;
+                    case CompletionGoal.AllSkillPoints:
+                        goalText = "Collect all 20 Skill Points";
+                        break;
+                    case CompletionGoal.Epilogue:
+                        goalText = "Defeat the Sorceress in Sorceress' Lair and collect all 20 skill points";
+                        break;
+                    default:
+                        goalText = "Error finding your goal";
+                        break;
+                }
+                Log.Logger.Information($"Your goal is: {goalText}");
                 break;
         }
     }
@@ -163,6 +201,12 @@ public partial class App : Application
         await Client.Login(e.Slot, !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
         if (Client.Options?.Count > 0)
         {
+            int eggs = CalculateCurrentEggs();
+            int skillPoints = CalculateCurrentSkillPoints();
+            bool beatenSorceress = Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false;
+            string defeatedSorceressText = beatenSorceress ? "you have defeated the sorceress" : "you have not defeated the sorceress";
+            Log.Logger.Information($"You have {eggs} eggs, {skillPoints} skill points, and {defeatedSorceressText}.");
+            GameLocations = GameLocations.Where(x => x != null && !Client.CurrentSession.Locations.AllLocationsChecked.Contains(x.Id)).ToList();
             Client.MonitorLocations(GameLocations);
             Log.Logger.Information("Warnings and errors above are okay if this is your first time connecting to this multiworld server.");
         }
@@ -174,13 +218,14 @@ public partial class App : Application
 
     private void Client_LocationCompleted(object? sender, LocationCompletedEventArgs e)
     {
-        if (Client.GameState == null) return;
+        if (Client.GameState == null || Client.CurrentSession == null) return;
         var currentEggs = CalculateCurrentEggs();
         CheckGoalCondition();
     }
 
     private async void ItemReceived(object? o, ItemReceivedEventArgs args)
     {
+        if (Client.GameState == null || Client.CurrentSession == null) return;
         Log.Logger.Debug($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
         int currentHealth;
         switch (args.Item.Name)
@@ -292,7 +337,6 @@ public partial class App : Application
                 GetZoeHint(args.Item.Name);
                 break;
             case "Progressive Sparx Health Upgrade":
-                _sparxUpgrades++;
                 break;
             case "World Key":
                 _worldKeys++;
@@ -347,17 +391,38 @@ public partial class App : Application
     }
     private static async void HandleMaxSparxHealth(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame())
+        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
         {
             return;
         }
         byte currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
+        byte _sparxUpgrades = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0);
+        _sparxUpgrades += (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0);
+        if (
+            (Client.GameState?.ReceivedItems.Where(x => x.Name == "Starfish Reef Complete").Count() ?? 0) > 0 &&
+            (int.Parse(Client.Options?.GetValueOrDefault("sparx_power_settings", "0").ToString()) == 0) 
+        )
+        {
+            _sparxUpgrades++;
+        }
+        if (_sparxOption == ProgressiveSparxHealthOptions.Blue)
+        {
+            _sparxUpgrades += 2;
+        }
+        else if (_sparxOption == ProgressiveSparxHealthOptions.Green)
+        {
+            _sparxUpgrades += 1;
+        }
+        else if (_sparxOption == ProgressiveSparxHealthOptions.TrueSparxless)
+        {
+            _sparxUpgrades = 0;
+        }
         if (currentHealth > _sparxUpgrades)
         {
             Memory.WriteByte(Addresses.PlayerHealth, _sparxUpgrades);
         }
         LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.CurrentLevelAddress);
-        byte maxSparxHealth = (byte)(_sparxUpgrades * 2);
+        byte maxSparxHealth = (byte)(Math.Min(_sparxUpgrades * 2, 6));
         if (maxSparxHealth == 0)
         {
             maxSparxHealth = 1;
@@ -394,14 +459,14 @@ public partial class App : Application
                 Memory.WriteByte(Addresses.PlayerHealthBugbot, maxSparxHealth);
             }
         }
-        if (_sparxUpgrades == 3)
+        if (_sparxUpgrades == 4)
         {
             _sparxTimer.Enabled = false;
         }
     }
     private static async void HandleWorldKeys(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame())
+        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -451,7 +516,7 @@ public partial class App : Application
     }
     private static async void HandleSparxPowers(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame())
+        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -491,7 +556,7 @@ public partial class App : Application
     private static void HandleMinigames(object source, ElapsedEventArgs e)
     {
         // NOTE: Be very careful here, as writing to the wrong address or at the wrong time can crash the game.
-        if (!Helpers.IsInGame())
+        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -629,12 +694,32 @@ public partial class App : Application
                 Memory.WriteByte(Addresses.TanksCount, (byte)9);
             }
         }
+        else if (
+            _easyChallenges.Contains("no_green_rockets") &&
+            currentLevel == LevelInGameIDs.ScorchsPit
+        )
+        {
+            byte greenRockets = Memory.ReadByte(Addresses.GreenRocketCount);
+            int redRockets = (int)Memory.ReadByte(Addresses.RedRocketCount);
+            if (greenRockets > 0)
+            {
+                redRockets = Math.Min(200, redRockets + 50);
+                greenRockets--;
+                Memory.WriteByte(Addresses.RedRocketCount, (byte)redRockets);
+                Memory.WriteByte(Addresses.GreenRocketCount, greenRockets);
+                if (greenRockets == 0)
+                {
+                    Memory.WriteByte(Addresses.HasGreenRocketAddress, 0);
+                }
+            }
+        }
         // TODO: Add SBR.
     }
     private static async void HandleCosmeticQueue(object source, ElapsedEventArgs e)
     {
         // Avoid overwhelming the game when many cosmetic effects are received at once by processing only 1
         // every 5 seconds.  This also lets the user see effects when logging in asynchronously.
+        if (Client.GameState == null || Client.CurrentSession == null) return;
         if (_cosmeticEffects.Count > 0 && Memory.ReadShort(Addresses.GameStatus) == (short)GameStatus.InGame)
         {
             string effect = _cosmeticEffects.Dequeue();
@@ -669,7 +754,7 @@ public partial class App : Application
     }
     private static void StartSpyroGame(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame())
+        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
         {
             Log.Logger.Information("Player is not yet in game.");
             return;
@@ -781,10 +866,11 @@ public partial class App : Application
                 Memory.Write(Addresses.CrystalBridgeUnlock, 65536);
             }
         }
+        _loadGameTimer.Enabled = false;
     }
     private static void CheckGoalCondition()
     {
-        if (_hasSubmittedGoal)
+        if (_hasSubmittedGoal || Client.GameState == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -793,7 +879,7 @@ public partial class App : Application
         int goal = int.Parse(Client.Options?.GetValueOrDefault("goal", 0).ToString());
         if ((CompletionGoal)goal == CompletionGoal.Sorceress1)
         {
-            if (currentEggs >= 100 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == (int)ImportantLocationIDs.SorceressEgg))
+            if (currentEggs >= 100 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -801,7 +887,7 @@ public partial class App : Application
         }
         else if ((CompletionGoal)goal == CompletionGoal.EggForSale)
         {
-            if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == (int)ImportantLocationIDs.EggForSale))
+            if ((Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Moneybags Chase Complete") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -809,7 +895,7 @@ public partial class App : Application
         }
         else if ((CompletionGoal)goal == CompletionGoal.Sorceress2)
         {
-            if (Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == (int)ImportantLocationIDs.SuperBonusRoundEgg))
+            if ((Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Super Bonus Round Complete") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -825,7 +911,7 @@ public partial class App : Application
         }
         else if ((CompletionGoal)goal == CompletionGoal.Epilogue)
         {
-            if (currentSkillPoints >= 20 && Client.CurrentSession.Locations.AllLocationsChecked.Any(x => GameLocations.First(y => y.Id == x).Id == (int)ImportantLocationIDs.SorceressEgg))
+            if (currentSkillPoints >= 20 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -954,7 +1040,11 @@ public partial class App : Application
     }
     private static void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations)
     {
-        if (Client.GameState == null) return;
+        if (Client.GameState == null || Client.CurrentSession == null) return;
+        if (!Helpers.IsInGame())
+        {
+            Log.Logger.Error("Sending location while not in game - please report this error in the Discord.");
+        }
         var currentEggs = CalculateCurrentEggs();
         CheckGoalCondition();
 
@@ -999,7 +1089,8 @@ public partial class App : Application
                 "easy_sleepyhead",
                 "easy_shark_riders",
                 "easy_whackamole",
-                "easy_tunnels"
+                "easy_tunnels",
+                "no_green_rockets"
         ];
         foreach (string optionName in easyModeOptions)
         {
@@ -1037,18 +1128,9 @@ public partial class App : Application
             _sparxPowerTimer.Enabled = true;
         }
 
-        ProgressiveSparxHealthOptions sparxOption = (ProgressiveSparxHealthOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_progressive_sparx_health", "0").ToString());
-        if (sparxOption != ProgressiveSparxHealthOptions.Off)
+        _sparxOption = (ProgressiveSparxHealthOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_progressive_sparx_health", "0").ToString());
+        if (_sparxOption != ProgressiveSparxHealthOptions.Off)
         {
-            _sparxUpgrades = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0);
-            if (sparxOption == ProgressiveSparxHealthOptions.Blue)
-            {
-                _sparxUpgrades += 2;
-            }
-            else if (sparxOption == ProgressiveSparxHealthOptions.Green)
-            {
-                _sparxUpgrades += 1;
-            }
             _sparxTimer = new Timer();
             _sparxTimer.Elapsed += new ElapsedEventHandler(HandleMaxSparxHealth);
             _sparxTimer.Interval = 500;
@@ -1065,7 +1147,6 @@ public partial class App : Application
         Log.Logger.Information("Disconnected from Archipelago");
         // Avoid ongoing timers affecting a new game.
         _hintsList = null;
-        _sparxUpgrades = 0;
         _hasSubmittedGoal = false;
         _useQuietHints = true;
         _easyChallenges = new List<string>();

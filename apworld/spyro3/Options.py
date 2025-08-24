@@ -27,6 +27,11 @@ class SparxUpgradeOptions():
     SPARXLESS = 3
     TRUE_SPARXLESS = 4
 
+class SparxForGemsOptions():
+    OFF = 0
+    GREEN_SPARX = 1
+    SPARX_FINDER = 2
+
 class GemsanityOptions():
     OFF = 0
     PINK_GEMS = 1
@@ -181,7 +186,7 @@ class EnableTrapSparxless(Toggle):
 class EnableProgressiveSparxHealth(Choice):
     """Start the game with lower max health and add items to the pool to increase your max health.
     Applies to Sparx levels as well.
-    The Starfish Reef health upgrade will have no effect until you find all Progressive Sparx Health Upgrade items.
+    The Starfish Reef health upgrade will have no effect in True Sparxless mode.
     Off - The game behaves normally.
     Blue - Your max health starts at blue Sparx, and 1 upgrade is added to the pool.
     Green - Your max health starts at green Sparx, and 2 upgrades are added to the pool.
@@ -197,10 +202,26 @@ class EnableProgressiveSparxHealth(Choice):
 
 class ProgressiveSparxHealthLogic(Toggle):
     """Ensures that sufficient max Sparx health is in logic before various required checks.
-    Entering any Midday level logically requires green Sparx.  Entering Fireworks Factory and Charmed Ridge
-    logically requires blue Sparx, and entering Dino Mines and the Sorceress logically requires gold Sparx.
+    Entering Crawdad Farm or any Midday level logically requires green Sparx.  Entering Fireworks Factory and
+    Charmed Ridge logically requires blue Sparx, and entering Dino Mines and the Sorceress logically requires
+    gold Sparx.  The Extra Health item/bonus from Starfish Reef is not considered for this logic.
     Note: This does nothing unless Enable Progressive Sparx Health Upgrades is set to blue, green, or Sparxless,"""
     display_name = "Enable Progressive Sparx Health Logic"
+
+class RequireSparxForMaxGems(Choice):
+    """Determines the logic for 100% gem checks and gemsanity.
+    Off: Sparx max health and abilities do not affect gem logic.
+    Green Sparx: Only 75% of gems in non-flight levels are in logic until max health is green.
+        In gemsanity, no individual gems are in logic until max health is green.
+    Sparx Finder: Only 75% of gems in non-flight levels are in logic until Sparx Finder is usable.
+        In gemsanity, no individual gems are in logic until Sparx Finder is usable.
+    NOTE: This option is ignored in True Sparxless mode, or in Sparxless mode if Progressive Sparx Health Logic
+        is off."""
+    display_name = "Require Sparx for Max Gems"
+    default = SparxForGemsOptions.OFF
+    option_off = SparxForGemsOptions.OFF
+    option_green_sparx = SparxForGemsOptions.GREEN_SPARX
+    option_sparx_finder = SparxForGemsOptions.SPARX_FINDER
 
 class ZoeGivesHints(Range):
     """Enables some or all of the 11 Tutorial Zoes across Sunrise Spring and its levels giving hints.
@@ -268,6 +289,10 @@ class EasyTunnels(Toggle):
     """Makes Spyro move more slowly through the water tunnels in Seashell Shore and Dino Mines."""
     display_name = "Easy Tunnels"
 
+class NoGreenRockets(Toggle):
+    """Collecting a green rocket in Scorch will automatically convert to 50 red rockets instead."""
+    display_name = "Convert Scorch Green Rockets to Red"
+
 class LogicSunnySheilaEarly(Toggle):
     """Puts entering the Sheila sub-area of Sunny Villa without completing Sheila into logic.
     This requires jumps to the top of the side area "hut" or entering from behind.
@@ -302,6 +327,11 @@ class LogicSeashellEarly(Toggle):
     """Puts entering Seashell Shores from out of bounds without 14 eggs into logic.
     This requires a swim in air trick."""
     display_name = "Enter Seashell Shores Early"
+
+class LogicSeashellSheilaEarly(Toggle):
+    """Puts entering the Sheila sub-area of Seashell Shores without completing Sheila into logic.
+    One way to do this is through a proxy and swim in air."""
+    display_name = "Enter Seashell Shores Sheila Area Early"
 
 class LogicMushroomEarly(Toggle):
     """Puts entering Mushroom Speedway from out of bounds without 20 eggs into logic.
@@ -403,6 +433,16 @@ class LogicDesertNoMoneybags(Toggle):
     This option only matters if Moneybagssanity is turned on."""
     display_name = "Complete Desert Ruins without Moneybags"
 
+class LogicHauntedAgent9Early(Toggle):
+    """Puts entering the Agent 9 sub-area of Haunted Tomb without completing Agent 9 into logic.
+    See https://www.youtube.com/watch?v=GAr-E1pha7c"""
+    display_name = "Enter Haunted Tomb Agent 9 Area Early"
+
+class LogicDinoAgent9Early(Toggle):
+    """Puts entering the Agent 9 sub-area of Dino Mines without completing Agent 9 into logic.
+    This can be done with a swim in air or getting on top of the level's terrain."""
+    display_name = "Enter Dino Mines Agent 9 Area Early"
+
 class LogicSorceressEarly(Toggle):
     """Puts defeating the Sorceress without 100 eggs into logic.
     This requires a proxy on the Desert Ruins helmet, or a series of difficult terrain jumps.
@@ -437,6 +477,7 @@ class Spyro3Option(PerGameCommonOptions):
     #enable_trap_lag: EnableTrapLag
     enable_progressive_sparx_health: EnableProgressiveSparxHealth
     enable_progressive_sparx_logic: ProgressiveSparxHealthLogic
+    require_sparx_for_max_gems: RequireSparxForMaxGems
     zoe_gives_hints: ZoeGivesHints
     enable_hwd_randomizer: EnableHWDRandomizer
     easy_skateboarding: EasySkateboarding
@@ -449,12 +490,14 @@ class Spyro3Option(PerGameCommonOptions):
     easy_shark_riders: EasySharkRiders
     easy_whackamole: EasyWhackAMole
     easy_tunnels: EasyTunnels
+    no_green_rockets: NoGreenRockets
     logic_sunny_sheila_early: LogicSunnySheilaEarly
     logic_cloud_backwards: LogicCloudBackwards
     logic_molten_early: LogicMoltenEarly
     logic_molten_byrd_early: LogicMoltenByrdEarly
     logic_molten_thieves_no_moneybags: LogicMoltenThievesNoMoneybags
     logic_seashell_early: LogicSeashellEarly
+    logic_seashell_sheila_early: LogicSeashellSheilaEarly
     logic_mushroom_early: LogicMushroomEarly
     logic_sheila_early: LogicSheilaEarly
     logic_spooky_early: LogicSpookyEarly
@@ -473,6 +516,8 @@ class Spyro3Option(PerGameCommonOptions):
     logic_bentley_early: LogicBentleyEarly
     logic_crystal_no_moneybags: LogicCrystalNoMoneybags
     logic_desert_no_moneybags: LogicDesertNoMoneybags
+    logic_haunted_agent_9_early: LogicHauntedAgent9Early
+    logic_dino_agent_9_early: LogicDinoAgent9Early
     logic_sorceress_early: LogicSorceressEarly
 
 
@@ -490,7 +535,8 @@ spyro_options_groups = [
             EasySleepyhead,
             EasySharkRiders,
             EasyWhackAMole,
-            EasyTunnels
+            EasyTunnels,
+            NoGreenRockets
         ],
         True
     ),
@@ -503,6 +549,7 @@ spyro_options_groups = [
             LogicMoltenByrdEarly,
             LogicMoltenThievesNoMoneybags,
             LogicSeashellEarly,
+            LogicSeashellSheilaEarly,
             LogicMushroomEarly,
             LogicSheilaEarly,
             LogicSpookyEarly,
@@ -521,6 +568,8 @@ spyro_options_groups = [
             LogicBentleyEarly,
             LogicCrystalNoMoneybags,
             LogicDesertNoMoneybags,
+            LogicHauntedAgent9Early,
+            LogicDinoAgent9Early,
             LogicSorceressEarly
         ],
         True

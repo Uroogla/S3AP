@@ -156,5 +156,8 @@
         public static readonly uint[] DesertSharkAddresses = [0x0016b72c, 0x0016b784, 0x0016b7dc, 0x0016b834, 0x0016b88c, 0x0016b93c, 0x0016b994];
         public const uint TanksCount = 0x00177964; // byte
         public const uint MaxTanksCount = 0x0006757a; // byte; also the "max" for any bottom right HUD value. Read-only.
+        public const uint RedRocketCount = 0x000705f0;
+        public const uint GreenRocketCount = 0x0015bf64;
+        public const uint HasGreenRocketAddress = 0x0015bf68;
     }
 }
