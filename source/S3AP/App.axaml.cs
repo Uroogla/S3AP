@@ -15,6 +15,7 @@ using Avalonia.Media;
 using Avalonia.OpenGL;
 using Newtonsoft.Json;
 using ReactiveUI;
+using S3AP.Models;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -141,6 +142,16 @@ public partial class App : Application
                     case CompletionGoal.Epilogue:
                         goalText = "Defeat the Sorceress in Sorceress' Lair and collect all 20 skill points";
                         break;
+                    case CompletionGoal.Spike:
+                        goalText = "Defeat Spike in Spike's Arena and collect 36 eggs";
+                        break;
+                    case CompletionGoal.Scorch:
+                        goalText = "Defeat Scorch in Scorch's Pit and collect 65 eggs";
+                        break;
+                    case CompletionGoal.EggHunt:
+                        int eggsNeeded = int.Parse(Client.Options?.GetValueOrDefault("egg_count", 0).ToString());
+                        goalText = $"Collect {eggsNeeded} eggs from a reduced egg pool";
+                        break;
                     default:
                         goalText = "Error finding your goal";
                         break;
@@ -191,7 +202,6 @@ public partial class App : Application
             Log.Logger.Error("Your host seems to be invalid.  Please confirm that you have entered it correctly.");
             return;
         }
-        GameLocations = Helpers.BuildLocationList();
         _cosmeticEffects = new Queue<string>();
         Client.LocationCompleted += Client_LocationCompleted;
         Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
@@ -201,6 +211,18 @@ public partial class App : Application
         await Client.Login(e.Slot, !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
         if (Client.Options?.Count > 0)
         {
+            GemsanityOptions gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
+            int slot = Client.CurrentSession.ConnectionInfo.Slot;
+            Dictionary<string, object> obj = await Client.CurrentSession.DataStorage.GetSlotDataAsync(slot);
+            List<int> gemsanityIDs = new List<int>();
+            if (obj.TryGetValue("gemsanity_ids", out var value))
+            {
+                if (value != null)
+                {
+                    gemsanityIDs = System.Text.Json.JsonSerializer.Deserialize<List<int>>(value.ToString());
+                }
+            }
+            GameLocations = Helpers.BuildLocationList(includeGemsanity: gemsanityOption != GemsanityOptions.Off, gemsanityIDs: gemsanityIDs);
             int eggs = CalculateCurrentEggs();
             int skillPoints = CalculateCurrentSkillPoints();
             bool beatenSorceress = Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false;
@@ -220,6 +242,11 @@ public partial class App : Application
     {
         if (Client.GameState == null || Client.CurrentSession == null) return;
         var currentEggs = CalculateCurrentEggs();
+        GemsanityOptions gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
+        if (gemsanityOption != GemsanityOptions.Off)
+        {
+            CalculateCurrentGems();
+        }
         CheckGoalCondition();
     }
 
@@ -357,6 +384,14 @@ public partial class App : Application
                 _progressiveBasketBreaks++;
                 Memory.WriteByte(Addresses.SparxBreakBaskets, (byte)_progressiveBasketBreaks);
                 break;
+        }
+        if (args.Item.Name.EndsWith(" Defeated")) {
+            CheckGoalCondition();
+        }
+        else if (args.Item.Name.EndsWith(" Gem") || args.Item.Name.EndsWith(" Gems"))
+        {
+            CalculateCurrentGems();
+            CheckGoalCondition();
         }
     }
     private static async void GetZoeHint(string hintName)
@@ -560,8 +595,40 @@ public partial class App : Application
         {
             return;
         }
+        CalculateCurrentEggs();
+        CalculateCurrentGems();
         LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.CurrentLevelAddress);
         byte currentSubarea = Memory.ReadByte(Addresses.CurrentSubareaAddress);
+        CompletionGoal goal = (CompletionGoal)int.Parse(Client.Options?.GetValueOrDefault("goal", "0").ToString());
+        if (goal == CompletionGoal.EggHunt)
+        {
+            double multiplier = int.Parse(Client.Options?.GetValueOrDefault("egg_count", "0").ToString()) / 100.0;
+            if (currentLevel == LevelInGameIDs.SunriseSpring)
+            {
+                Memory.WriteByte(Addresses.MoltenEggReq, (byte)Math.Floor(10 * multiplier));
+                Memory.WriteByte(Addresses.SeashellEggReq, (byte)Math.Floor(14 * multiplier));
+                Memory.WriteByte(Addresses.MushroomEggReq, (byte)Math.Floor(20 * multiplier));
+            }
+            else if (currentLevel == LevelInGameIDs.MiddayGardens)
+            {
+                Memory.WriteByte(Addresses.SpookyEggReq, (byte)Math.Floor(25 * multiplier));
+                Memory.WriteByte(Addresses.BambooEggReq, (byte)Math.Floor(30 * multiplier));
+                Memory.WriteByte(Addresses.CountryEggReq, (byte)Math.Floor(36 * multiplier));
+            }
+            else if (currentLevel == LevelInGameIDs.EveningLake)
+            {
+                Memory.WriteByte(Addresses.FireworksEggReq, (byte)Math.Floor(50 * multiplier));
+                Memory.WriteByte(Addresses.CharmedEggReq, (byte)Math.Floor(58 * multiplier));
+                Memory.WriteByte(Addresses.HoneyEggReq, (byte)Math.Floor(65 * multiplier));
+            }
+            else if (currentLevel == LevelInGameIDs.MidnightMountain)
+            {
+                Memory.WriteByte(Addresses.HauntedEggReq, (byte)Math.Floor(70 * multiplier));
+                Memory.WriteByte(Addresses.DinoEggReq, (byte)Math.Floor(80 * multiplier));
+                Memory.WriteByte(Addresses.HarborEggReq, (byte)Math.Floor(90 * multiplier));
+            }
+        }
+
 
         // For some challenges, it makes more sense to adjust local adaptive difficulty than modify other values.
         if (
@@ -720,7 +787,8 @@ public partial class App : Application
         // Avoid overwhelming the game when many cosmetic effects are received at once by processing only 1
         // every 5 seconds.  This also lets the user see effects when logging in asynchronously.
         if (Client.GameState == null || Client.CurrentSession == null) return;
-        if (_cosmeticEffects.Count > 0 && Memory.ReadShort(Addresses.GameStatus) == (short)GameStatus.InGame)
+        if (Memory.ReadShort(Addresses.GameStatus) != (short)GameStatus.InGame) return;
+        if (_cosmeticEffects.Count > 0)
         {
             string effect = _cosmeticEffects.Dequeue();
             switch (effect)
@@ -760,6 +828,7 @@ public partial class App : Application
             return;
         }
         MoneybagsOptions moneybagsOption = (MoneybagsOptions)int.Parse(Client.Options?.GetValueOrDefault("moneybags_settings", "0").ToString());
+        GemsanityOptions gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
         if (moneybagsOption != MoneybagsOptions.Vanilla)
         {
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
@@ -866,6 +935,24 @@ public partial class App : Application
                 Memory.Write(Addresses.CrystalBridgeUnlock, 65536);
             }
         }
+        if (moneybagsOption == MoneybagsOptions.Vanilla && gemsanityOption != GemsanityOptions.Off)
+        {
+            Memory.WriteByte(Addresses.SheilaUnlock, 0);
+            Memory.WriteByte(Addresses.SgtByrdUnlock, 0);
+            Memory.WriteByte(Addresses.BentleyUnlock, 0);
+            Memory.WriteByte(Addresses.Agent9Unlock, 0);
+        }
+        if (moneybagsOption == MoneybagsOptions.Companionsanity && gemsanityOption != GemsanityOptions.Off)
+        {
+            Memory.WriteByte(Addresses.CloudBellowsUnlock, 0);
+            Memory.WriteByte(Addresses.SpookyDoorUnlock, 0);
+            Memory.WriteByte(Addresses.IcyNancyUnlock, 0);
+            Memory.WriteByte(Addresses.MoltenThievesUnlock, 0);
+            Memory.WriteByte(Addresses.CharmedStairsUnlock, 0);
+            Memory.WriteByte(Addresses.DesertDoorUnlock, 0);
+            Memory.WriteByte(Addresses.FrozenHockeyUnlock, 0);
+            Memory.WriteByte(Addresses.CrystalBridgeUnlock, 0);
+        }
         _loadGameTimer.Enabled = false;
     }
     private static void CheckGoalCondition()
@@ -912,6 +999,30 @@ public partial class App : Application
         else if ((CompletionGoal)goal == CompletionGoal.Epilogue)
         {
             if (currentSkillPoints >= 20 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
+            {
+                Client.SendGoalCompletion();
+                _hasSubmittedGoal = true;
+            }
+        }
+        else if ((CompletionGoal)goal == CompletionGoal.Spike)
+        {
+            if (currentEggs >= 36 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Spike Defeated") ?? false))
+            {
+                Client.SendGoalCompletion();
+                _hasSubmittedGoal = true;
+            }
+        }
+        else if ((CompletionGoal)goal == CompletionGoal.Scorch)
+        {
+            if (currentEggs >= 65 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Scorch Defeated") ?? false))
+            {
+                Client.SendGoalCompletion();
+                _hasSubmittedGoal = true;
+            }
+        }
+        else if ((CompletionGoal)goal == CompletionGoal.EggHunt)
+        {
+            if (currentEggs >= int.Parse(Client.Options?.GetValueOrDefault("egg_count", 0).ToString()))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1060,6 +1171,36 @@ public partial class App : Application
     {
         return Client.GameState?.ReceivedItems.Where(x => x.Name == "Skill Point").Count() ?? 0;
     }
+    private static int CalculateCurrentGems()
+    {
+        GemsanityOptions gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
+        if (gemsanityOption == GemsanityOptions.Off)
+        {
+            return Memory.ReadShort(Addresses.TotalGemAddress);
+        }
+        uint levelGemCountAddress = Addresses.SunriseSpringGems;
+        int totalGems = 0;
+        int i = 0;
+        foreach (LevelData level in Helpers.GetLevelData())
+        {
+            if (level.Name != "Super Bonus Round")
+            {
+                string levelName = level.Name;
+                int levelGemCount = 50 * (Client.GameState?.ReceivedItems?.Where(x => x != null && x.Name == $"{levelName} 50 Gems").Count() ?? 0) +
+                    100 * (Client.GameState?.ReceivedItems?.Where(x => x != null && x.Name == $"{levelName} 100 Gems").Count() ?? 0);
+                Memory.Write(levelGemCountAddress, levelGemCount);
+                totalGems += levelGemCount;
+            }
+            else
+            {
+                totalGems += Memory.ReadInt(levelGemCountAddress);
+            }
+            i++;
+            levelGemCountAddress += 4;
+        }
+        Memory.Write(Addresses.TotalGemAddress, totalGems);
+        return totalGems;
+    }
     private static void OnConnected(object sender, EventArgs args)
     {
         Log.Logger.Information("Connected to Archipelago");
@@ -1100,13 +1241,10 @@ public partial class App : Application
                 _easyChallenges.Add(optionName);
             }
         }
-        if (_easyChallenges.Count > 0)
-        {
-            _minigamesTimer = new Timer();
-            _minigamesTimer.Elapsed += new ElapsedEventHandler(HandleMinigames);
-            _minigamesTimer.Interval = 100;
-            _minigamesTimer.Enabled = true;
-        }
+        _minigamesTimer = new Timer();
+        _minigamesTimer.Elapsed += new ElapsedEventHandler(HandleMinigames);
+        _minigamesTimer.Interval = 100;
+        _minigamesTimer.Enabled = true;
 
         int isWorldKeysOn = int.Parse(Client.Options?.GetValueOrDefault("enable_world_keys", "0").ToString());
         if (isWorldKeysOn != 0)

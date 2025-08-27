@@ -1,7 +1,8 @@
 from enum import IntEnum
+import math
 from typing import NamedTuple
 from BaseClasses import Item
-from .Options import MoneybagsOptions, SparxUpgradeOptions, GemsanityOptions
+from .Options import MoneybagsOptions, SparxUpgradeOptions, GemsanityOptions, GoalOptions, SparxForGemsOptions
 from Options import OptionError
 
 
@@ -14,8 +15,7 @@ class Spyro3ItemCategory(IntEnum):
     SKILLPOINT_GOAL = 5,
     MONEYBAGS = 6,
     HINT = 7,
-    # Numbering allows for logical adding of other gem types.
-    PINK_GEM = 12,
+    GEMSANITY = 8,
     SPARX_POWERUP = 13,
     WORLD_KEY = 14
 
@@ -126,34 +126,48 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Hint 10", 4009, Spyro3ItemCategory.HINT),
     ("Hint 11", 4010, Spyro3ItemCategory.HINT),
 
-    # Numbering allows for logically adding other gem types.
-    # Final digit is zero-indexed gem type, middle 2 digits are zero-indexed level ID.
-    ("Mushroom Speedway Pink Gem", 5054, Spyro3ItemCategory.PINK_GEM),
-    ("Sheila's Alp Pink Gem", 5064, Spyro3ItemCategory.PINK_GEM),
-    ("Crawdad Farm Pink Gem", 5084, Spyro3ItemCategory.PINK_GEM),
-    ("Spooky Swamp Pink Gem", 5124, Spyro3ItemCategory.PINK_GEM),
-    ("Country Speedway Pink Gem", 5144, Spyro3ItemCategory.PINK_GEM),
-    ("Sgt. Byrd's Base Pink Gem", 5154, Spyro3ItemCategory.PINK_GEM),
-    ("Frozen Altars Pink Gem", 5194, Spyro3ItemCategory.PINK_GEM),
-    ("Charmed Ridge Pink Gem", 5224, Spyro3ItemCategory.PINK_GEM),
-    ("Honey Speedway Pink Gem", 5234, Spyro3ItemCategory.PINK_GEM),
-    ("Bentley's Outpost Pink Gem", 5244, Spyro3ItemCategory.PINK_GEM),
-    ("Crystal Islands Pink Gem", 5284, Spyro3ItemCategory.PINK_GEM),
-    ("Desert Ruins Pink Gem", 5294, Spyro3ItemCategory.PINK_GEM),
-    ("Haunted Tomb Pink Gem", 5304, Spyro3ItemCategory.PINK_GEM),
-    ("Dino Mines Pink Gem", 5310, Spyro3ItemCategory.PINK_GEM),
-    ("Harbor Speedway Pink Gem", 5324, Spyro3ItemCategory.PINK_GEM),
-    ("Agent 9's Lab Pink Gem", 5334, Spyro3ItemCategory.PINK_GEM),
-    ("Super Bonus Round Pink Gem", 5364, Spyro3ItemCategory.PINK_GEM),
+    ("Sunrise Spring 100 Gems", 5000, Spyro3ItemCategory.GEMSANITY),
+    ("Sunny Villa 100 Gems", 5001, Spyro3ItemCategory.GEMSANITY),
+    ("Cloud Spires 100 Gems", 5002, Spyro3ItemCategory.GEMSANITY),
+    ("Molten Crater 100 Gems", 5003, Spyro3ItemCategory.GEMSANITY),
+    ("Seashell Shore 100 Gems", 5004, Spyro3ItemCategory.GEMSANITY),
+    ("Mushroom Speedway 100 Gems", 5005, Spyro3ItemCategory.GEMSANITY),
+    ("Sheila's Alp 100 Gems", 5006, Spyro3ItemCategory.GEMSANITY),
+    ("Crawdad Farm 50 Gems", 5007, Spyro3ItemCategory.GEMSANITY),
+    ("Midday Gardens 100 Gems", 5008, Spyro3ItemCategory.GEMSANITY),
+    ("Icy Peak 100 Gems", 5009, Spyro3ItemCategory.GEMSANITY),
+    ("Enchanted Towers 100 Gems", 5010, Spyro3ItemCategory.GEMSANITY),
+    ("Spooky Swamp 100 Gems", 5011, Spyro3ItemCategory.GEMSANITY),
+    ("Bamboo Terrace 100 Gems", 5012, Spyro3ItemCategory.GEMSANITY),
+    ("Country Speedway 100 Gems", 5013, Spyro3ItemCategory.GEMSANITY),
+    ("Sgt. Byrd's Base 100 Gems", 5014, Spyro3ItemCategory.GEMSANITY),
+    ("Spider Town 50 Gems", 5015, Spyro3ItemCategory.GEMSANITY),
+    ("Evening Lake 100 Gems", 5016, Spyro3ItemCategory.GEMSANITY),
+    ("Frozen Altars 100 Gems", 5017, Spyro3ItemCategory.GEMSANITY),
+    ("Lost Fleet 100 Gems", 5018, Spyro3ItemCategory.GEMSANITY),
+    ("Fireworks Factory 100 Gems", 5019, Spyro3ItemCategory.GEMSANITY),
+    ("Charmed Ridge 100 Gems", 5020, Spyro3ItemCategory.GEMSANITY),
+    ("Honey Speedway 100 Gems", 5021, Spyro3ItemCategory.GEMSANITY),
+    ("Bentley's Outpost 100 Gems", 5022, Spyro3ItemCategory.GEMSANITY),
+    ("Starfish Reef 50 Gems", 5023, Spyro3ItemCategory.GEMSANITY),
+    ("Midnight Mountain 100 Gems", 5024, Spyro3ItemCategory.GEMSANITY),
+    ("Crystal Islands 100 Gems", 5025, Spyro3ItemCategory.GEMSANITY),
+    ("Desert Ruins 100 Gems", 5026, Spyro3ItemCategory.GEMSANITY),
+    ("Haunted Tomb 100 Gems", 5027, Spyro3ItemCategory.GEMSANITY),
+    ("Dino Mines 100 Gems", 5028, Spyro3ItemCategory.GEMSANITY),
+    ("Harbor Speedway 100 Gems", 5029, Spyro3ItemCategory.GEMSANITY),
+    ("Agent 9's Lab 100 Gems", 5030, Spyro3ItemCategory.GEMSANITY),
+    ("Bugbot Factory 50 Gems", 5031, Spyro3ItemCategory.GEMSANITY),
 ]]
 
 item_descriptions = {}
 
 item_dictionary = {item_data.name: item_data for item_data in _all_items}
 
-def BuildItemPool(multiworld, count, preplaced_eggs, options):
+def BuildItemPool(world, count, preplaced_eggs, options):
     item_pool = []
     included_itemcount = 0
+    multiworld = world.multiworld
 
     if options.guaranteed_items.value:
         for item_name in options.guaranteed_items.value:
@@ -161,17 +175,60 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
             item_pool.append(item)
             included_itemcount = included_itemcount + 1
     remaining_count = count - included_itemcount
-    eggs_to_place = 150 - preplaced_eggs
+    eggs_to_place = 150
+    if options.goal == GoalOptions.EGG_HUNT:
+        eggs_to_place = math.ceil(options.egg_count * (1.0 + options.percent_extra_eggs / 100.0))
+    eggs_to_place = eggs_to_place - preplaced_eggs
     for i in range(eggs_to_place):
         item_pool.append(item_dictionary["Egg"])
     remaining_count = remaining_count - eggs_to_place
+
+    if options.enable_gemsanity.value == GemsanityOptions.PARTIAL:
+        for i in range(4):
+            item_pool.append(item_dictionary["Crawdad Farm 50 Gems"])
+            item_pool.append(item_dictionary["Spider Town 50 Gems"])
+            item_pool.append(item_dictionary["Starfish Reef 50 Gems"])
+            item_pool.append(item_dictionary["Bugbot Factory 50 Gems"])
+        for i in range(4):
+            item_pool.append(item_dictionary["Sunrise Spring 100 Gems"])
+            item_pool.append(item_dictionary["Sunny Villa 100 Gems"])
+            item_pool.append(item_dictionary["Cloud Spires 100 Gems"])
+            item_pool.append(item_dictionary["Molten Crater 100 Gems"])
+            item_pool.append(item_dictionary["Seashell Shore 100 Gems"])
+            item_pool.append(item_dictionary["Mushroom Speedway 100 Gems"])
+            item_pool.append(item_dictionary["Sheila's Alp 100 Gems"])
+            item_pool.append(item_dictionary["Midday Gardens 100 Gems"])
+            item_pool.append(item_dictionary["Country Speedway 100 Gems"])
+            item_pool.append(item_dictionary["Evening Lake 100 Gems"])
+            item_pool.append(item_dictionary["Honey Speedway 100 Gems"])
+            item_pool.append(item_dictionary["Midnight Mountain 100 Gems"])
+            item_pool.append(item_dictionary["Harbor Speedway 100 Gems"])
+        for i in range(5):
+            item_pool.append(item_dictionary["Icy Peak 100 Gems"])
+            item_pool.append(item_dictionary["Enchanted Towers 100 Gems"])
+            item_pool.append(item_dictionary["Spooky Swamp 100 Gems"])
+            item_pool.append(item_dictionary["Bamboo Terrace 100 Gems"])
+            item_pool.append(item_dictionary["Sgt. Byrd's Base 100 Gems"])
+        for i in range(6):
+            item_pool.append(item_dictionary["Frozen Altars 100 Gems"])
+            item_pool.append(item_dictionary["Lost Fleet 100 Gems"])
+            item_pool.append(item_dictionary["Fireworks Factory 100 Gems"])
+            item_pool.append(item_dictionary["Charmed Ridge 100 Gems"])
+            item_pool.append(item_dictionary["Bentley's Outpost 100 Gems"])
+        for i in range(7):
+            item_pool.append(item_dictionary["Crystal Islands 100 Gems"])
+            item_pool.append(item_dictionary["Desert Ruins 100 Gems"])
+            item_pool.append(item_dictionary["Haunted Tomb 100 Gems"])
+            item_pool.append(item_dictionary["Dino Mines 100 Gems"])
+            item_pool.append(item_dictionary["Agent 9's Lab 100 Gems"])
+        remaining_count -= 158
 
     if options.moneybags_settings.value in [MoneybagsOptions.COMPANIONSANITY, MoneybagsOptions.MONEYBAGSSANITY]:
         item_pool.append(item_dictionary["Moneybags Unlock - Sheila"])
         item_pool.append(item_dictionary["Moneybags Unlock - Sgt. Byrd"])
         item_pool.append(item_dictionary["Moneybags Unlock - Bentley"])
         item_pool.append(item_dictionary["Moneybags Unlock - Agent 9"])
-        remaining_count = remaining_count - 4;
+        remaining_count = remaining_count - 4
     if options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY:
         item_pool.append(item_dictionary["Moneybags Unlock - Cloud Spires Bellows"])
         item_pool.append(item_dictionary["Moneybags Unlock - Spooky Swamp Door"])
@@ -181,7 +238,7 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
         item_pool.append(item_dictionary["Moneybags Unlock - Desert Ruins Door"])
         item_pool.append(item_dictionary["Moneybags Unlock - Frozen Altars Cat Hockey Door"])
         item_pool.append(item_dictionary["Moneybags Unlock - Crystal Islands Bridge"])
-        remaining_count = remaining_count - 8;
+        remaining_count = remaining_count - 8
     
     if options.enable_progressive_sparx_health in [SparxUpgradeOptions.BLUE, SparxUpgradeOptions.GREEN, SparxUpgradeOptions.SPARXLESS]:
         item_pool.append(item_dictionary["Progressive Sparx Health Upgrade"])
@@ -195,7 +252,11 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
 
     if options.sparx_power_settings.value:
         item_pool.append(item_dictionary["Increased Sparx Range"])
-        item_pool.append(item_dictionary["Sparx Gem Finder"])
+        if options.enable_progressive_sparx_logic.value and options.require_sparx_for_max_gems.value == SparxForGemsOptions.SPARX_FINDER:
+            multiworld.push_precollected(world.create_item("Sparx Gem Finder"))
+            remaining_count = remaining_count + 1
+        else:
+            item_pool.append(item_dictionary["Sparx Gem Finder"])
         item_pool.append(item_dictionary["Extra Hit Point"])
         item_pool.append(item_dictionary["Progressive Sparx Basket Break"])
         item_pool.append(item_dictionary["Progressive Sparx Basket Break"])
@@ -205,40 +266,6 @@ def BuildItemPool(multiworld, count, preplaced_eggs, options):
         for i in range(3):
             item_pool.append(item_dictionary["World Key"])
         remaining_count = remaining_count - 3
-
-
-    #if options.enable_gemsanity_checks.value == GemsanityOptions.PINK_GEMS:
-    #    for i in range(8):
-    #        item_pool.append(item_dictionary["Mushroom Speedway Pink Gem"])
-    #    item_pool.append(item_dictionary["Sheila's Alp Pink Gem"])
-    #    item_pool.append(item_dictionary["Crawdad Farm Pink Gem"])
-    #    for i in range(2):
-    #        item_pool.append(item_dictionary["Spooky Swamp Pink Gem"])
-    #    for i in range(8):
-    #        item_pool.append(item_dictionary["Country Speedway Pink Gem"])
-    #    item_pool.append(item_dictionary["Sgt. Byrd's Base Pink Gem"])
-    #    for i in range(2):
-    #        item_pool.append(item_dictionary["Frozen Altars Pink Gem"])
-    #    for i in range(2):
-    #        item_pool.append(item_dictionary["Charmed Ridge Pink Gem"])
-    #    for i in range(8):
-    #        item_pool.append(item_dictionary["Honey Speedway Pink Gem"])
-    #    for i in range(2):
-    #        item_pool.append(item_dictionary["Bentley's Outpost Pink Gem"])
-    #    for i in range(3):
-    #        item_pool.append(item_dictionary["Crystal Islands Pink Gem"])
-    #    for i in range(3):
-    #        item_pool.append(item_dictionary["Desert Ruins Pink Gem"])
-    #    for i in range(4):
-    #        item_pool.append(item_dictionary["Haunted Tomb Pink Gem"])
-    #    item_pool.append(item_dictionary["Dino Mines Pink Gem"])
-    #    for i in range(8):
-    #        item_pool.append(item_dictionary["Harbor Speedway Pink Gem"])
-    #    for i in range(5):
-    #        item_pool.append(item_dictionary["Agent 9's Lab Pink Gem"])
-    #    for i in range(5):
-    #        item_pool.append(item_dictionary["Super Bonus Round Pink Gem"])
-    #    remaining_count = remaining_count - 64
 
     if remaining_count < 0:
         raise OptionError(f"The options you have selected require at least {remaining_count * -1} more checks to be enabled.")

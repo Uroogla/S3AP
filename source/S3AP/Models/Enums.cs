@@ -24,7 +24,18 @@
             EggForSale = 1,
             Sorceress2 = 2,
             AllSkillPoints = 3,
-            Epilogue = 4
+            Epilogue = 4,
+            Spike = 5,
+            Scorch = 6,
+            EggHunt = 7
+        }
+
+        public enum GemsanityOptions
+        {
+            Off = 0,
+            Partial = 1,
+            Full = 2,
+            FullGlobal = 3
         }
 
         public enum SpyroColor : short
