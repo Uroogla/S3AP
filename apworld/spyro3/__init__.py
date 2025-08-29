@@ -6,7 +6,7 @@ from BaseClasses import MultiWorld, Region, Item, Entrance, Tutorial, ItemClassi
 
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_rule, add_item_rule, forbid_item
-from Options import Accessibility
+from Options import Accessibility, Range
 
 from .Items import Spyro3Item, Spyro3ItemCategory, item_dictionary, key_item_names, item_descriptions, BuildItemPool
 from .Locations import Spyro3Location, Spyro3LocationCategory, location_tables, location_dictionary, hint_locations
@@ -42,22 +42,12 @@ class Spyro3World(World):
     web = Spyro3Web()
     data_version = 0
     base_id = 1230000
-    enabled_location_categories: Set[Spyro3LocationCategory]
-    enabled_hint_locations = []
     required_client_version = (0, 5, 0)
     item_name_to_id = Spyro3Item.get_name_to_id()
     location_name_to_id = Spyro3Location.get_name_to_id()
     item_name_groups = {}
     item_descriptions = item_descriptions
-    chosen_gem_locations = []
-    requirement_multiplier = 1.0
 
-    all_levels = [
-        "Sunrise Spring","Sunny Villa","Cloud Spires","Molten Crater","Seashell Shore","Mushroom Speedway","Sheila's Alp", "Buzz", "Crawdad Farm",
-        "Midday Gardens","Icy Peak","Enchanted Towers","Spooky Swamp","Bamboo Terrace","Country Speedway","Sgt. Byrd's Base","Spike","Spider Town",
-        "Evening Lake","Frozen Altars","Lost Fleet","Fireworks Factory","Charmed Ridge","Honey Speedway","Bentley's Outpost","Scorch","Starfish Reef",
-        "Midnight Mountain","Crystal Islands","Desert Ruins","Haunted Tomb","Dino Mines","Harbor Speedway","Agent 9's Lab","Sorceress","Bugbot Factory","Super Bonus Round"
-    ]
     level_gems = {
         "Sunrise Spring": 400,
         "Sunny Villa": 400,
@@ -105,6 +95,16 @@ class Spyro3World(World):
         self.locked_locations = []
         self.main_path_locations = []
         self.enabled_location_categories = set()
+        self.all_levels = [
+            "Sunrise Spring","Sunny Villa","Cloud Spires","Molten Crater","Seashell Shore","Mushroom Speedway","Sheila's Alp", "Buzz", "Crawdad Farm",
+            "Midday Gardens","Icy Peak","Enchanted Towers","Spooky Swamp","Bamboo Terrace","Country Speedway","Sgt. Byrd's Base","Spike","Spider Town",
+            "Evening Lake","Frozen Altars","Lost Fleet","Fireworks Factory","Charmed Ridge","Honey Speedway","Bentley's Outpost","Scorch","Starfish Reef",
+            "Midnight Mountain","Crystal Islands","Desert Ruins","Haunted Tomb","Dino Mines","Harbor Speedway","Agent 9's Lab","Sorceress","Bugbot Factory","Super Bonus Round"
+        ]
+        self.requirement_multiplier = 1.0
+        self.enabled_hint_locations = []
+        self.enabled_location_categories = set()
+        self.chosen_gem_locations = []
 
     def generate_early(self):
         self.enabled_location_categories.add(Spyro3LocationCategory.EGG)
@@ -137,7 +137,8 @@ class Spyro3World(World):
             all_gem_locations = []
             for location in location_dictionary:
                 if location_dictionary[location].category == Spyro3LocationCategory.GEMSANITY:
-                    all_gem_locations.append(location)
+                    if self.options.goal != GoalOptions.EGG_HUNT or not location.startswith("Bugbot "):
+                        all_gem_locations.append(location)
             self.chosen_gem_locations = self.multiworld.random.sample(all_gem_locations, k=200)
         if self.options.enable_gemsanity.value == GemsanityOptions.FULL:
             for itemname, item in item_dictionary.items():
@@ -145,13 +146,17 @@ class Spyro3World(World):
                     self.options.local_items.value.add(item)
         # Egg Hunt does not contain enough eggs to reach all areas, by design.
         if self.options.goal == GoalOptions.EGG_HUNT:
-            self.options.accessibility = Accessibility(2) # Minimal
+            self.all_levels.remove("Sorceress")
+            self.all_levels.remove("Bugbot Factory")
+            self.all_levels.remove("Super Bonus Round")
             self.requirement_multiplier = 1.0 * self.options.egg_count / 100
         # Prevent restrictive starts.
         if self.options.moneybags_settings == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_cloud_backwards:
             self.multiworld.early_items[self.player]["Moneybags Unlock - Cloud Spires Bellows"] = 1
         if self.options.moneybags_settings == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_sheila_early:
             self.multiworld.early_items[self.player]["Moneybags Unlock - Sheila"] = 1
+        # Conceptually, partial accessibility does not make sense in Spyro 3 and just leads to generation failures.
+        self.options.accessibility = Accessibility(0)  # Full
 
 
     def create_regions(self):
@@ -210,9 +215,10 @@ class Spyro3World(World):
         create_connection("Midnight Mountain", "Harbor Speedway")
         create_connection("Midnight Mountain", "Agent 9's Lab")
 
-        create_connection("Midnight Mountain", "Sorceress")
-        create_connection("Midnight Mountain", "Bugbot Factory")
-        create_connection("Midnight Mountain", "Super Bonus Round")
+        if self.options.goal.value != GoalOptions.EGG_HUNT:
+            create_connection("Midnight Mountain", "Sorceress")
+            create_connection("Midnight Mountain", "Bugbot Factory")
+            create_connection("Midnight Mountain", "Super Bonus Round")
         
         
     # For each region, add the associated locations retrieved from the corresponding location_table
@@ -220,8 +226,26 @@ class Spyro3World(World):
         new_region = Region(region_name, self.player, self.multiworld)
         #print("location table size: " + str(len(location_table)))
         for location in location_table:
+            if self.options.goal == GoalOptions.EGG_HUNT and (location.name.startswith("Bugbot ") or location.name.startswith("Super Bonus Round")):
+                continue
+            if self.options.goal == GoalOptions.EGG_HUNT and location.name in ("Midnight Mountain Home: Egg for sale. (Al)", "Midnight Mountain Home: Moneybags Chase Complete"):
+                filler_item = self.create_item("Filler")
+                # print("Adding Location: " + location.name + " as an event with default item " + location.default_item)
+                new_location = Spyro3Location(
+                    self.player,
+                    location.name,
+                    location.category,
+                    location.default_item,
+                    self.location_name_to_id[location.name],
+                    new_region
+                )
+                if location.name == "Midnight Mountain Home: Moneybags Chase Complete":
+                    filler_item.code = None
+                new_location.place_locked_item(filler_item)
+                # print("Placing event: " + event_item.name + " in location: " + location.name)
+                new_region.locations.append(new_location)
             #print("Creating location: " + location.name)
-            if location.category in self.enabled_location_categories and location.category not in [Spyro3LocationCategory.EVENT, Spyro3LocationCategory.GEMSANITY, Spyro3LocationCategory.HINT, Spyro3LocationCategory.TOTAL_GEM]:
+            elif location.category in self.enabled_location_categories and location.category not in [Spyro3LocationCategory.EVENT, Spyro3LocationCategory.GEMSANITY, Spyro3LocationCategory.HINT, Spyro3LocationCategory.TOTAL_GEM]:
                 #print("Adding location: " + location.name + " with default item " + location.default_item)
                 new_location = Spyro3Location(
                     self.player,
@@ -246,7 +270,7 @@ class Spyro3World(World):
                 new_region.locations.append(new_location)
             elif location.category in self.enabled_location_categories and location.category == Spyro3LocationCategory.TOTAL_GEM:
                 gems_needed = int(location.name.split("Total Gems: ")[1])
-                if gems_needed <= self.options.max_total_gem_checks.value:
+                if gems_needed <= self.options.max_total_gem_checks.value and not (self.options.goal == GoalOptions.EGG_HUNT and gems_needed > 14800):
                     new_location = Spyro3Location(
                         self.player,
                         location.name,
@@ -396,7 +420,7 @@ class Spyro3World(World):
             return state.count("World Key", self.player) >= key_count
 
         def has_entrance_eggs(self, eggs, state):
-            return math.floor(state.count("Egg", self.player) >= self.requirement_multiplier) * eggs
+            return state.count("Egg", self.player) >= math.floor(self.requirement_multiplier * eggs)
 
         def has_optional_moneybags_unlock(self, unlock, state):
             if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY:
@@ -1043,7 +1067,7 @@ class Spyro3World(World):
                               140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157,
                               158, 159, 160]
             empty_bits = [5, 18, 54, 59, 76, 80, 104, 110, 122]
-            if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_spooky_no_moneybags.value:
+            if self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_spooky_no_moneybags.value:
                 for gem in moneybags_gems:
                     skipped_bits = 0
                     for bit in empty_bits:
@@ -1439,8 +1463,9 @@ class Spyro3World(World):
             set_indirect_rule(self, "Midnight Mountain", lambda state: is_boss_defeated(self, "Scorch", state) and has_world_keys(self, 3, state))
         else:
             set_indirect_rule(self, "Midnight Mountain", lambda state: is_boss_defeated(self, "Scorch", state))
-        set_rule(self.multiworld.get_location("Midnight Mountain Home: Egg for sale. (Al)", self.player), lambda state: is_boss_defeated(self,"Sorceress", state))
-        set_rule(self.multiworld.get_location("Midnight Mountain Home: Moneybags Chase Complete", self.player), lambda state: is_boss_defeated(self, "Sorceress", state))
+        if self.options.goal != GoalOptions.EGG_HUNT:
+            set_rule(self.multiworld.get_location("Midnight Mountain Home: Egg for sale. (Al)", self.player), lambda state: is_boss_defeated(self,"Sorceress", state))
+            set_rule(self.multiworld.get_location("Midnight Mountain Home: Moneybags Chase Complete", self.player), lambda state: is_boss_defeated(self, "Sorceress", state))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(105):
                 if len(self.chosen_gem_locations) == 0 or f"Midnight Mountain: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1694,25 +1719,28 @@ class Spyro3World(World):
                     )
 
         # Sorceress' Lair Rules
-        if not self.options.logic_sorceress_early.value and self.options.enable_progressive_sparx_logic.value:
-            set_indirect_rule(self, "Sorceress", lambda state: has_sparx_health(self, 3, state) and state.has("Egg", self.player, 100))
-        elif not self.options.logic_sorceress_early.value:
-            set_indirect_rule(self, "Sorceress", lambda state: state.has("Egg", self.player, 100))
-        elif self.options.enable_progressive_sparx_logic.value:
-            set_indirect_rule(self, "Sorceress", lambda state: has_sparx_health(self, 3, state))
+        if self.options.goal != GoalOptions.EGG_HUNT:
+            if not self.options.logic_sorceress_early.value and self.options.enable_progressive_sparx_logic.value:
+                set_indirect_rule(self, "Sorceress", lambda state: has_sparx_health(self, 3, state) and state.has("Egg", self.player, 100))
+            elif not self.options.logic_sorceress_early.value:
+                set_indirect_rule(self, "Sorceress", lambda state: state.has("Egg", self.player, 100))
+            elif self.options.enable_progressive_sparx_logic.value:
+                set_indirect_rule(self, "Sorceress", lambda state: has_sparx_health(self, 3, state))
 
         # Bugbot Factory Rules
-        set_indirect_rule(self, "Bugbot Factory", lambda state: is_boss_defeated(self,"Sorceress", state))
-        # Sparx level gems are always accessible in gemsanity.
+        if self.options.goal != GoalOptions.EGG_HUNT:
+            set_indirect_rule(self, "Bugbot Factory", lambda state: is_boss_defeated(self,"Sorceress", state))
+            # Sparx level gems are always accessible in gemsanity.
 
 
         # Super Bonus Round Rules
-        # Ensure all gems are in logic.
-        set_indirect_rule(
-            self,
-            "Super Bonus Round",
-            lambda state: is_boss_defeated(self, "Sorceress", state) and state.has("Egg", self.player, 149) and has_all_gems(self, state)
-        )
+        if self.options.goal != GoalOptions.EGG_HUNT:
+            # Ensure all gems are in logic.
+            set_indirect_rule(
+                self,
+                "Super Bonus Round",
+                lambda state: is_boss_defeated(self, "Sorceress", state) and state.has("Egg", self.player, 149) and has_all_gems(self, state)
+            )
 
         # Level Gem Count rules
         for level in self.all_levels:
@@ -1744,7 +1772,7 @@ class Spyro3World(World):
         if Spyro3LocationCategory.TOTAL_GEM in self.enabled_location_categories:
             for i in range(40):
                 gems = 500 * (i + 1)
-                if gems <= self.options.max_total_gem_checks.value:
+                if gems <= self.options.max_total_gem_checks.value and not (self.options.goal == GoalOptions.EGG_HUNT and gems > 14800):
                     set_rule(self.multiworld.get_location(f"Total Gems: {gems}", self.player), lambda state, gems=gems: has_total_accessible_gems(self, state, gems))
                 else:
                     break

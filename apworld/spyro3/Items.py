@@ -188,7 +188,10 @@ def BuildItemPool(world, count, preplaced_eggs, options):
             item_pool.append(item_dictionary["Crawdad Farm 50 Gems"])
             item_pool.append(item_dictionary["Spider Town 50 Gems"])
             item_pool.append(item_dictionary["Starfish Reef 50 Gems"])
-            item_pool.append(item_dictionary["Bugbot Factory 50 Gems"])
+            if options.goal != GoalOptions.EGG_HUNT:
+                item_pool.append(item_dictionary["Bugbot Factory 50 Gems"])
+            else:
+                remaining_count = remaining_count + 4
         for i in range(4):
             item_pool.append(item_dictionary["Sunrise Spring 100 Gems"])
             item_pool.append(item_dictionary["Sunny Villa 100 Gems"])

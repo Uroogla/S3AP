@@ -52,7 +52,7 @@ class GoalOption(Choice):
     Spike - Beat Spike with 36 eggs.
     Scorch - Beat Scorch with 65 eggs.
     Egg Hunt - Find a certain number of eggs to win. Portal requirements are reduced.  The Sorceress and SBR are
-         inaccessible. This option is incompatible with full accessibility."""
+         inaccessible."""
     display_name = "Completion Goal"
     default = GoalOptions.SORCERESS_ONE
     option_sorceress_1 = GoalOptions.SORCERESS_ONE
