@@ -47,10 +47,10 @@ You may upload this to [the Archipelago website](https://archipelago.gg/uploads)
 
 1. Download the S3AP.zip and spyro3.apworld from the GitHub page linked above.
 2. Double click the apworld to install to your Archipelago installation.
-3. Extract S3AP.zip and note where S3AP.exe is.
+3. Extract S3AP.zip and note where S3AP.Desktop.exe is.
 4. Open Duckstation and load into Spyro: Year of the Dragon.
 5. Start a new game (or if continuing an exisiting seed, load into that save file).
-6. Open S3AP.exe, the Spyro 3 client.  You will likely want to do so as an administrator.
+6. Open S3AP.Desktop.exe, the Spyro 3 client.  You will likely want to do so as an administrator.
 7. In the top left of the Spyro 3 client, click the "burger" menu to open the settings page.
 8. Enter your host, slot, and optionally your password.
 9. Click Connect. The first time you connect, a few error messages may appear - these are okay.
