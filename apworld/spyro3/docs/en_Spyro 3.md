@@ -63,9 +63,11 @@ The following command (without a slash or exclamation point) is available when u
 If playing on a new save file, you will still need to get to the end of each level and defeat the bosses to progress in the game.
 - `useQuietHints` Suppresses hints for found locations to make the client easier to read. On by default.
 - `useVerboseHints` Include found locations in hint lists. Due to Archipelago Server limitations, only applies to hints requested after this change.
+- `showGoal` Show what your completion goal is.
 
 ## Are There Any Bugs?
 
 The following are known issues that can impact your gameplay.
 
 - Companionsanity and Moneybagssanity can very rarely result in softlocks in a few places.
+- Leaving the client and game idle for extended periods of time may result in errors.

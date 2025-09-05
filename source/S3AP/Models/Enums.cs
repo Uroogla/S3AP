@@ -24,7 +24,18 @@
             EggForSale = 1,
             Sorceress2 = 2,
             AllSkillPoints = 3,
-            Epilogue = 4
+            Epilogue = 4,
+            Spike = 5,
+            Scorch = 6,
+            EggHunt = 7
+        }
+
+        public enum GemsanityOptions
+        {
+            Off = 0,
+            Partial = 1,
+            Full = 2,
+            FullGlobal = 3
         }
 
         public enum SpyroColor : short
@@ -52,14 +63,6 @@
             Green = 2,
             Sparxless = 3,
             TrueSparxless = 4
-        }
-
-        public enum ImportantLocationIDs : int
-        {
-            SunnyEndOfLevelEgg = 1231000,
-            SorceressEgg = 1264000,
-            EggForSale = 1257005,
-            SuperBonusRoundEgg = 1266000
         }
 
         public enum LevelInGameIDs : byte

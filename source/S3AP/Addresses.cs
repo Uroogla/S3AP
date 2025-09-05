@@ -1,4 +1,6 @@
-﻿namespace S3AP
+﻿using System.Collections.Generic;
+
+namespace S3AP
 {
     public static class Addresses
     {
@@ -92,53 +94,54 @@
         public const uint FrozenHockeyUnlock = 0x00066fac;
         public const uint CrystalBridgeUnlock = 0x00066fb0;
 
-        public const uint SunriseFirstZoeAddress = 0x0018ea95;
-        public const uint SunriseSuperflyZoeAddress = 0x0018f4e5;
-        public const uint SunriseCameraZoeAddress = 0x0018df95;
-        public const uint SunnyBigRhynocZoeAddress = 0x00190161;
-        public const uint SunnyCheckpointZoeAddress = 0x001910d9;
-        public const uint CloudMetalArmorZoeAddress = 0x0018ec71;
-        public const uint CloudGlideZoeAddress = 0x0018e8a9;
-        public const uint MoltenFodderZoeAddress = 0x0014bcfd;
-        public const uint SeashellAtlasZoeAddress = 0x0018b699;
-        public const uint SeashellHoverZoeAddress = 0x0018a931;
-        public const uint SheilaControlsZoeAddress = 0x0016796d;
+        public static readonly List<uint> SunriseFirstZoeAddress = [0x00071b9b, 4];
+        public static readonly List<uint> SunriseSuperflyZoeAddress = [0x00071b9f, 2];
+        public static readonly List<uint> SunriseCameraZoeAddress = [0x00071b97, 4];
+        public static readonly List<uint> SunnyBigRhynocZoeAddress = [0x00071bb1, 4];
+        public static readonly List<uint> SunnyCheckpointZoeAddress = [0x00071bb7, 1];
+        public static readonly List<uint> CloudMetalArmorZoeAddress = [0x00071bdb, 3];
+        public static readonly List<uint> CloudGlideZoeAddress = [0x00071bda, 0];
+        public static readonly List<uint> MoltenFodderZoeAddress = [0x00071bf8, 6];
+        public static readonly List<uint> SeashellAtlasZoeAddress = [0x00071c1c, 2];
+        public static readonly List<uint> SeashellHoverZoeAddress = [0x00071c17, 3];
+        public static readonly List<uint> SheilaControlsZoeAddress = [0x00071c56, 1];
 
         public const uint SheilaCutscene = 0x007166a;
         public const uint BuzzDefeated = 0x007166c;
         public const uint SpikeDefeated = 0x007166d;
         public const uint ScorchDefeated = 0x007166e;
+        public const uint HunterRescuedCutscene = 0x7169a;
         public const uint ByrdCutscene = 0x0071661;
         public const uint BentleyCutscene = 0x0071662;
         public const uint Agent9Cutscene = 0x007165e;
 
-        public const uint SunrisePondLifeBottleAddress = 0x0018fb96;
-        public const uint SunriseSheilaLifeBottleAddress = 0x0018d3b6;
-        public const uint SunnyFirstLifeBottleAddress = 0x00190812;
-        public const uint SunnySecondLifeBottleAddress = 0x0019086a;
-        public const uint CloudLifeBottleAddress = 0x0018cd52;
-        public const uint SheilaLifeBottleAddress = 0x00167c57;
-        public const uint MoltenLifeBottleAddress = 0x0012d206;
-        public const uint SeashellLifeBottleAddress = 0x00189fba;
-        public const uint ByrdLifeBottleAddress = 0x00188f6a;
-        public const uint BambooBentleyLifeBottleAddress = 0x00186fc7;
-        public const uint BambooFirstUnderwaterLifeBottleAddress = 0x00186b22;
-        public const uint BambooSecondUnderwaterLifeBottleAddress = 0x00186b7a;
-        public const uint BambooThirdUnderwaterLifeBottleAddress = 0x00186bd2;
-        public const uint BambooFourthUnderwaterLifeBottleAddress = 0x00186c2a;
-        public const uint EnchantedLifeBottleAddress = 0x00191b82;
-        public const uint IcyLifeBottleAddress = 0x0018e43a;
-        public const uint FireworksAgentLifeBottleAddress = 0x00187a16;
-        public const uint FireworksOOBLifeBottleAddress = 0x0018dba2;
-        public const uint FleetSkateboardingLifeBottleAddress = 0x0016d94a;
-        public const uint FleetAcidLifeBottleAddress = 0x0018fb02;
-        public const uint EveningLifeBottleAddress = 0x00192d6e;
-        public const uint CharmedFirstLifeBottleAddress = 0x0018f5e2;
-        public const uint CharmedSecondLifeBottleAddress = 0x0018f63a;
-        public const uint DesertInsideLifeBottleAddress = 0x0018153e;
-        public const uint DesertOutsideLifeBottleAddress = 0x001814e6;
-        public const uint HauntedLifeBottleAddress = 0x0018f4be;
-        public const uint DinoLifeBottleAddress = 0x0018f5ca;
+        public static readonly List<uint> SunrisePondLifeBottleAddress = [0x00071ba1, 6];
+        public static readonly List<uint> SunriseSheilaLifeBottleAddress = [0x00071b93, 2];
+        public static readonly List<uint> SunnyFirstLifeBottleAddress = [0x00071bb4, 0];
+        public static readonly List<uint> SunnySecondLifeBottleAddress = [0x00071bb4, 1];
+        public static readonly List<uint> CloudLifeBottleAddress = [0x00071bd0, 1];
+        public static readonly List<uint> SheilaLifeBottleAddress = [0x00071c57, 2];
+        public static readonly List<uint> MoltenLifeBottleAddress = [0x00071c00, 2];
+        public static readonly List<uint> SeashellLifeBottleAddress = [0x00071c14, 0];
+        public static readonly List<uint> ByrdLifeBottleAddress = [0x00071d76, 2];
+        public static readonly List<uint> BambooBentleyLifeBottleAddress = [0x00071d41, 5];
+        public static readonly List<uint> BambooFirstUnderwaterLifeBottleAddress = [0x00071d36, 4];
+        public static readonly List<uint> BambooSecondUnderwaterLifeBottleAddress = [0x00071d36, 5];
+        public static readonly List<uint> BambooThirdUnderwaterLifeBottleAddress = [0x00071d36, 7];
+        public static readonly List<uint> BambooFourthUnderwaterLifeBottleAddress = [0x00071d36, 6];
+        public static readonly List<uint> EnchantedLifeBottleAddress = [0x00071cf6, 5];
+        public static readonly List<uint> IcyLifeBottleAddress = [0x00071cd8, 7];
+        public static readonly List<uint> FireworksAgentLifeBottleAddress = [0x00071e46, 0];
+        public static readonly List<uint> FireworksOOBLifeBottleAddress = [0x00071e35, 5];
+        public static readonly List<uint> FleetSkateboardingLifeBottleAddress = [0x00071e2d, 2];
+        public static readonly List<uint> FleetAcidLifeBottleAddress = [0x00071e16, 3];
+        public static readonly List<uint> EveningLifeBottleAddress = [0x00071dd3, 6];
+        public static readonly List<uint> CharmedFirstLifeBottleAddress = [0x00071e57, 2];
+        public static readonly List<uint> CharmedSecondLifeBottleAddress = [0x00071e57, 3];
+        public static readonly List<uint> DesertInsideLifeBottleAddress = [0x00071f32, 4];
+        public static readonly List<uint> DesertOutsideLifeBottleAddress = [0x00071f32, 3];
+        public static readonly List<uint> HauntedLifeBottleAddress = [0x00071f50, 6];
+        public static readonly List<uint> DinoLifeBottleAddress = [0x00071f75, 0];
 
         public const uint SunnyLizardsCount = 0x001865ec; // byte
         public const uint SunnySkateScore = 0x001876e4; // short
@@ -155,5 +158,57 @@
         public static readonly uint[] DesertSharkAddresses = [0x0016b72c, 0x0016b784, 0x0016b7dc, 0x0016b834, 0x0016b88c, 0x0016b93c, 0x0016b994];
         public const uint TanksCount = 0x00177964; // byte
         public const uint MaxTanksCount = 0x0006757a; // byte; also the "max" for any bottom right HUD value. Read-only.
+        public const uint RedRocketCount = 0x000705f0;
+        public const uint GreenRocketCount = 0x0015bf64;
+        public const uint HasGreenRocketAddress = 0x0015bf68;
+
+        public const uint SunriseGemMask = 0x00071b90;
+        public const uint SunnyGemMask = 0x00071bb0;
+        public const uint CloudGemMask = 0x00071bd0;
+        public const uint MoltenGemMask = 0x00071bf0;
+        public const uint SeashellGemMask = 0x00071c10;
+        public const uint MushroomGemMask = 0x00071c30;
+        public const uint SheilaGemMask = 0x00071c50;
+        public const uint CrawdadGemMask = 0x00071c91;
+        public const uint MiddayGemMask = 0x00071cb0;
+        public const uint IcyGemMask = 0x00071cd0;
+        public const uint EnchantedGemMask = 0x00071cf0;
+        public const uint SpookyGemMask = 0x00071d10;
+        public const uint BambooGemMask = 0x00071d30;
+        public const uint CountryGemMask = 0x00071d50;
+        public const uint ByrdGemMask = 0x00071d70;
+        public const uint SpiderGemMask = 0x00071db0;
+        public const uint EveningGemMask = 0x00071dd0;
+        public const uint FrozenGemMask = 0x00071df0;
+        public const uint FleetGemMask = 0x00071e10;
+        public const uint FireworksGemMask = 0x00071e30;
+        public const uint CharmedGemMask = 0x00071e50;
+        public const uint HoneyGemMask = 0x00071e70;
+        public const uint BentleyGemMask = 0x00071e90;
+        public const uint StarfishGemMask = 0x00071ed2;
+        public const uint MidnightGemMask = 0x00071ef0;
+        public const uint CrystalGemMask = 0x00071f10;
+        public const uint DesertGemMask = 0x00071f30;
+        public const uint HauntedGemMask = 0x00071f50;
+        public const uint DinoGemMask = 0x00071f70;
+        public const uint HarborGemMask = 0x00071f90;
+        public const uint Agent9GemMask = 0x00071fb0;
+        public const uint BugbotGemMask = 0x00071ff0;
+
+        public const uint MoltenEggReq = 0x19560c;
+        public const uint SeashellEggReq = 0x194F1c;
+        public const uint MushroomEggReq = 0x197cc0;
+        public const uint SpookyEggReq = 0x199938;
+        public const uint BambooEggReq = 0x199c70;
+        public const uint CountryEggReq = 0x199c5c;
+        public const uint FireworksEggReq = 0x19a088;
+        public const uint CharmedEggReq = 0x19a09c;
+        public const uint HoneyEggReq = 0x19a0b0;
+        public const uint HauntedEggReq = 0x19bfe0;
+        public const uint DinoEggReq = 0x19bea0;
+        public const uint HarborEggReq = 0x19be8c;
+
+        public const uint BlackLabelAtlasAddress = 0x0006c4d8;
+        public const uint GreenLabelAtlasAddress = 0x0006c5b8;
     }
 }

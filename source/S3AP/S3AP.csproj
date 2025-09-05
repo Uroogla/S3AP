@@ -10,6 +10,10 @@
     <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\Archipelago.Core\Archipelago.Core.csproj" />
+	</ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Archipelago.Core.AvaloniaGUI" Version="0.2.2" />
     <PackageReference Include="Avalonia" Version="$(AvaloniaVersion)" />
