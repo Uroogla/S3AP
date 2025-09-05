@@ -153,7 +153,7 @@ class Spyro3World(World):
         # Prevent restrictive starts.
         if self.options.moneybags_settings == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_cloud_backwards:
             self.multiworld.early_items[self.player]["Moneybags Unlock - Cloud Spires Bellows"] = 1
-        if self.options.moneybags_settings == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_sheila_early:
+        if self.options.moneybags_settings != MoneybagsOptions.VANILLA and not self.options.logic_sheila_early:
             self.multiworld.early_items[self.player]["Moneybags Unlock - Sheila"] = 1
         # Conceptually, partial accessibility does not make sense in Spyro 3 and just leads to generation failures.
         self.options.accessibility = Accessibility(0)  # Full

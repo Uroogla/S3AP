@@ -200,12 +200,15 @@ namespace S3AP
         public const uint MushroomEggReq = 0x197cc0;
         public const uint SpookyEggReq = 0x199938;
         public const uint BambooEggReq = 0x199c70;
-        public const uint CountryEggReq = 0x199c6c;
+        public const uint CountryEggReq = 0x199c5c;
         public const uint FireworksEggReq = 0x19a088;
         public const uint CharmedEggReq = 0x19a09c;
         public const uint HoneyEggReq = 0x19a0b0;
         public const uint HauntedEggReq = 0x19bfe0;
         public const uint DinoEggReq = 0x19bea0;
         public const uint HarborEggReq = 0x19be8c;
+
+        public const uint BlackLabelAtlasAddress = 0x0006c4d8;
+        public const uint GreenLabelAtlasAddress = 0x0006c5b8;
     }
 }

@@ -14,6 +14,7 @@ namespace S3AP
     public class Helpers
     {
         private static GameStatus lastNonZeroStatus = GameStatus.Spawning;
+        private static string gameVersion = "";
         public static string OpenEmbeddedResource(string resourceName)
         {
             var assembly = Assembly.GetExecutingAssembly();
@@ -71,12 +72,38 @@ namespace S3AP
         {
             return Memory.ReadByte(Addresses.IsInDemoMode) == 1;
         }
+        public static bool IsCorrectVersion()
+        {
+            if (gameVersion == "1.1")
+            {
+                return true;
+            }
+            else if (gameVersion == "1.0")
+            {
+                return false;
+            }
+            if (Memory.ReadString(Addresses.GreenLabelAtlasAddress, 5) == "Atlas")
+            {
+                gameVersion = "1.1";
+                return true;
+            }
+            else if (Memory.ReadString(Addresses.BlackLabelAtlasAddress, 5) == "Atlas")
+            {
+                gameVersion = "1.0";
+                Log.Logger.Error("This appears to be version 1.0 of Spyro 3.");
+                Log.Logger.Error("You will need version 1.1 (Greatest Hits label) to play.");
+                return false;
+            }
+            return false;
+        }
         public static bool IsInGame()
         {
             var status = GetGameStatus();
+            bool isCorrectGameVersion = IsCorrectVersion();
             return !IsInDemoMode() &&
                 status != GameStatus.TitleScreen &&
                 status != GameStatus.Loading && // Handle loading into and out of demo mode.
+                isCorrectGameVersion &&
                 Memory.ReadInt(Addresses.ResetCheckAddress) != 0 && // Handle status being 0 on console reset.
                 lastNonZeroStatus != GameStatus.StartingGame; // Handle status swapping from 16 to 0 temporarily on game load
         }

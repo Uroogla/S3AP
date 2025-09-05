@@ -20,6 +20,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Security.Principal;
@@ -315,7 +316,9 @@ public partial class App : Application
                 ActivateInvincibility(30);
                 break;
             case "Moneybags Unlock - Cloud Spires Bellows":
-                UnlockMoneybags(Addresses.CloudBellowsUnlock);
+                // Special case this to prevent a rhynoc from spawning in the bellows.
+                Memory.Write(Addresses.CloudBellowsUnlock, 0);
+                Log.Logger.Information("You can talk to Moneybags to complete this unlock for free.");
                 break;
             case "Moneybags Unlock - Spooky Swamp Door":
                 UnlockMoneybags(Addresses.SpookyDoorUnlock);
@@ -876,7 +879,8 @@ public partial class App : Application
             }
             else
             {
-                Memory.Write(Addresses.CloudBellowsUnlock, 65536);
+                // Special case this to just reduce the price to 0, since otherwise a rhynoc despawns.
+                Memory.Write(Addresses.CloudBellowsUnlock, 0);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
             {
