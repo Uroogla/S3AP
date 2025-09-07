@@ -84,6 +84,20 @@ class GuaranteedItemsOption(ItemDict):
     """Guarantees that the specified items will be in the item pool"""
     display_name = "Guaranteed Items"
 
+class OpenWorldOption(Toggle):
+    """Grants access to all 4 homeworlds from the start.
+    End of level and boss eggs are removed as checks.
+    You start with 1 egg to make level unlocks work correctly.
+    Levels normally requiring eggs to open instead require an unlock item.
+    In Companionsanity or Moneybagssanity, the player starts with access to Sheila's, Sgt. Byrd's, and Bentley's levels.
+    Not compatible with Hwd's randomizer.
+    If you are in Sunrise when you unlock Molten or Seashell, you may need to enter another level and come back for
+    the unlock to take effect.
+    Disables world keys.
+    For now, ignores Progressive Sparx Health Logic.
+    This is very experimental and likely to break."""
+    display_name = "Open World Mode"
+
 class Enable25PctGemChecksOption(Toggle):
     """Adds checks for getting 25% of the gems in a level"""
     display_name = "Enable 25% Gem Checks"
@@ -168,7 +182,8 @@ class EnableWorldKeys(Toggle):
     Trying to go to Midday without any World Keys will warp you to Sunrise.  Evening Lake requires 2 World Keys,
     Midnight Mountain requires 3.
     This reduces the chances that an item that another player needs early will be in a late level but
-    increases the chances of becoming stuck waiting for other players to find your World Keys."""
+    increases the chances of becoming stuck waiting for other players to find your World Keys.
+    Disabled in Open World mode."""
     display_name = "Enable World Keys"
 
 class EnableFillerExtraLives(DefaultOnToggle):
@@ -265,6 +280,7 @@ class EnableHWDRandomizer(Toggle):
     Due to its partial entrance randomizer, seeds may not be beatable otherwise.
     Since Moneybags prices are randomized, if Moneybagssanity is not on, total gem checks are logically locked behind
     defeating the Sorceress.
+    Disabled in Open World mode.
     NOTE: This will push eggs and Moneybags unlocks sooner in the seed to ensure a beatable seed."""
     display_name = "Use hwd405's Randomizer"
 
@@ -481,6 +497,7 @@ class Spyro3Option(PerGameCommonOptions):
     egg_count: EggCount
     percent_extra_eggs: PercentExtraEggs
     guaranteed_items: GuaranteedItemsOption
+    open_world: OpenWorldOption
     enable_25_pct_gem_checks: Enable25PctGemChecksOption
     enable_50_pct_gem_checks: Enable50PctGemChecksOption
     enable_75_pct_gem_checks: Enable75PctGemChecksOption

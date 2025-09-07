@@ -12,6 +12,7 @@ namespace S3AP
         public const uint GlobalDifficultySettingAddress = 0x0006c888; // byte
         public const uint IsInDemoMode = 0x0006c758;
         public const uint GameStatus = 0x0006e424;
+        public const uint SpyroState = 0x70450;
         public const uint NextWarpAddress = 0x0006c8a8;
         public const uint TransportMenuAddress = 0x0007023a; // Where the balloon/rocket will take Spyro.
         // The values at this and the following 3 bytes seem to be 0 only on reset.
@@ -114,6 +115,13 @@ namespace S3AP
         public const uint ByrdCutscene = 0x0071661;
         public const uint BentleyCutscene = 0x0071662;
         public const uint Agent9Cutscene = 0x007165e;
+
+        public const uint MoltenUnlocked = 0x71652;
+        public const uint SeashellUnlocked = 0x7165b;
+        public const uint SunriseLevelsComplete = 0x71666;
+        public const uint MiddayLevelsComplete = 0x71667;
+        public const uint EveningLevelsComplete = 0x71668;
+        public const uint EveningBianca = 0x71673;
 
         public static readonly List<uint> SunrisePondLifeBottleAddress = [0x00071ba1, 6];
         public static readonly List<uint> SunriseSheilaLifeBottleAddress = [0x00071b93, 2];

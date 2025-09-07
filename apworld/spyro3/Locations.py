@@ -18,7 +18,8 @@ class Spyro3LocationCategory(IntEnum):
     TOTAL_GEM = 10,
     LIFE_BOTTLE = 11,
     LIFE_BOTTLE_HARD = 12,
-    GEMSANITY = 13
+    GEMSANITY = 13,
+    EGG_EOL = 14
 
 
 class Spyro3LocationData(NamedTuple):
@@ -104,7 +105,7 @@ location_tables = {
         Spyro3LocationData("Sunrise Spring: Life Bottle By Sheila's Alp", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Sunny Villa": [
-        Spyro3LocationData("Sunny Villa: Rescue the mayor. (Sanders)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Sunny Villa: Rescue the mayor. (Sanders)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Sunny Villa: Hop to Rapunzel. (Lucy)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Sunny Villa: Lizard skating I. (Emily)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Sunny Villa: Lizard skating II. (Daisy)", "Egg", Spyro3LocationCategory.EGG),
@@ -121,7 +122,7 @@ location_tables = {
         Spyro3LocationData("Sunny Villa: Life Bottle By Skateboarding Sub-Area", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Cloud Spires": [
-        Spyro3LocationData("Cloud Spires: Turn on the cloud generator. (Henry)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Cloud Spires: Turn on the cloud generator. (Henry)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Cloud Spires: Plant the sun seeds. (LuLu)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Cloud Spires: Bell tower spirits. (Jake)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Cloud Spires: Bell tower thief. (Bryan)", "Egg", Spyro3LocationCategory.EGG),
@@ -133,7 +134,7 @@ location_tables = {
         Spyro3LocationData("Cloud Spires: Life Bottle Past Whirlwind", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Molten Crater": [
-        Spyro3LocationData("Molten Crater: Get to the tiki lodge. (Curlie)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Molten Crater: Get to the tiki lodge. (Curlie)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Molten Crater: Replace idol heads. (Ryan)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Molten Crater: Catch the thief. (Moira)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Molten Crater: Supercharge after the thief. (Kermitt)", "Egg", Spyro3LocationCategory.EGG),
@@ -148,7 +149,7 @@ location_tables = {
         Spyro3LocationData("Molten Crater: Life Bottle in Breakable Wall in Thief Area", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Seashell Shore": [
-        Spyro3LocationData("Seashell Shore: Free the seals. (Dizzy)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Seashell Shore: Free the seals. (Dizzy)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Seashell Shore: Under the docks. (Jason)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Seashell Shore: Destroy the sand castle. (Mollie)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Seashell Shore: Defeat the shark sub. (Jackie)", "Egg", Spyro3LocationCategory.EGG),
@@ -167,7 +168,7 @@ location_tables = {
         Spyro3LocationData("Mushroom Speedway: Hunter's dogfight. (Tater)", "Egg", Spyro3LocationCategory.EGG),
     ],
     "Sheila's Alp": [
-        Spyro3LocationData("Sheila's Alp: Help Bobby get home. (Nan)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Sheila's Alp: Help Bobby get home. (Nan)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Sheila's Alp: Help Pete get home. (Jenny)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Sheila's Alp: Help Billy get home. (Ruby)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Sheila's Alp Complete", "Sheila's Alp Complete", Spyro3LocationCategory.EVENT),
@@ -175,7 +176,7 @@ location_tables = {
         Spyro3LocationData("Sheila's Alp: Life Bottle by Headbash Crate in Huts Area", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Buzz": [
-        Spyro3LocationData("Buzz's Dungeon: Defeat Buzz. (Grayson)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Buzz's Dungeon: Defeat Buzz. (Grayson)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Buzz Defeated", "Buzz Defeated", Spyro3LocationCategory.EVENT)
     ],
     "Crawdad Farm": [
@@ -191,7 +192,7 @@ location_tables = {
         Spyro3LocationData("Midday Gardens Home: Climb to the ledge. (Modesty)", "Egg", Spyro3LocationCategory.EGG),
     ],
     "Icy Peak": [
-        Spyro3LocationData("Icy Peak: Find Doug the polar bear. (Chet)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Icy Peak: Find Doug the polar bear. (Chet)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Icy Peak: Protect Nancy the skater. (Cerny)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Icy Peak: Speedy thieves I. (Betty)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Icy Peak: Speedy thieves II. (Scout)", "Egg", Spyro3LocationCategory.EGG),
@@ -203,7 +204,7 @@ location_tables = {
         Spyro3LocationData("Icy Peak: Life Bottle on hidden path to 'Glide to the sky island. (Reez)'", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Enchanted Towers": [
-        Spyro3LocationData("Enchanted Towers: Destroy the sorceress statue. (Peanut)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Enchanted Towers: Destroy the sorceress statue. (Peanut)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Enchanted Towers: Rescue the lost wolf. (Lys)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Enchanted Towers: Collect the bones. (Ralph)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Enchanted Towers: Trick skater I. (Caroline)", "Egg", Spyro3LocationCategory.EGG),
@@ -215,7 +216,7 @@ location_tables = {
         Spyro3LocationData("Enchanted Towers: Life Bottle on Tower Near Start", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Spooky Swamp": [
-        Spyro3LocationData("Spooky Swamp: Find Shiny the firefly. (Thelonious)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Spooky Swamp: Find Shiny the firefly. (Thelonious)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Spooky Swamp: Jump to the island. (Michael)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Spooky Swamp: Across the treetops. (Frank)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Spooky Swamp: Escort the twins I. (Peggy)", "Egg", Spyro3LocationCategory.EGG),
@@ -226,7 +227,7 @@ location_tables = {
         Spyro3LocationData("Spooky Swamp: Destroy all piranha signs (Goal)", "Skill Point", Spyro3LocationCategory.SKILLPOINT_GOAL),
     ],
     "Bamboo Terrace": [
-        Spyro3LocationData("Bamboo Terrace: Clear the pandas' path. (Tom)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Bamboo Terrace: Clear the pandas' path. (Tom)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Bamboo Terrace: Shoot from the boat. (Rusty)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Bamboo Terrace: Smash to the mountain top. (Brubeck)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Bamboo Terrace: Glide to the hidden cave. (Madison)", "Egg", Spyro3LocationCategory.EGG),
@@ -245,7 +246,7 @@ location_tables = {
         Spyro3LocationData("Country Speedway: Hunter's rescue mission. (Roberto)", "Egg", Spyro3LocationCategory.EGG),
     ],
     "Sgt. Byrd's Base": [
-        Spyro3LocationData("Sgt. Byrd's Base: Clear the building. (RyanLee)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Sgt. Byrd's Base: Clear the building. (RyanLee)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Sgt. Byrd's Base: Clear the caves. (Sigfried)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Sgt. Byrd's Base: Rescue 5 hummingbirds. (Roy)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Sgt. Byrd's Base Complete", "Sgt. Byrd's Base Complete", Spyro3LocationCategory.EVENT),
@@ -254,7 +255,7 @@ location_tables = {
         Spyro3LocationData("Sgt. Byrd's Base: Life Bottle above Exit Portal", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Spike": [
-        Spyro3LocationData("Spike's Arena: Defeat Spike. (Monique)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Spike's Arena: Defeat Spike. (Monique)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Spike Defeated", "Spike Defeated", Spyro3LocationCategory.EVENT)
     ],
     "Spider Town": [
@@ -271,7 +272,7 @@ location_tables = {
         Spyro3LocationData("Evening Lake: Life Bottle on Upper Path", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Frozen Altars": [
-        Spyro3LocationData("Frozen Altars: Melt the snowmen. (Jana)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Frozen Altars: Melt the snowmen. (Jana)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Frozen Altars: Box the yeti. (Aly)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Frozen Altars: Box the yeti again! (Ricco)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Frozen Altars: Catch the ice cats. (Ba'ah)", "Egg", Spyro3LocationCategory.EGG),
@@ -282,7 +283,7 @@ location_tables = {
         Spyro3LocationData("Frozen Altars: Beat yeti in two rounds (Goal)", "Skill Point", Spyro3LocationCategory.SKILLPOINT_GOAL),
     ],
     "Lost Fleet": [
-        Spyro3LocationData("Lost Fleet: Find Crazy Ed's treasure. (Craig)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Lost Fleet: Find Crazy Ed's treasure. (Craig)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Lost Fleet: Sink the subs I. (Ethel)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Lost Fleet: Sink the subs II. (Dolores)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Lost Fleet: Swim through acid. (Chad)", "Egg", Spyro3LocationCategory.EGG),
@@ -295,7 +296,7 @@ location_tables = {
         Spyro3LocationData("Lost Fleet: Life Bottle in Skateboarding Sub-Area", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Fireworks Factory": [
-        Spyro3LocationData("Fireworks Factory: Destwoy the wocket! (Grady)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Fireworks Factory: Destwoy the wocket! (Grady)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Fireworks Factory: You're doomed! (Patty)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Fireworks Factory: You're still doomed! (Donovan)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Fireworks Factory: Ninja HQ (Sam)", "Egg", Spyro3LocationCategory.EGG),
@@ -308,7 +309,7 @@ location_tables = {
         Spyro3LocationData("Fireworks Factory: Life Bottle Out of Bounds Near Start", "Filler", Spyro3LocationCategory.LIFE_BOTTLE_HARD),
     ],
     "Charmed Ridge": [
-        Spyro3LocationData("Charmed Ridge: Rescue the Fairy Princess. (Sakura)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Charmed Ridge: Rescue the Fairy Princess. (Sakura)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Charmed Ridge: Glide to the tower. (Moe)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Charmed Ridge: Egg in the cave. (Benjamin)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Charmed Ridge: Cat witch chaos. (Abby)", "Egg", Spyro3LocationCategory.EGG),
@@ -328,7 +329,7 @@ location_tables = {
         Spyro3LocationData("Honey Speedway: Hunter's narrow escape. (Nori)", "Egg", Spyro3LocationCategory.EGG),
     ],
     "Bentley's Outpost": [
-        Spyro3LocationData("Bentley's Outpost: Help Bartholomew home. (Eric)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Bentley's Outpost: Help Bartholomew home. (Eric)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Bentley's Outpost: The Gong Show (Brian)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Bentley's Outpost: Snowball's chance. (Charlie)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Bentley's Outpost Complete", "Bentley's Outpost Complete", Spyro3LocationCategory.EVENT),
@@ -336,7 +337,7 @@ location_tables = {
         Spyro3LocationData("Bentley's Outpost: Push box off the cliff (Goal)", "Skill Point", Spyro3LocationCategory.SKILLPOINT_GOAL),
     ],
     "Scorch": [
-        Spyro3LocationData("Scorch's Pit: Defeat Scorch. (James)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Scorch's Pit: Defeat Scorch. (James)", "Egg", Spyro3LocationCategory.EGG_EOL),
         Spyro3LocationData("Scorch Defeated", "Scorch Defeated", Spyro3LocationCategory.EVENT)
     ],
     "Starfish Reef": [

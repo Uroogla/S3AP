@@ -17,7 +17,8 @@ class Spyro3ItemCategory(IntEnum):
     HINT = 7,
     GEMSANITY = 8,
     SPARX_POWERUP = 13,
-    WORLD_KEY = 14
+    WORLD_KEY = 14,
+    LEVEL_KEY = 15
 
 
 class Spyro3ItemData(NamedTuple):
@@ -158,6 +159,19 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Harbor Speedway 100 Gems", 5029, Spyro3ItemCategory.GEMSANITY),
     ("Agent 9's Lab 100 Gems", 5030, Spyro3ItemCategory.GEMSANITY),
     ("Bugbot Factory 50 Gems", 5031, Spyro3ItemCategory.GEMSANITY),
+
+    ("Molten Crater Unlock", 6000, Spyro3ItemCategory.LEVEL_KEY),
+    ("Seashell Shore Unlock", 6001, Spyro3ItemCategory.LEVEL_KEY),
+    ("Mushroom Speedway Unlock", 6002, Spyro3ItemCategory.LEVEL_KEY),
+    ("Spooky Swamp Unlock", 6003, Spyro3ItemCategory.LEVEL_KEY),
+    ("Bamboo Terrace Unlock", 6004, Spyro3ItemCategory.LEVEL_KEY),
+    ("Country Speedway Unlock", 6005, Spyro3ItemCategory.LEVEL_KEY),
+    ("Fireworks Factory Unlock", 6006, Spyro3ItemCategory.LEVEL_KEY),
+    ("Charmed Ridge Unlock", 6007, Spyro3ItemCategory.LEVEL_KEY),
+    ("Honey Speedway Unlock", 6008, Spyro3ItemCategory.LEVEL_KEY),
+    ("Haunted Tomb Unlock", 6009, Spyro3ItemCategory.LEVEL_KEY),
+    ("Dino Mines Unlock", 6010, Spyro3ItemCategory.LEVEL_KEY),
+    ("Harbor Speedway Unlock", 6011, Spyro3ItemCategory.LEVEL_KEY),
 ]]
 
 item_descriptions = {}
@@ -179,6 +193,9 @@ def BuildItemPool(world, count, preplaced_eggs, options):
     if options.goal == GoalOptions.EGG_HUNT:
         eggs_to_place = math.ceil(options.egg_count * (1.0 + options.percent_extra_eggs / 100.0))
     eggs_to_place = eggs_to_place - preplaced_eggs
+    if options.open_world.value:
+        multiworld.push_precollected(world.create_item("Egg"))
+        eggs_to_place = eggs_to_place - 1
     for i in range(eggs_to_place):
         item_pool.append(item_dictionary["Egg"])
     remaining_count = remaining_count - eggs_to_place
@@ -226,12 +243,20 @@ def BuildItemPool(world, count, preplaced_eggs, options):
             item_pool.append(item_dictionary["Agent 9's Lab 100 Gems"])
         remaining_count -= 158
 
-    if options.moneybags_settings.value in [MoneybagsOptions.COMPANIONSANITY, MoneybagsOptions.MONEYBAGSSANITY]:
+    if options.moneybags_settings.value in [MoneybagsOptions.COMPANIONSANITY, MoneybagsOptions.MONEYBAGSSANITY] and \
+            not options.open_world.value:
         item_pool.append(item_dictionary["Moneybags Unlock - Sheila"])
         item_pool.append(item_dictionary["Moneybags Unlock - Sgt. Byrd"])
         item_pool.append(item_dictionary["Moneybags Unlock - Bentley"])
         item_pool.append(item_dictionary["Moneybags Unlock - Agent 9"])
         remaining_count = remaining_count - 4
+    elif options.moneybags_settings.value in [MoneybagsOptions.COMPANIONSANITY, MoneybagsOptions.MONEYBAGSSANITY] and \
+            options.open_world.value:
+        multiworld.push_precollected(world.create_item("Moneybags Unlock - Sheila"))
+        multiworld.push_precollected(world.create_item("Moneybags Unlock - Sgt. Byrd"))
+        multiworld.push_precollected(world.create_item("Moneybags Unlock - Bentley"))
+        item_pool.append(item_dictionary["Moneybags Unlock - Agent 9"])
+        remaining_count = remaining_count - 1
     if options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY:
         item_pool.append(item_dictionary["Moneybags Unlock - Cloud Spires Bellows"])
         item_pool.append(item_dictionary["Moneybags Unlock - Spooky Swamp Door"])
@@ -264,6 +289,21 @@ def BuildItemPool(world, count, preplaced_eggs, options):
         item_pool.append(item_dictionary["Progressive Sparx Basket Break"])
         item_pool.append(item_dictionary["Progressive Sparx Basket Break"])
         remaining_count = remaining_count - 5
+
+    if options.open_world.value:
+        item_pool.append(item_dictionary["Molten Crater Unlock"])
+        item_pool.append(item_dictionary["Seashell Shore Unlock"])
+        item_pool.append(item_dictionary["Mushroom Speedway Unlock"])
+        item_pool.append(item_dictionary["Spooky Swamp Unlock"])
+        item_pool.append(item_dictionary["Bamboo Terrace Unlock"])
+        item_pool.append(item_dictionary["Country Speedway Unlock"])
+        item_pool.append(item_dictionary["Fireworks Factory Unlock"])
+        item_pool.append(item_dictionary["Charmed Ridge Unlock"])
+        item_pool.append(item_dictionary["Honey Speedway Unlock"])
+        item_pool.append(item_dictionary["Haunted Tomb Unlock"])
+        item_pool.append(item_dictionary["Dino Mines Unlock"])
+        item_pool.append(item_dictionary["Harbor Speedway Unlock"])
+        remaining_count = remaining_count - 12
 
     if options.enable_world_keys.value:
         for i in range(3):

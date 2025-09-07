@@ -598,37 +598,169 @@ public partial class App : Application
         {
             return;
         }
-        CalculateCurrentEggs();
+        int eggs = CalculateCurrentEggs();
         CalculateCurrentGems();
         LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.CurrentLevelAddress);
         byte currentSubarea = Memory.ReadByte(Addresses.CurrentSubareaAddress);
         CompletionGoal goal = (CompletionGoal)int.Parse(Client.Options?.GetValueOrDefault("goal", "0").ToString());
+        int openWorld = int.Parse(Client.Options?.GetValueOrDefault("open_world", "0").ToString());
+        double multiplier = 1.0;
         if (goal == CompletionGoal.EggHunt)
         {
-            double multiplier = int.Parse(Client.Options?.GetValueOrDefault("egg_count", "0").ToString()) / 100.0;
+            multiplier = int.Parse(Client.Options?.GetValueOrDefault("egg_count", "0").ToString()) / 100.0;
+            if (openWorld == 0)
+            {
+                if (currentLevel == LevelInGameIDs.SunriseSpring)
+                {
+                    Memory.WriteByte(Addresses.MoltenEggReq, (byte)Math.Floor(10 * multiplier));
+                    Memory.WriteByte(Addresses.SeashellEggReq, (byte)Math.Floor(14 * multiplier));
+                    Memory.WriteByte(Addresses.MushroomEggReq, (byte)Math.Floor(20 * multiplier));
+                }
+                else if (currentLevel == LevelInGameIDs.MiddayGardens)
+                {
+                    Memory.WriteByte(Addresses.SpookyEggReq, (byte)Math.Floor(25 * multiplier));
+                    Memory.WriteByte(Addresses.BambooEggReq, (byte)Math.Floor(30 * multiplier));
+                    Memory.WriteByte(Addresses.CountryEggReq, (byte)Math.Floor(36 * multiplier));
+                }
+                else if (currentLevel == LevelInGameIDs.EveningLake)
+                {
+                    Memory.WriteByte(Addresses.FireworksEggReq, (byte)Math.Floor(50 * multiplier));
+                    Memory.WriteByte(Addresses.CharmedEggReq, (byte)Math.Floor(58 * multiplier));
+                    Memory.WriteByte(Addresses.HoneyEggReq, (byte)Math.Floor(65 * multiplier));
+                }
+                else if (currentLevel == LevelInGameIDs.MidnightMountain)
+                {
+                    Memory.WriteByte(Addresses.HauntedEggReq, (byte)Math.Floor(70 * multiplier));
+                    Memory.WriteByte(Addresses.DinoEggReq, (byte)Math.Floor(80 * multiplier));
+                    Memory.WriteByte(Addresses.HarborEggReq, (byte)Math.Floor(90 * multiplier));
+                }
+            }
+        }
+        if (openWorld > 0)
+        {
             if (currentLevel == LevelInGameIDs.SunriseSpring)
             {
-                Memory.WriteByte(Addresses.MoltenEggReq, (byte)Math.Floor(10 * multiplier));
-                Memory.WriteByte(Addresses.SeashellEggReq, (byte)Math.Floor(14 * multiplier));
-                Memory.WriteByte(Addresses.MushroomEggReq, (byte)Math.Floor(20 * multiplier));
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Molten Crater Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.MoltenEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.MoltenEggReq, (byte)151);
+                }
+
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Seashell Shore Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.SeashellEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.SeashellEggReq, (byte)151);
+                }
+
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Mushroom Speedway Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.MushroomEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.MushroomEggReq, (byte)151);
+                }
             }
             else if (currentLevel == LevelInGameIDs.MiddayGardens)
             {
-                Memory.WriteByte(Addresses.SpookyEggReq, (byte)Math.Floor(25 * multiplier));
-                Memory.WriteByte(Addresses.BambooEggReq, (byte)Math.Floor(30 * multiplier));
-                Memory.WriteByte(Addresses.CountryEggReq, (byte)Math.Floor(36 * multiplier));
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Spooky Swamp Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.SpookyEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.SpookyEggReq, (byte)151);
+                }
+
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Bamboo Terrace Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.BambooEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.BambooEggReq, (byte)151);
+                }
+
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Country Speedway Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.CountryEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.CountryEggReq, (byte)151);
+                }
             }
             else if (currentLevel == LevelInGameIDs.EveningLake)
             {
-                Memory.WriteByte(Addresses.FireworksEggReq, (byte)Math.Floor(50 * multiplier));
-                Memory.WriteByte(Addresses.CharmedEggReq, (byte)Math.Floor(58 * multiplier));
-                Memory.WriteByte(Addresses.HoneyEggReq, (byte)Math.Floor(65 * multiplier));
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Fireworks Factory Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.FireworksEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.FireworksEggReq, (byte)151);
+                }
+
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Charmed Ridge Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.CharmedEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.CharmedEggReq, (byte)151);
+                }
+
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Honey Speedway Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.HoneyEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.HoneyEggReq, (byte)151);
+                }
             }
             else if (currentLevel == LevelInGameIDs.MidnightMountain)
             {
-                Memory.WriteByte(Addresses.HauntedEggReq, (byte)Math.Floor(70 * multiplier));
-                Memory.WriteByte(Addresses.DinoEggReq, (byte)Math.Floor(80 * multiplier));
-                Memory.WriteByte(Addresses.HarborEggReq, (byte)Math.Floor(90 * multiplier));
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Haunted Tomb Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.HauntedEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.HauntedEggReq, (byte)151);
+                }
+
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Dino Mines Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.DinoEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.DinoEggReq, (byte)151);
+                }
+
+                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Harbor Speedway Unlock").Count() ?? 0) > 0)
+                {
+                    Memory.WriteByte(Addresses.HarborEggReq, (byte)1);
+                }
+                else
+                {
+                    Memory.WriteByte(Addresses.HarborEggReq, (byte)151);
+                }
+            }
+            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Molten Crater Unlock").Count() ?? 0) > 0)
+            {
+                Memory.WriteByte(Addresses.MoltenUnlocked, 1);
+            }
+            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Seashell Shore Unlock").Count() ?? 0) > 0)
+            {
+                Memory.WriteByte(Addresses.SeashellUnlocked, 1);
             }
         }
 
@@ -956,6 +1088,60 @@ public partial class App : Application
             Memory.WriteByte(Addresses.DesertDoorUnlock, 0);
             Memory.WriteByte(Addresses.FrozenHockeyUnlock, 0);
             Memory.WriteByte(Addresses.CrystalBridgeUnlock, 0);
+        }
+        int openWorldOption = int.Parse(Client.Options?.GetValueOrDefault("open_world", "0").ToString());
+        if (openWorldOption != 0)
+        {
+            Memory.WriteByte(Addresses.SunriseLevelsComplete, 1);
+            Memory.WriteByte(Addresses.MiddayLevelsComplete, 1);
+            Memory.WriteByte(Addresses.EveningLevelsComplete, 1);
+            // Mark level as entered in atlas, which changes transport behavior.
+            Memory.WriteByte(0x720A2, 1);
+            Memory.WriteByte(0x72090, 1);
+            Memory.WriteByte(0x72097, 1);
+            Memory.WriteByte(0x72099, 1);
+            Memory.WriteByte(0x720AB, 1);
+            Memory.WriteByte(0x720A9, 1);
+            Memory.WriteByte(0x720A0, 1);
+            Memory.WriteByte(0x72091, 1);
+            Memory.WriteByte(0x72092, 1);
+            Memory.WriteByte(0x72093, 1);
+            Memory.WriteByte(0x72094, 1);
+            Memory.WriteByte(0x72096, 1);
+            Memory.WriteByte(0x7209a, 1);
+            Memory.WriteByte(0x7209b, 1);
+            Memory.WriteByte(0x7209c, 1);
+            Memory.WriteByte(0x7209d, 1);
+            Memory.WriteByte(0x7209f, 1);
+            Memory.WriteByte(0x720a3, 1);
+            Memory.WriteByte(0x720a4, 1);
+            Memory.WriteByte(0x720a5, 1);
+            Memory.WriteByte(0x720a6, 1);
+            Memory.WriteByte(0x720a8, 1);
+            // Triggered when getting end of level eggs in sunrise.
+            Memory.WriteByte(0x716a2, 2);
+            Memory.WriteByte(0x716a8, 2);
+            Memory.WriteByte(0x716ae, 2);
+            Memory.WriteByte(0x716b4, 2);
+            Memory.WriteByte(0x716c0, 2);
+
+
+            Memory.WriteByte(Addresses.BuzzDefeated, 1);
+            Memory.WriteByte(Addresses.SpikeDefeated, 1);
+            Memory.WriteByte(Addresses.ScorchDefeated, 1);
+            Memory.WriteByte(Addresses.EveningBianca, 1);
+            uint eggAddress = Addresses.EggStartAddress;
+            List<uint> collectedEggs = new List<uint> { 1, 2, 3, 4, 6, 7, 10, 11, 12, 13, 15, 16, 19, 20, 21, 22, 24, 25 };
+            for (uint i = 0; i < 26; i++)
+            {
+                if (collectedEggs.Contains(i))
+                {
+                    Memory.WriteBit(eggAddress + i, 0, true);
+                }
+            }
+            var currentLives = Memory.ReadShort(Addresses.PlayerLives);
+            Memory.Write(Addresses.PlayerLives, (short)(Math.Min(99, currentLives + 1)));
+            Memory.WriteByte(Addresses.SpyroState, 31);  // Death
         }
         _loadGameTimer.Enabled = false;
     }
