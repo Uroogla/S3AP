@@ -96,13 +96,13 @@ namespace S3AP
             }
             return false;
         }
-        public static bool IsInGame()
+        public static bool IsInGame(bool includeLoading = true)
         {
             var status = GetGameStatus();
             bool isCorrectGameVersion = IsCorrectVersion();
             return !IsInDemoMode() &&
                 status != GameStatus.TitleScreen &&
-                status != GameStatus.Loading && // Handle loading into and out of demo mode.
+                (!includeLoading || status != GameStatus.Loading) && // Handle loading into and out of demo mode.
                 isCorrectGameVersion &&
                 Memory.ReadInt(Addresses.ResetCheckAddress) != 0 && // Handle status being 0 on console reset.
                 lastNonZeroStatus != GameStatus.StartingGame; // Handle status swapping from 16 to 0 temporarily on game load
