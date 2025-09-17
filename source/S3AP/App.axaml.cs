@@ -231,7 +231,6 @@ public partial class App : Application
             Log.Logger.Information($"You have {eggs} eggs, {skillPoints} skill points, and {defeatedSorceressText}.");
             GameLocations = GameLocations.Where(x => x != null && !Client.CurrentSession.Locations.AllLocationsChecked.Contains(x.Id)).ToList();
             Client.MonitorLocations(GameLocations);
-            Log.Logger.Information("Warnings and errors above are okay if this is your first time connecting to this multiworld server.");
         }
         else
         {
@@ -388,7 +387,7 @@ public partial class App : Application
                 Memory.WriteByte(Addresses.SparxBreakBaskets, (byte)_progressiveBasketBreaks);
                 break;
         }
-        if (args.Item.Name.EndsWith(" Defeated")) {
+        if (args.Item.Name.EndsWith(" Defeated") || args.Item.Name.EndsWith(" Complete")) {
             CheckGoalCondition();
         }
         else if (args.Item.Name.EndsWith(" Gem") || args.Item.Name.EndsWith(" Gems"))
