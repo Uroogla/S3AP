@@ -142,7 +142,7 @@ namespace S3AP
         public static readonly List<uint> FireworksAgentLifeBottleAddress = [0x00071e46, 0];
         public static readonly List<uint> FireworksOOBLifeBottleAddress = [0x00071e35, 5];
         public static readonly List<uint> FleetSkateboardingLifeBottleAddress = [0x00071e2d, 2];
-        public static readonly List<uint> FleetAcidLifeBottleAddress = [0x00071e16, 3];
+        public static readonly List<uint> FleetAcidLifeBottleAddress = [0x00071e18, 4];
         public static readonly List<uint> EveningLifeBottleAddress = [0x00071dd3, 6];
         public static readonly List<uint> CharmedFirstLifeBottleAddress = [0x00071e57, 2];
         public static readonly List<uint> CharmedSecondLifeBottleAddress = [0x00071e57, 3];

@@ -181,12 +181,14 @@ public partial class App : Application
         catch (ArgumentException ex)
         {
             Log.Logger.Warning("Duckstation not running, open Duckstation and launch the game before connecting!");
+            OnDisconnected();
             return;
         }
         var DuckstationConnected = client.Connect();
         if (!DuckstationConnected)
         {
             Log.Logger.Warning("Duckstation not running, open Duckstation and launch the game before connecting!");
+            OnDisconnected();
             return;
         }
         Client = new ArchipelagoClient(client);
@@ -231,7 +233,6 @@ public partial class App : Application
             Log.Logger.Information($"You have {eggs} eggs, {skillPoints} skill points, and {defeatedSorceressText}.");
             GameLocations = GameLocations.Where(x => x != null && !Client.CurrentSession.Locations.AllLocationsChecked.Contains(x.Id)).ToList();
             Client.MonitorLocations(GameLocations);
-            Log.Logger.Information("Warnings and errors above are okay if this is your first time connecting to this multiworld server.");
         }
         else
         {
@@ -388,7 +389,7 @@ public partial class App : Application
                 Memory.WriteByte(Addresses.SparxBreakBaskets, (byte)_progressiveBasketBreaks);
                 break;
         }
-        if (args.Item.Name.EndsWith(" Defeated")) {
+        if (args.Item.Name.EndsWith(" Defeated") || args.Item.Name.EndsWith(" Complete")) {
             CheckGoalCondition();
         }
         else if (args.Item.Name.EndsWith(" Gem") || args.Item.Name.EndsWith(" Gems"))
@@ -1470,7 +1471,7 @@ public partial class App : Application
         Client?.SendMessage("!hint");
     }
 
-    private static void OnDisconnected(object sender, EventArgs args)
+    private static void OnDisconnected(object sender=null, EventArgs args=null)
     {
         Log.Logger.Information("Disconnected from Archipelago");
         // Avoid ongoing timers affecting a new game.
