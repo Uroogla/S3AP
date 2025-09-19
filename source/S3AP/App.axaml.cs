@@ -181,12 +181,14 @@ public partial class App : Application
         catch (ArgumentException ex)
         {
             Log.Logger.Warning("Duckstation not running, open Duckstation and launch the game before connecting!");
+            OnDisconnected();
             return;
         }
         var DuckstationConnected = client.Connect();
         if (!DuckstationConnected)
         {
             Log.Logger.Warning("Duckstation not running, open Duckstation and launch the game before connecting!");
+            OnDisconnected();
             return;
         }
         Client = new ArchipelagoClient(client);
@@ -1283,7 +1285,7 @@ public partial class App : Application
         Client?.SendMessage("!hint");
     }
 
-    private static void OnDisconnected(object sender, EventArgs args)
+    private static void OnDisconnected(object sender=null, EventArgs args=null)
     {
         Log.Logger.Information("Disconnected from Archipelago");
         // Avoid ongoing timers affecting a new game.
