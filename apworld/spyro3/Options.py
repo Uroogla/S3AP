@@ -90,7 +90,6 @@ class OpenWorldOption(Toggle):
     You start with 1 egg to make level unlocks work correctly.
     Levels normally requiring eggs to open instead require an unlock item.
     In Companionsanity or Moneybagssanity, the player starts with access to Sheila's, Sgt. Byrd's, and Bentley's levels.
-    Not compatible with Hwd's randomizer.
     If you are in Sunrise when you unlock Molten or Seashell, you may need to enter another level and come back for
     the unlock to take effect.
     Disables world keys.
@@ -131,7 +130,7 @@ class MaxTotalGemCheckOption(Range):
 class EnableGemsanityOption(Choice):
     """Adds checks for each individual gem.
     WARNING: To avoid logic issues, this setting is meant for Moneybagssanity only.  If Moneybagssanity is off,
-    all Moneybags prices will be set to 0 in game. Additionally, this may break with hwd's randomizer on.
+    all Moneybags prices will be set to 0 in game.
     Off: Individual gems are not checks.
     Partial: Every gem has a chance to be a check, but only 200 will be (chosen at random).  For every level with loose
         gems, items giving 50 or 100 gems for that level will be added to the pool."""
@@ -274,15 +273,6 @@ class ZoeGivesHints(Range):
     range_start = 0
     range_end = 11
     default = 0
-
-class EnableHWDRandomizer(Toggle):
-    """Choose this setting if you plan to use hwd405's standalone randomizer with this seed.
-    Due to its partial entrance randomizer, seeds may not be beatable otherwise.
-    Since Moneybags prices are randomized, if Moneybagssanity is not on, total gem checks are logically locked behind
-    defeating the Sorceress.
-    Disabled in Open World mode.
-    NOTE: This will push eggs and Moneybags unlocks sooner in the seed to ensure a beatable seed."""
-    display_name = "Use hwd405's Randomizer"
 
 class EasySkateboarding(Toggle):
     """Makes most skateboarding challenges and skill points much easier.
@@ -523,7 +513,6 @@ class Spyro3Option(PerGameCommonOptions):
     enable_progressive_sparx_logic: ProgressiveSparxHealthLogic
     require_sparx_for_max_gems: RequireSparxForMaxGems
     zoe_gives_hints: ZoeGivesHints
-    enable_hwd_randomizer: EnableHWDRandomizer
     easy_skateboarding: EasySkateboarding
     easy_boxing: EasyBoxing
     easy_sheila_bombing: EasySheilaBombing

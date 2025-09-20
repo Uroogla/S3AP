@@ -18,7 +18,8 @@ class Spyro3ItemCategory(IntEnum):
     GEMSANITY = 8,
     SPARX_POWERUP = 13,
     WORLD_KEY = 14,
-    LEVEL_KEY = 15
+    LEVEL_KEY = 15,
+    UT_ITEM = 99  # Ultimate tracker
 
 
 class Spyro3ItemData(NamedTuple):
@@ -172,6 +173,8 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Haunted Tomb Unlock", 6009, Spyro3ItemCategory.LEVEL_KEY),
     ("Dino Mines Unlock", 6010, Spyro3ItemCategory.LEVEL_KEY),
     ("Harbor Speedway Unlock", 6011, Spyro3ItemCategory.LEVEL_KEY),
+
+    ("Glitched Item", 9000, Spyro3ItemCategory.UT_ITEM)
 ]]
 
 item_descriptions = {}
@@ -193,6 +196,8 @@ def BuildItemPool(world, count, preplaced_eggs, options):
     if options.goal == GoalOptions.EGG_HUNT:
         eggs_to_place = math.ceil(options.egg_count * (1.0 + options.percent_extra_eggs / 100.0))
     eggs_to_place = eggs_to_place - preplaced_eggs
+    # Portals with egg requirements can't be set to require 0, so start with 1 egg to ensure level unlocks
+    # work correctly in open world mode.
     if options.open_world.value:
         multiworld.push_precollected(world.create_item("Egg"))
         eggs_to_place = eggs_to_place - 1
@@ -243,20 +248,12 @@ def BuildItemPool(world, count, preplaced_eggs, options):
             item_pool.append(item_dictionary["Agent 9's Lab 100 Gems"])
         remaining_count -= 158
 
-    if options.moneybags_settings.value in [MoneybagsOptions.COMPANIONSANITY, MoneybagsOptions.MONEYBAGSSANITY] and \
-            not options.open_world.value:
+    if options.moneybags_settings.value in [MoneybagsOptions.COMPANIONSANITY, MoneybagsOptions.MONEYBAGSSANITY]:
         item_pool.append(item_dictionary["Moneybags Unlock - Sheila"])
         item_pool.append(item_dictionary["Moneybags Unlock - Sgt. Byrd"])
         item_pool.append(item_dictionary["Moneybags Unlock - Bentley"])
         item_pool.append(item_dictionary["Moneybags Unlock - Agent 9"])
         remaining_count = remaining_count - 4
-    elif options.moneybags_settings.value in [MoneybagsOptions.COMPANIONSANITY, MoneybagsOptions.MONEYBAGSSANITY] and \
-            options.open_world.value:
-        multiworld.push_precollected(world.create_item("Moneybags Unlock - Sheila"))
-        multiworld.push_precollected(world.create_item("Moneybags Unlock - Sgt. Byrd"))
-        multiworld.push_precollected(world.create_item("Moneybags Unlock - Bentley"))
-        item_pool.append(item_dictionary["Moneybags Unlock - Agent 9"])
-        remaining_count = remaining_count - 1
     if options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY:
         item_pool.append(item_dictionary["Moneybags Unlock - Cloud Spires Bellows"])
         item_pool.append(item_dictionary["Moneybags Unlock - Spooky Swamp Door"])

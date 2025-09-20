@@ -12,7 +12,6 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
-using Avalonia.OpenGL;
 using Newtonsoft.Json;
 using ReactiveUI;
 using S3AP.Models;
@@ -20,7 +19,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Security.Principal;
@@ -122,6 +120,9 @@ public partial class App : Application
             case "useVerboseHints":
                 Log.Logger.Information("Hints for found locations will be displayed.  Type 'useQuietHints' to show them.");
                 _useQuietHints = false;
+                break;
+            case "showUnlockedLevels":
+                showUnlockedLevels();
                 break;
             case "showGoal":
                 CompletionGoal goal = (CompletionGoal)(int.Parse(Client.Options?.GetValueOrDefault("goal", 0).ToString()));
@@ -396,6 +397,39 @@ public partial class App : Application
         {
             CalculateCurrentGems();
             CheckGoalCondition();
+        }
+        else if (args.Item.Name.EndsWith(" Unlock")) {
+            showUnlockedLevels();
+        }
+    }
+    private void showUnlockedLevels()
+    {
+        int openWorld = int.Parse(Client.Options?.GetValueOrDefault("open_world", "0").ToString());
+        if (openWorld == 0)
+        {
+            Log.Logger.Information("Open World mode is not enabled.");
+            return;
+        }
+        List<Item> unlockedLevels = (Client.GameState?.ReceivedItems.Where(x => x.Name.EndsWith(" Unlock")).ToList() ?? new List<Item>());
+        Log.Logger.Information("You have unlocked: ");
+        string unlockedLevelsString = "";
+        int levelCount = 0;
+        foreach (Item unlockedLevel in unlockedLevels)
+        {
+            string newLevel = unlockedLevel.Name.Split(" ")[0];
+            unlockedLevelsString += (newLevel + "; ");
+            levelCount++;
+            // Print 6 per line so it is easier to read.
+            if (levelCount % 6 == 0)
+            {
+                Log.Logger.Information(unlockedLevelsString.Substring(0, unlockedLevelsString.Length - 2));
+                unlockedLevelsString = "";
+            }
+        }
+        if (unlockedLevelsString.Length > 0)
+        {
+            unlockedLevelsString = unlockedLevelsString.Substring(0, unlockedLevelsString.Length - 2);
+            Log.Logger.Information(unlockedLevelsString);
         }
     }
     private static async void GetZoeHint(string hintName)
@@ -960,7 +994,7 @@ public partial class App : Application
     {
         if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
         {
-            Log.Logger.Information("Player is not yet in game.");
+            Log.Logger.Information("Player is not yet in control of Spyro.");
             return;
         }
         MoneybagsOptions moneybagsOption = (MoneybagsOptions)int.Parse(Client.Options?.GetValueOrDefault("moneybags_settings", "0").ToString());
