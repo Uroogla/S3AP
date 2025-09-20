@@ -30,6 +30,8 @@ namespace S3AP;
 
 public partial class App : Application
 {
+    // TODO: Remember to set this in S3AP.Desktop as well.
+    public static string Version = "1.2.0-RC2";
     public static MainWindowViewModel Context;
     public static ArchipelagoClient Client { get; set; }
     public static List<ILocation> GameLocations { get; set; }
@@ -227,7 +229,25 @@ public partial class App : Application
                 }
             }
             GameLocations = Helpers.BuildLocationList(includeGemsanity: gemsanityOption != GemsanityOptions.Off, gemsanityIDs: gemsanityIDs);
-            int eggs = CalculateCurrentEggs();
+            if (obj.TryGetValue("apworldVersion", out var versionValue))
+            {
+                if (versionValue != null && versionValue.ToString().ToLower() != Version.ToLower())
+                {
+                    Log.Logger.Warning($"The host's AP world version is {versionValue.ToString()} but the client version is {Version}.");
+                    Log.Logger.Warning("Please ensure these are compatible before proceeding.");
+                }
+                else if (versionValue == null)
+                {
+                    Log.Logger.Error($"The host's AP world version predates 1.2.0, but the client version is {Version}.");
+                    Log.Logger.Error("This will almost certainly result in errors.");
+                }
+            }
+            else
+            {
+                Log.Logger.Error($"The host's AP world version predates 1.2.0, but the client version is {Version}.");
+                Log.Logger.Error("This will almost certainly result in errors.");
+            }
+                int eggs = CalculateCurrentEggs();
             int skillPoints = CalculateCurrentSkillPoints();
             bool beatenSorceress = Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false;
             string defeatedSorceressText = beatenSorceress ? "you have defeated the sorceress" : "you have not defeated the sorceress";
@@ -643,6 +663,10 @@ public partial class App : Application
         if (goal == CompletionGoal.EggHunt)
         {
             multiplier = int.Parse(Client.Options?.GetValueOrDefault("egg_count", "0").ToString()) / 100.0;
+            if (multiplier > 1.0)
+            {
+                multiplier = 1.0;
+            }
             if (openWorld == 0)
             {
                 if (currentLevel == LevelInGameIDs.SunriseSpring)
@@ -992,9 +1016,21 @@ public partial class App : Application
     }
     private static void StartSpyroGame(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
+        bool isInGame = Helpers.IsInGame();
+        bool nullGameState = Client.GameState == null;
+        bool nullCurrentSession = Client.CurrentSession == null;
+        if (!isInGame || nullGameState || nullCurrentSession)
         {
-            Log.Logger.Information("Player is not yet in control of Spyro.");
+            if (nullGameState || nullCurrentSession)
+            {
+                Log.Logger.Warning("This client is not correctly connected to Archipelago.");
+                Log.Logger.Warning("If this warning persists, please restart the client and try again to connect.");
+            }
+            else
+            {
+                Log.Logger.Information("Player is not yet in control of Spyro.");
+                Log.Logger.Information("Please restart this client and Duckstation if incorrect.");
+            }
             return;
         }
         MoneybagsOptions moneybagsOption = (MoneybagsOptions)int.Parse(Client.Options?.GetValueOrDefault("moneybags_settings", "0").ToString());
@@ -1437,7 +1473,7 @@ public partial class App : Application
         // TODO: Test which of these can be combined without impacting the end result.
         _loadGameTimer = new Timer();
         _loadGameTimer.Elapsed += new ElapsedEventHandler(StartSpyroGame);
-        _loadGameTimer.Interval = 5000;
+        _loadGameTimer.Interval = 10000;
         _loadGameTimer.Enabled = true;
 
         _cosmeticsTimer = new Timer();

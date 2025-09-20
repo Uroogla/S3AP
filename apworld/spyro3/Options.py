@@ -68,12 +68,13 @@ class EggCount(Range):
     """The number of eggs needed to win in Egg Hunt."""
     display_name = "Eggs to Win Egg Hunt"
     range_start = 10
-    range_end = 100
+    range_end = 150
     default = 50
 
 class PercentExtraEggs(Range):
     """The percentage of extra eggs in the pool for Egg Hunt.
     For example, if 50 eggs are needed and there are 20% extra eggs, 60 eggs will be in the pool.
+    The total number of available eggs caps at 150 regardless of this option.
     Rounds up."""
     display_name = "Percent Extra Egg Hunt Eggs"
     range_start = 0

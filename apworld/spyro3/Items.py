@@ -195,6 +195,9 @@ def BuildItemPool(world, count, preplaced_eggs, options):
     eggs_to_place = 150
     if options.goal == GoalOptions.EGG_HUNT:
         eggs_to_place = math.ceil(options.egg_count * (1.0 + options.percent_extra_eggs / 100.0))
+        # Game caps egg count at 150 and can encounter issues above this number.
+        if eggs_to_place > 150:
+            eggs_to_place = 150
     eggs_to_place = eggs_to_place - preplaced_eggs
     # Portals with egg requirements can't be set to require 0, so start with 1 egg to ensure level unlocks
     # work correctly in open world mode.
@@ -210,7 +213,7 @@ def BuildItemPool(world, count, preplaced_eggs, options):
             item_pool.append(item_dictionary["Crawdad Farm 50 Gems"])
             item_pool.append(item_dictionary["Spider Town 50 Gems"])
             item_pool.append(item_dictionary["Starfish Reef 50 Gems"])
-            if options.goal != GoalOptions.EGG_HUNT:
+            if options.goal != GoalOptions.EGG_HUNT or options.egg_count > 100:
                 item_pool.append(item_dictionary["Bugbot Factory 50 Gems"])
             else:
                 remaining_count = remaining_count + 4
