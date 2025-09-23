@@ -218,5 +218,49 @@ namespace S3AP
 
         public const uint BlackLabelAtlasAddress = 0x0006c4d8;
         public const uint GreenLabelAtlasAddress = 0x0006c5b8;
+
+        public const uint SunnyVillaName = 0x10f1c;
+
+        public static uint GetVersionAddress(uint greenLabelAddress)
+        {
+            if (Helpers.gameVersion == "1.0")
+            {
+                // Moneybags unlocks, Sparx powerups, and skill points have a different offset than most other items.
+                if (
+                    greenLabelAddress == CloudBellowsUnlock ||
+                    greenLabelAddress == SpookyDoorUnlock ||
+                    greenLabelAddress == SheilaUnlock ||
+                    greenLabelAddress == IcyNancyUnlock ||
+                    greenLabelAddress == MoltenThievesUnlock ||
+                    greenLabelAddress == CharmedStairsUnlock ||
+                    greenLabelAddress == SgtByrdUnlock ||
+                    greenLabelAddress == BentleyUnlock ||
+                    greenLabelAddress == DesertDoorUnlock ||
+                    greenLabelAddress == Agent9Unlock ||
+                    greenLabelAddress == FrozenHockeyUnlock ||
+                    greenLabelAddress == CrystalBridgeUnlock ||
+                    greenLabelAddress == SparxRange ||
+                    greenLabelAddress == SparxRangeHelper1 ||
+                    greenLabelAddress == SparxRangeHelper2 ||
+                    greenLabelAddress == SparxGemFinder ||
+                    greenLabelAddress == SparxBreakBaskets ||
+                    greenLabelAddress == PlayerMaxHealth ||
+                    greenLabelAddress == SkillPointAddress
+                )
+                {
+                    return greenLabelAddress - 0xD8;
+                }
+                // TODO: Level names from SBR through Sorceress' Lair have no offset.
+                // Those afteer are greenLabelAddress - 0x4
+                if (
+                    greenLabelAddress == SunnyVillaName
+                )
+                {
+                    return greenLabelAddress - 0x4;
+                }
+                return greenLabelAddress - 0xE0;
+            }
+            return greenLabelAddress;
+        }
     }
 }

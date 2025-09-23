@@ -15,7 +15,11 @@
             LoadingHomeworld = 12,
             GettingEgg = 15,
             StartingGame = 16
+        }
 
+        public enum SpyroState
+        {
+            Dying = 31
         }
 
         public enum CompletionGoal

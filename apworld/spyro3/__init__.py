@@ -659,7 +659,7 @@ class Spyro3World(World):
                 level_gems = 200
                 ignore_sparx_restrictions = True
             elif level == 'Midnight Mountain':
-                if not is_boss_defeated(self, 'Scorch', state):
+                if not is_boss_defeated(self, 'Scorch', state) or (self.options.enable_world_keys.value and not has_world_keys(self, 3, state)):
                     return 0
                 level_gems = 400
             elif level == 'Crystal Islands':
@@ -835,7 +835,7 @@ class Spyro3World(World):
             sheila_gems = [105, 106, 107, 108, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124,
                            125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
                            144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 155, 156, 157, 158, 159, 160]
-            empty_bits = [13, 33, 34, 58, 109, 154, 172, 173, 174, 175, 193, 194, 195, 196, 197, 203, 105, 206, 211, 212,
+            empty_bits = [13, 33, 34, 58, 109, 154, 172, 173, 174, 175, 193, 194, 195, 196, 197, 203, 205, 206, 211, 212,
                           214]
             if not self.options.logic_sunny_sheila_early.value:
                 for gem in sheila_gems:
