@@ -16,6 +16,7 @@ using ReactiveUI;
 using S3AP.Models;
 using Serilog;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Concurrency;
@@ -30,7 +31,7 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.2.0-RC2";
+    public static string Version = "1.2.0-RC3";
 
     public static MainWindowViewModel Context;
     public static ArchipelagoClient Client { get; set; }
@@ -43,9 +44,13 @@ public partial class App : Application
     private static List<string> _easyChallenges { get; set; }
     private static int _worldKeys { get; set; }
     private static int _progressiveBasketBreaks { get; set; }
+    private static bool _checkNames { get; set; }
     // AP Options and slot data
     private static int _slot { get; set; }
     private static Dictionary<string, object> _slotData { get; set; }
+    private static LevelLockOptions _levelLockOptions { get; set; }
+    private static Dictionary<string, int> _eggRequirements { get; set; }
+    private static Dictionary<string, int> _gemRequirements { get; set; }
     private static GemsanityOptions _gemsanityOption { get; set; }
     private static MoneybagsOptions _moneybagsOption { get; set; }
     private static int _openWorld {  get; set; }
@@ -107,6 +112,8 @@ public partial class App : Application
         _hasSubmittedGoal = false;
         _useQuietHints = true;
         _easyChallenges = new List<string>();
+        _eggRequirements = new Dictionary<string, int>();
+        _gemRequirements = new Dictionary<string, int>();
         _worldKeys = 0;
         _progressiveBasketBreaks = 0;
         Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America) releases of Spyro 3.");
@@ -236,6 +243,7 @@ public partial class App : Application
             _eggCountGoal = int.Parse(Client.Options?.GetValueOrDefault("egg_count", "0").ToString());
             _isWorldKeysOn = int.Parse(Client.Options?.GetValueOrDefault("enable_world_keys", "0").ToString());
             _sparxOption = (ProgressiveSparxHealthOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_progressive_sparx_health", "0").ToString());
+            _levelLockOptions = (LevelLockOptions)int.Parse(Client.Options?.GetValueOrDefault("level_lock_option", "0").ToString());
 
             string[] easyModeOptions = [
                 "easy_skateboarding",
@@ -261,7 +269,22 @@ public partial class App : Application
 
             _slot = Client.CurrentSession.ConnectionInfo.Slot;
             _slotData = await Client.CurrentSession.DataStorage.GetSlotDataAsync(_slot);
-            
+
+            if (_slotData.TryGetValue("level_egg_requirements", out var levelEggRequirements))
+            {
+                if (levelEggRequirements != null)
+                {
+                    _eggRequirements = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(levelEggRequirements.ToString());
+                }
+            }
+            if (_slotData.TryGetValue("level_gem_requirements", out var levelGemRequirements))
+            {
+                if (levelGemRequirements != null)
+                {
+                    _gemRequirements = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(levelGemRequirements.ToString());
+                }
+            }
+
             if (_slotData.TryGetValue("apworldVersion", out var versionValue))
             {
                 if (versionValue != null && versionValue.ToString().ToLower() != Version.ToLower())
@@ -330,7 +353,8 @@ public partial class App : Application
         switch (args.Item.Name)
         {
             case "Egg":
-                var currentEggs = CalculateCurrentEggs();
+                _checkNames = true;
+                int eggs = CalculateCurrentEggs();
                 CheckGoalCondition();
                 break;
             case "Skill Point":
@@ -375,6 +399,7 @@ public partial class App : Application
             case "Turn Spyro Pink":
             case "Turn Spyro Green":
             case "Turn Spyro Black":
+            case "Normal Spyro":
                 _cosmeticEffects.Enqueue(args.Item.Name);
                 break;
             case "Invincibility (15 seconds)":
@@ -461,21 +486,17 @@ public partial class App : Application
         }
         else if (args.Item.Name.EndsWith(" Gem") || args.Item.Name.EndsWith(" Gems"))
         {
-            CalculateCurrentGems();
+            _checkNames = true;
             CheckGoalCondition();
         }
         else if (args.Item.Name.EndsWith(" Unlock")) {
+            _checkNames = true;
             showUnlockedLevels();
         }
     }
 
     private void showUnlockedLevels()
     {
-        if (_openWorld == 0)
-        {
-            Log.Logger.Information("Open World mode is not enabled.");
-            return;
-        }
         List<Item> unlockedLevels = (Client.GameState?.ReceivedItems.Where(x => x.Name.EndsWith(" Unlock")).ToList() ?? new List<Item>());
         Log.Logger.Information("You have unlocked: ");
         string unlockedLevelsString = "";
@@ -897,6 +918,91 @@ public partial class App : Application
         // TODO: Add SBR.
     }
 
+    private static bool HandleKeyUnlock(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
+    {
+        if ((Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
+        {
+            Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 6);
+            return true;
+        }
+        else
+        {
+            Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 0);
+            return false;
+        }
+    }
+
+    private static bool HandleKeyName(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
+    {
+        if ((Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
+        {
+            WriteStringToMemory(
+                Addresses.GetVersionAddress(nameAddress),
+                Addresses.GetVersionAddress(nameAddress) + nameLength,
+                levelName,
+                padWithSpaces: false
+            );
+            return true;
+        }
+        else
+        {
+            WriteStringToMemory(
+                Addresses.GetVersionAddress(nameAddress),
+                Addresses.GetVersionAddress(nameAddress) + nameLength,
+                "LOCKED",
+                padWithSpaces: false
+            );
+            return false;
+        }
+    }
+
+    private static bool HandleEggGemUnlock(string levelName, uint portalAddress, uint nameAddress, uint nameLength, int eggCount, int gemCount, double multiplier)
+    {
+        int eggReq = (int)Math.Floor(_eggRequirements.GetValueOrDefault(levelName, 0) * multiplier);
+        int gemReq = _gemRequirements.GetValueOrDefault(levelName, 0);
+        if (eggCount >= eggReq && gemCount >= gemReq)
+        {
+            Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 6);
+            return true;
+        }
+        else
+        {
+            Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 0);
+            return false;
+        }
+    }
+
+    private static bool HandleEggGemName(string levelName, uint portalAddress, uint nameAddress, uint nameLength, int eggCount, int gemCount, double multiplier)
+    {
+        int eggReq = (int)Math.Floor(_eggRequirements.GetValueOrDefault(levelName, 0) * multiplier);
+        int gemReq = _gemRequirements.GetValueOrDefault(levelName, 0);
+        if (eggCount >= eggReq && gemCount >= gemReq)
+        {
+            WriteStringToMemory(
+                Addresses.GetVersionAddress(nameAddress),
+                Addresses.GetVersionAddress(nameAddress) + nameLength,
+                levelName,
+                padWithSpaces: false
+            );
+            return true;
+        }
+        else
+        {
+            string req = $"Gem x{gemReq}";
+            if (eggReq > 0)
+            {
+                req = $"Egg x{eggReq}";
+            }
+            WriteStringToMemory(
+                Addresses.GetVersionAddress(nameAddress),
+                Addresses.GetVersionAddress(nameAddress) + nameLength,
+                req,
+                padWithSpaces: false
+            );
+            return false;
+        }
+    }
+
     private static void HandleLevelUnlocks(object source, ElapsedEventArgs e)
     {
         LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
@@ -908,177 +1014,210 @@ public partial class App : Application
             {
                 multiplier = 1.0;
             }
-            if (_openWorld == 0)
-            {
-                if (currentLevel == LevelInGameIDs.SunriseSpring)
-                {
-                    // TODO: Portal behavior
-                    Memory.WriteByte(Addresses.GetVersionAddress(0xD2F4C), 0);
-                    WriteStringToMemory(
-                        Addresses.GetVersionAddress(Addresses.SunnyVillaName),
-                        Addresses.GetVersionAddress(Addresses.SunnyVillaName) + 12,
-                        "Egg x9",
-                        padWithSpaces: false
-                    );
-                    // TODO: This may need to change.
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)Math.Floor(10 * multiplier));
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)Math.Floor(14 * multiplier));
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)Math.Floor(20 * multiplier));
-                }
-                else if (currentLevel == LevelInGameIDs.MiddayGardens)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyEggReq), (byte)Math.Floor(25 * multiplier));
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BambooEggReq), (byte)Math.Floor(30 * multiplier));
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CountryEggReq), (byte)Math.Floor(36 * multiplier));
-                }
-                else if (currentLevel == LevelInGameIDs.EveningLake)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FireworksEggReq), (byte)Math.Floor(50 * multiplier));
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedEggReq), (byte)Math.Floor(58 * multiplier));
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HoneyEggReq), (byte)Math.Floor(65 * multiplier));
-                }
-                else if (currentLevel == LevelInGameIDs.MidnightMountain)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HauntedEggReq), (byte)Math.Floor(70 * multiplier));
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DinoEggReq), (byte)Math.Floor(80 * multiplier));
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HarborEggReq), (byte)Math.Floor(90 * multiplier));
-                }
-            }
         }
-        if (_openWorld > 0)
+        int eggs = CalculateCurrentEggs();
+        int gems = CalculateCurrentGems();
+        if (_levelLockOptions == LevelLockOptions.Vanilla)
         {
-            if (currentLevel == LevelInGameIDs.SunriseSpring)
-            {
-                // TODO: Portals
-                Memory.WriteByte(Addresses.GetVersionAddress(0xD2F4C), 0);
-                WriteStringToMemory(
-                    Addresses.GetVersionAddress(Addresses.SunnyVillaName),
-                    Addresses.GetVersionAddress(Addresses.SunnyVillaName) + 12,
-                    "Egg x9",
-                    padWithSpaces: false
-                );
-                // TODO: Change how unlocks work.
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Molten Crater Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)151);
-                }
-
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Seashell Shore Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)151);
-                }
-
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Mushroom Speedway Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)151);
-                }
-            }
-            else if (currentLevel == LevelInGameIDs.MiddayGardens)
-            {
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Spooky Swamp Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyEggReq), (byte)151);
-                }
-
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Bamboo Terrace Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BambooEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BambooEggReq), (byte)151);
-                }
-
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Country Speedway Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CountryEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CountryEggReq), (byte)151);
-                }
-            }
-            else if (currentLevel == LevelInGameIDs.EveningLake)
-            {
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Fireworks Factory Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FireworksEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FireworksEggReq), (byte)151);
-                }
-
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Charmed Ridge Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedEggReq), (byte)151);
-                }
-
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Honey Speedway Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HoneyEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HoneyEggReq), (byte)151);
-                }
-            }
-            else if (currentLevel == LevelInGameIDs.MidnightMountain)
-            {
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Haunted Tomb Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HauntedEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HauntedEggReq), (byte)151);
-                }
-
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Dino Mines Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DinoEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DinoEggReq), (byte)151);
-                }
-
-                if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Harbor Speedway Unlock").Count() ?? 0) > 0)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HarborEggReq), (byte)1);
-                }
-                else
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HarborEggReq), (byte)151);
-                }
-            }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Molten Crater Unlock").Count() ?? 0) > 0)
+            if (_openWorld != 0 && eggs >= Math.Floor(10 * multiplier))
             {
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Seashell Shore Unlock").Count() ?? 0) > 0)
+            if (_openWorld != 0 && eggs >= Math.Floor(14 * multiplier))
             {
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+            }
+
+            if (currentLevel == LevelInGameIDs.SunriseSpring)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)Math.Floor(10 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)Math.Floor(14 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)Math.Floor(20 * multiplier));
+            }
+            else if (currentLevel == LevelInGameIDs.MiddayGardens)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyEggReq), (byte)Math.Floor(25 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BambooEggReq), (byte)Math.Floor(30 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CountryEggReq), (byte)Math.Floor(36 * multiplier));
+            }
+            else if (currentLevel == LevelInGameIDs.EveningLake)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FireworksEggReq), (byte)Math.Floor(50 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedEggReq), (byte)Math.Floor(58 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HoneyEggReq), (byte)Math.Floor(65 * multiplier));
+            }
+            else if (currentLevel == LevelInGameIDs.MidnightMountain)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HauntedEggReq), (byte)Math.Floor(70 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DinoEggReq), (byte)Math.Floor(80 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HarborEggReq), (byte)Math.Floor(90 * multiplier));
+            }
+        }
+        else if (_levelLockOptions == LevelLockOptions.Keys)
+        {
+            if (_checkNames)
+            {
+                HandleKeyName("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12);
+                HandleKeyName("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16);
+                bool moltenUnlocked = HandleKeyName("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16);
+                bool seashellUnlocked = HandleKeyName("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16);
+                HandleKeyName("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20);
+                HandleKeyName("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20);
+                HandleKeyName("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12);
+                HandleKeyName("Spooky Swamp", Addresses.SpookySwampPortal, Addresses.SpookySwampName, 16);
+                HandleKeyName("Bamboo Terrace", Addresses.BambooTerracePortal, Addresses.BambooTerraceName, 16);
+                HandleKeyName("Country Speedway", Addresses.CountrySpeedwayPortal, Addresses.CountrySpeedwayName, 20);
+                HandleKeyName("Frozen Altars", Addresses.FrozenAltarsPortal, Addresses.FrozenAltarsName, 16);
+                HandleKeyName("Lost Fleet", Addresses.LostFleetPortal, Addresses.LostFleetName, 12);
+                HandleKeyName("Fireworks Factory", Addresses.FireworksFactoryPortal, Addresses.FireworksFactoryName, 20);
+                HandleKeyName("Charmed Ridge", Addresses.CharmedRidgePortal, Addresses.CharmedRidgeName, 16);
+                HandleKeyName("Honey Speedway", Addresses.HoneySpeedwayPortal, Addresses.HoneySpeedwayName, 16);
+                HandleKeyName("Crystal Islands", Addresses.CrystalIslandsPortal, Addresses.CrystalIslandsName, 16);
+                HandleKeyName("Desert Ruins", Addresses.DesertRuinsPortal, Addresses.DesertRuinsName, 16);
+                HandleKeyName("Haunted Tomb", Addresses.HauntedTombPortal, Addresses.HauntedTombName, 16);
+                HandleKeyName("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12);
+                HandleKeyName("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16);
+                if (_openWorld != 0 && moltenUnlocked)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+                }
+                if (_openWorld != 0 && seashellUnlocked)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+                }
+                _checkNames = false;
+            }
+            if (currentLevel == LevelInGameIDs.SunriseSpring)
+            {
+                HandleKeyUnlock("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12);
+                HandleKeyUnlock("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16);
+                HandleKeyUnlock("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16);
+                HandleKeyUnlock("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16);
+                HandleKeyUnlock("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.MiddayGardens)
+            {
+                HandleKeyUnlock("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20);
+                HandleKeyUnlock("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12);
+                HandleKeyUnlock("Spooky Swamp", Addresses.SpookySwampPortal, Addresses.SpookySwampName, 16);
+                HandleKeyUnlock("Bamboo Terrace", Addresses.BambooTerracePortal, Addresses.BambooTerraceName, 16);
+                HandleKeyUnlock("Country Speedway", Addresses.CountrySpeedwayPortal, Addresses.CountrySpeedwayName, 20);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BambooEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CountryEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.EveningLake)
+            {
+                HandleKeyUnlock("Frozen Altars", Addresses.FrozenAltarsPortal, Addresses.FrozenAltarsName, 16);
+                HandleKeyUnlock("Lost Fleet", Addresses.LostFleetPortal, Addresses.LostFleetName, 12);
+                HandleKeyUnlock("Fireworks Factory", Addresses.FireworksFactoryPortal, Addresses.FireworksFactoryName, 20);
+                HandleKeyUnlock("Charmed Ridge", Addresses.CharmedRidgePortal, Addresses.CharmedRidgeName, 16);
+                HandleKeyUnlock("Honey Speedway", Addresses.HoneySpeedwayPortal, Addresses.HoneySpeedwayName, 16);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FireworksEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HoneyEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.MidnightMountain)
+            {
+                HandleKeyUnlock("Crystal Islands", Addresses.CrystalIslandsPortal, Addresses.CrystalIslandsName, 16);
+                HandleKeyUnlock("Desert Ruins", Addresses.DesertRuinsPortal, Addresses.DesertRuinsName, 16);
+                HandleKeyUnlock("Haunted Tomb", Addresses.HauntedTombPortal, Addresses.HauntedTombName, 16);
+                HandleKeyUnlock("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12);
+                HandleKeyUnlock("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HauntedEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DinoEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HarborEggReq), (byte)1);
+            }
+        }
+        else
+        {
+            if (_checkNames)
+            {
+                HandleEggGemName("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12, eggs, gems, multiplier);
+                HandleEggGemName("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16, eggs, gems, multiplier);
+                bool moltenUnlocked = HandleEggGemName("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16, eggs, gems, multiplier);
+                bool seashellUnlocked = HandleEggGemName("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20, eggs, gems, multiplier);
+                HandleEggGemName("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20, eggs, gems, multiplier);
+                HandleEggGemName("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12, eggs, gems, multiplier);
+                HandleEggGemName("Spooky Swamp", Addresses.SpookySwampPortal, Addresses.SpookySwampName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Bamboo Terrace", Addresses.BambooTerracePortal, Addresses.BambooTerraceName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Country Speedway", Addresses.CountrySpeedwayPortal, Addresses.CountrySpeedwayName, 20, eggs, gems, multiplier);
+                HandleEggGemName("Frozen Altars", Addresses.FrozenAltarsPortal, Addresses.FrozenAltarsName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Lost Fleet", Addresses.LostFleetPortal, Addresses.LostFleetName, 12, eggs, gems, multiplier);
+                HandleEggGemName("Fireworks Factory", Addresses.FireworksFactoryPortal, Addresses.FireworksFactoryName, 20, eggs, gems, multiplier);
+                HandleEggGemName("Charmed Ridge", Addresses.CharmedRidgePortal, Addresses.CharmedRidgeName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Honey Speedway", Addresses.HoneySpeedwayPortal, Addresses.HoneySpeedwayName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Crystal Islands", Addresses.CrystalIslandsPortal, Addresses.CrystalIslandsName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Desert Ruins", Addresses.DesertRuinsPortal, Addresses.DesertRuinsName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Haunted Tomb", Addresses.HauntedTombPortal, Addresses.HauntedTombName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12, eggs, gems, multiplier);
+                HandleEggGemName("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16, eggs, gems, multiplier);
+
+                if (_openWorld != 0 && moltenUnlocked)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+                }
+                if (_openWorld != 0 && seashellUnlocked)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+                }
+                _checkNames = false;
+            }
+            if (currentLevel == LevelInGameIDs.SunriseSpring)
+            {
+                HandleEggGemUnlock("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12, eggs, gems, multiplier);
+                HandleEggGemUnlock("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20, eggs, gems, multiplier);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.MiddayGardens)
+            {
+                HandleEggGemUnlock("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20, eggs, gems, multiplier);
+                HandleEggGemUnlock("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12, eggs, gems, multiplier);
+                HandleEggGemUnlock("Spooky Swamp", Addresses.SpookySwampPortal, Addresses.SpookySwampName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Bamboo Terrace", Addresses.BambooTerracePortal, Addresses.BambooTerraceName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Country Speedway", Addresses.CountrySpeedwayPortal, Addresses.CountrySpeedwayName, 20, eggs, gems, multiplier);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BambooEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CountryEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.EveningLake)
+            {
+                HandleEggGemUnlock("Frozen Altars", Addresses.FrozenAltarsPortal, Addresses.FrozenAltarsName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Lost Fleet", Addresses.LostFleetPortal, Addresses.LostFleetName, 12, eggs, gems, multiplier);
+                HandleEggGemUnlock("Fireworks Factory", Addresses.FireworksFactoryPortal, Addresses.FireworksFactoryName, 20, eggs, gems, multiplier);
+                HandleEggGemUnlock("Charmed Ridge", Addresses.CharmedRidgePortal, Addresses.CharmedRidgeName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Honey Speedway", Addresses.HoneySpeedwayPortal, Addresses.HoneySpeedwayName, 16, eggs, gems, multiplier);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FireworksEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HoneyEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.MidnightMountain)
+            {
+                HandleEggGemUnlock("Crystal Islands", Addresses.CrystalIslandsPortal, Addresses.CrystalIslandsName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Desert Ruins", Addresses.DesertRuinsPortal, Addresses.DesertRuinsName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Haunted Tomb", Addresses.HauntedTombPortal, Addresses.HauntedTombName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12, eggs, gems, multiplier);
+                HandleEggGemUnlock("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16, eggs, gems, multiplier);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HauntedEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DinoEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HarborEggReq), (byte)1);
             }
         }
     }
@@ -1094,6 +1233,10 @@ public partial class App : Application
             string effect = _cosmeticEffects.Dequeue();
             switch (effect)
             {
+                case "Normal Spyro":
+                    TurnSpyroColor(SpyroColor.SpyroColorDefault);
+                    DeactivateBigHeadMode();
+                    break;
                 case "Big Head Mode":
                     ActivateBigHeadMode();
                     break;
@@ -1152,6 +1295,7 @@ public partial class App : Application
         GameLocations = Helpers.BuildLocationList(includeGemsanity: _gemsanityOption != GemsanityOptions.Off, gemsanityIDs: gemsanityIDs);
         GameLocations = GameLocations.Where(x => x != null && !Client.CurrentSession.Locations.AllLocationsChecked.Contains(x.Id)).ToList();
         Client.MonitorLocations(GameLocations);
+        _checkNames = true;
 
         if (_moneybagsOption != MoneybagsOptions.Vanilla)
         {
@@ -1260,7 +1404,7 @@ public partial class App : Application
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 65536);
             }
         }
-        if (_moneybagsOption == MoneybagsOptions.Vanilla && _gemsanityOption != GemsanityOptions.Off)
+        if (_moneybagsOption == MoneybagsOptions.Vanilla && _gemsanityOption != GemsanityOptions.Off || _openWorld != 0)
         {
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 0);
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 0);
@@ -1284,19 +1428,19 @@ public partial class App : Application
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MiddayLevelsComplete), 1);
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningLevelsComplete), 1);
             // Mark level as entered in atlas, which changes transport behavior.
-            Memory.WriteByte(Addresses.GetVersionAddress(0x720A2), 1);  // Evening Lake
-            Memory.WriteByte(Addresses.GetVersionAddress(0x72090), 1);  // Sunrise Springs
-            Memory.WriteByte(Addresses.GetVersionAddress(0x72097), 1);  // Buzz's Dungeon
-            Memory.WriteByte(Addresses.GetVersionAddress(0x72099), 1);  // Midday Gardens
-            Memory.WriteByte(Addresses.GetVersionAddress(0x720AB), 1);  // Midnight Mountain
-            Memory.WriteByte(Addresses.GetVersionAddress(0x720A9), 1);  // Scorch's Pit
-            Memory.WriteByte(Addresses.GetVersionAddress(0x720A0), 1);  // Spike's Arena
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunriseAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BuzzAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MiddayAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MidnightAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ScorchAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpikeAtlasUnlock), 1);
             // Triggered when getting end of level eggs in sunrise.
-            Memory.WriteByte(Addresses.GetVersionAddress(0x716a2), 2);
-            Memory.WriteByte(Addresses.GetVersionAddress(0x716a8), 2);
-            Memory.WriteByte(Addresses.GetVersionAddress(0x716ae), 2);
-            Memory.WriteByte(Addresses.GetVersionAddress(0x716b4), 2);
-            Memory.WriteByte(Addresses.GetVersionAddress(0x716c0), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunnyCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CloudCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaCompletedFlags), 2);
 
 
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BuzzDefeated), 1);
@@ -1317,6 +1461,7 @@ public partial class App : Application
             Memory.Write(Addresses.GetVersionAddress(Addresses.PlayerLives), (short)(Math.Min(99, currentLives + 1)));
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroState), (byte)SpyroState.Dying);
         }
+
         _loadGameTimer.Enabled = false;
     }
 
@@ -1392,6 +1537,14 @@ public partial class App : Application
                 _hasSubmittedGoal = true;
             }
         }
+    }
+
+    private static async void DeactivateBigHeadMode()
+    {
+        Memory.Write(Addresses.GetVersionAddress(Addresses.BigHeadMode), (short)(0));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroHeight), (byte)(0));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroLength), (byte)(0));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroWidth), (byte)(0));
     }
 
     private static async void ActivateBigHeadMode()
@@ -1596,6 +1749,10 @@ public partial class App : Application
         _easyChallenges = new List<string>();
         _worldKeys = 0;
         _progressiveBasketBreaks = 0;
+        _levelLockOptions = LevelLockOptions.Vanilla;
+        _eggRequirements = new Dictionary<string, int>();
+        _gemRequirements = new Dictionary<string, int>();
+
         Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America) releases of Spyro 3.");
 
         if (_loadGameTimer != null)

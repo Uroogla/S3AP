@@ -219,7 +219,62 @@ namespace S3AP
         public const uint BlackLabelAtlasAddress = 0x0006c4d8;
         public const uint GreenLabelAtlasAddress = 0x0006c5b8;
 
+        public const uint SunriseAtlasUnlock = 0x72090;
+        public const uint MiddayAtlasUnlock = 0x72099;
+        public const uint EveningAtlasUnlock = 0x720A2;
+        public const uint MidnightAtlasUnlock = 0x720AB;
+        public const uint BuzzAtlasUnlock = 0x72097;
+        public const uint SpikeAtlasUnlock = 0x720A0;
+        public const uint ScorchAtlasUnlock = 0x720A9;
+
+        public const uint SunnyCompletedFlags = 0x716a2;
+        public const uint CloudCompletedFlags = 0x716a8;
+        public const uint MoltenCompletedFlags = 0x716ae;
+        public const uint SeashellCompletedFlags = 0x716b4;
+        public const uint SheilaCompletedFlags = 0x716c0;
+
         public const uint SunnyVillaName = 0x10f1c;
+        public const uint CloudSpiresName = 0x10f0c;
+        public const uint MoltenCraterName = 0x10efc;
+        public const uint SeashellShoreName = 0x10eec;
+        public const uint MushroomSpeedwayName = 0x10ed8;
+        public const uint IcyPeakName = 0x10e88;
+        public const uint EnchantedTowersName = 0x10e74;
+        public const uint SpookySwampName = 0x10e64;
+        public const uint BambooTerraceName = 0x10e54;
+        public const uint CountrySpeedwayName = 0x10e40;
+        public const uint FrozenAltarsName = 0x10dec;
+        public const uint LostFleetName = 0x10de0;
+        public const uint FireworksFactoryName = 0x10dcc;
+        public const uint CharmedRidgeName = 0x10dbc;
+        public const uint HoneySpeedwayName = 0x10dac;
+        public const uint CrystalIslandsName = 0x10d50;
+        public const uint DesertRuinsName = 0x10d40;
+        public const uint HauntedTombName = 0x10d30;
+        public const uint DinoMinesName = 0x10d24;
+        public const uint HarborSpeedwayName = 0x10d14;
+
+        public const uint SunnyVillaPortal = 0xD2F4C;
+        public const uint CloudSpiresPortal = 0xD2F54;
+        public const uint MoltenCraterPortal = 0xD2F5C;
+        public const uint SeashellShorePortal = 0xD2F64;
+        public const uint MushroomSpeedwayPortal = 0xD2F6C;
+        // The order of Enchanted and Icy is flipped in game, for some reason.
+        public const uint EnchantedTowersPortal = 0xCC22C;
+        public const uint IcyPeakPortal = 0xCC234;
+        public const uint SpookySwampPortal = 0xCC23C;
+        public const uint BambooTerracePortal = 0xCC244;
+        public const uint CountrySpeedwayPortal = 0xCC24C;
+        public const uint FrozenAltarsPortal = 0xD4038;
+        public const uint LostFleetPortal = 0xD4040;
+        public const uint FireworksFactoryPortal = 0xD4048;
+        public const uint CharmedRidgePortal = 0xD4050;
+        public const uint HoneySpeedwayPortal = 0xD4058;
+        public const uint CrystalIslandsPortal = 0xDA798;
+        public const uint DesertRuinsPortal = 0xDA7A0;
+        public const uint HauntedTombPortal = 0xDA7A8;
+        public const uint DinoMinesPortal = 0xDA7B0;
+        public const uint HarborSpeedwayPortal = 0xDA7B8;
 
         public static uint GetVersionAddress(uint greenLabelAddress)
         {
@@ -250,10 +305,57 @@ namespace S3AP
                 {
                     return greenLabelAddress - 0xD8;
                 }
+                if (greenLabelAddress == HauntedEggReq)
+                {
+                    return greenLabelAddress - 0xe8;
+                }
+                if (greenLabelAddress == SpookyEggReq)
+                {
+                    return 0x199808;
+                }
+                if (greenLabelAddress == BambooEggReq)
+                {
+                    return 0x199b40;
+                }
+                if (greenLabelAddress == CountryEggReq)
+                {
+                    return 0x199b2c;
+                }
+                if (greenLabelAddress == FireworksEggReq)
+                {
+                    return 0x199ccc;
+                }
+                if (greenLabelAddress == CharmedEggReq)
+                {
+                    return 0x199ce0;
+                }
+                if (greenLabelAddress == HoneyEggReq)
+                {
+                    return 0x199cf4;
+                }
                 // TODO: Level names from SBR through Sorceress' Lair have no offset.
                 // Those afteer are greenLabelAddress - 0x4
                 if (
-                    greenLabelAddress == SunnyVillaName
+                    greenLabelAddress == SunnyVillaName ||
+                    greenLabelAddress == CloudSpiresName ||
+                    greenLabelAddress == MoltenCraterName ||
+                    greenLabelAddress == SeashellShoreName ||
+                    greenLabelAddress == MushroomSpeedwayName ||
+                    greenLabelAddress == IcyPeakName ||
+                    greenLabelAddress == EnchantedTowersName ||
+                    greenLabelAddress == SpookySwampName ||
+                    greenLabelAddress == BambooTerraceName ||
+                    greenLabelAddress == CountrySpeedwayName ||
+                    greenLabelAddress == FrozenAltarsName ||
+                    greenLabelAddress == LostFleetName ||
+                    greenLabelAddress == FireworksFactoryName ||
+                    greenLabelAddress == CharmedRidgeName ||
+                    greenLabelAddress == HoneySpeedwayName ||
+                    greenLabelAddress == CrystalIslandsName ||
+                    greenLabelAddress == DesertRuinsName ||
+                    greenLabelAddress == HauntedTombName ||
+                    greenLabelAddress == DinoMinesName ||
+                    greenLabelAddress == HarborSpeedwayName
                 )
                 {
                     return greenLabelAddress - 0x4;

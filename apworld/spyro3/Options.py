@@ -41,6 +41,14 @@ class GemsanityOptions():
     FULL = 2
     FULL_GLOBAL = 3
 
+class LevelLockOptions():
+    VANILLA = 0
+    KEYS = 1
+    KEYS_AND_EGGS = 2
+    RANDOM_REQS = 3
+    ADD_REQS = 4
+    ADD_GEM_REQS = 5
+
 
 class GoalOption(Choice):
     """Lets the user choose the completion goal
@@ -88,15 +96,42 @@ class GuaranteedItemsOption(ItemDict):
 class OpenWorldOption(Toggle):
     """Grants access to all 4 homeworlds from the start.
     End of level and boss eggs are removed as checks.
-    You start with 1 egg to make level unlocks work correctly.
-    Levels normally requiring eggs to open instead require an unlock item.
-    In Companionsanity or Moneybagssanity, the player starts with access to Sheila's, Sgt. Byrd's, and Bentley's levels.
     If you are in Sunrise when you unlock Molten or Seashell, you may need to enter another level and come back for
     the unlock to take effect.
-    Disables world keys.
-    For now, ignores Progressive Sparx Health Logic.
-    This is very experimental and likely to break."""
+    Progressive Sparx Health Logic will be different
+    If Moneybags is Vanilla, companion unlocks will be free.
+    Disables world keys."""
     display_name = "Open World Mode"
+
+class LevelLockOption(Choice):
+    """Determines the rules locking levels.  Sparx levels, companion levels, homeworlds, Super Bonus Round, and bosses
+    are not affected by these settings.
+    At least one of Sunny, Cloud, Molten, and Seashell will always start unlocked.
+    For any setting other than Vanilla or Keys and Eggs, you start with 1 egg to make level unlocks work correctly.
+    Settings other than Vanilla also prevent entering non-companion levels from out of bounds.
+    Vanilla: Levels have their vanilla unlock requirements, though egg hunt can lower them.
+    Keys: 20 Level Unlock items are added to the item pool.
+    Randomize Requirements: The number of eggs required for levels locked in vanilla will be randomized.
+    Add Requirements: Any level can have an egg requirement added.
+    Add Gem Requirements: Any level can have an egg OR gem requirement added. Only works when Moneybagssanity and Gemsanity are on.
+    """
+    display_name = "Level Lock Options"
+    default = LevelLockOptions.VANILLA
+    option_vanilla = LevelLockOptions.VANILLA
+    option_keys = LevelLockOptions.KEYS
+    option_randomize_requirements = LevelLockOptions.RANDOM_REQS
+    option_add_requirements = LevelLockOptions.ADD_REQS
+    option_add_gem_requirements = LevelLockOptions.ADD_GEM_REQS
+
+class StartingLevels(Range):
+    """When Level Lock Options is not Vanilla or Randomize Requirements,
+    determines how many non-companion levels start unlocked.
+    The recommended value when Keys are in use is 2 or 3.
+    One Sunrise level will always be unlocked."""
+    display_name = "Number of Starting Levels"
+    range_start = 1
+    range_end = 20
+    default = 2
 
 class Enable25PctGemChecksOption(Toggle):
     """Adds checks for getting 25% of the gems in a level"""
@@ -489,6 +524,8 @@ class Spyro3Option(PerGameCommonOptions):
     percent_extra_eggs: PercentExtraEggs
     guaranteed_items: GuaranteedItemsOption
     open_world: OpenWorldOption
+    level_lock_option: LevelLockOption
+    starting_levels_count: StartingLevels
     enable_25_pct_gem_checks: Enable25PctGemChecksOption
     enable_50_pct_gem_checks: Enable50PctGemChecksOption
     enable_75_pct_gem_checks: Enable75PctGemChecksOption
@@ -509,7 +546,6 @@ class Spyro3Option(PerGameCommonOptions):
     trap_filler_percent: TrapFillerPercent
     enable_trap_damage_sparx: EnableTrapDamageSparx
     enable_trap_sparxless: EnableTrapSparxless
-    #enable_trap_lag: EnableTrapLag
     enable_progressive_sparx_health: EnableProgressiveSparxHealth
     enable_progressive_sparx_logic: ProgressiveSparxHealthLogic
     require_sparx_for_max_gems: RequireSparxForMaxGems

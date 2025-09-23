@@ -69,6 +69,15 @@
             TrueSparxless = 4
         }
 
+        public enum LevelLockOptions
+        {
+            Vanilla = 0,
+            Keys = 1,
+            RandomReqs = 3,
+            AddReqs = 4,
+            AddGemReqs = 5
+        }
+
         public enum LevelInGameIDs : byte
         {
             SunriseSpring = 10,
