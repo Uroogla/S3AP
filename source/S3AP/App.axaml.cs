@@ -1413,14 +1413,14 @@ public partial class App : Application
         }
         if (_moneybagsOption == MoneybagsOptions.Companionsanity && _gemsanityOption != GemsanityOptions.Off)
         {
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 0);
         }
         if (_openWorld != 0)
         {
