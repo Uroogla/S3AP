@@ -1406,21 +1406,21 @@ public partial class App : Application
         }
         if (_moneybagsOption == MoneybagsOptions.Vanilla && (_gemsanityOption != GemsanityOptions.Off || _openWorld != 0))
         {
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), (short)0);
         }
         if (_moneybagsOption == MoneybagsOptions.Companionsanity && _gemsanityOption != GemsanityOptions.Off)
         {
-            Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), (short)0);
         }
         if (_openWorld != 0)
         {
