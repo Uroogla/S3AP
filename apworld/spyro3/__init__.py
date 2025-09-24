@@ -202,8 +202,8 @@ class Spyro3World(World):
             vanilla_reqs = [10, 14, 20, 25, 30, 36, 50, 58, 65, 70, 80, 90]
             random_reqs = []
             for req in vanilla_reqs:
-                # 85% to 115% of vanilla requirements.
-                random_reqs.append(math.floor(req * (1 + 0.3 * (-0.5 + self.multiworld.random.random()))))
+                # 85% to 110% of vanilla requirements.
+                random_reqs.append(math.floor(req * (1 + 0.25 * (-0.6 + self.multiworld.random.random()))))
             if self.options.open_world:
                 random_levels = [
                     "Molten Crater", "Seashell Shore", "Mushroom Speedway",
@@ -254,8 +254,8 @@ class Spyro3World(World):
                 unlocked_levels = self.multiworld.random.sample(all_levels, k=self.options.starting_levels_count - 1)
             unlocked_levels.append(open_sunrise_level)
             for req in vanilla_reqs:
-                # 85% to 115% of vanilla requirements.
-                random_reqs.append(math.floor(req * (1 + 0.3 * (-0.5 + self.multiworld.random.random()))))
+                # 80% to 110% of vanilla requirements.
+                random_reqs.append(math.floor(req * (1 + 0.25 * (-0.6 + self.multiworld.random.random()))))
             if self.options.open_world:
                 levels = [
                     "Sunny Villa", "Cloud Spires", "Molten Crater", "Seashell Shore", "Mushroom Speedway",
@@ -308,8 +308,8 @@ class Spyro3World(World):
                 unlocked_levels = self.multiworld.random.sample(all_levels, k=self.options.starting_levels_count - 1)
             unlocked_levels.append(open_sunrise_level)
             for req in vanilla_egg_reqs:
-                # 85% to 115% of vanilla requirements.
-                random_reqs.append(math.floor(req * (1 + 0.3 * (-0.5 + self.multiworld.random.random()))))
+                # 80% to 110% of vanilla requirements.
+                random_reqs.append(math.floor(req * (1 + 0.25 * (-0.6 + self.multiworld.random.random()))))
             full_reqs = []
             for i in range(20):
                 full_reqs.append((random_reqs[i], gem_reqs[i]))
@@ -413,8 +413,12 @@ class Spyro3World(World):
             if self.options.egg_count <= 149:
                 self.all_levels.remove("Super Bonus Round")
 
-        # TODO: Support UT.
-        self.generate_entry_requirements()
+        if hasattr(self.multiworld, "re_gen_passthrough"):
+            self.key_locked_levels = self.multiworld.re_gen_passthrough["Spyro 3"]["key_locked_levels"]
+            self.level_egg_requirements = self.multiworld.re_gen_passthrough["Spyro 3"]["level_egg_requirements"]
+            self.level_gem_requirements = self.multiworld.re_gen_passthrough["Spyro 3"]["level_gem_requirements"]
+        else:
+            self.generate_entry_requirements()
 
         # Prevent restrictive starts.
         if self.options.moneybags_settings == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_cloud_backwards:
@@ -2112,7 +2116,10 @@ class Spyro3World(World):
                 else:
                     break
 
-                
+    # Universal Tracker Support
+    def interpret_slot_data(self, slot_data):
+        return slot_data
+
     def fill_slot_data(self) -> Dict[str, object]:
         name_to_s3_code = {item.name: item.s3_code for item in item_dictionary.values()}
         # Create the mandatory lists to generate the player's output file
@@ -2224,6 +2231,7 @@ class Spyro3World(World):
             },
             "gemsanity_ids": gemsanity_locations,
             "hints": hints,
+            "key_locked_levels": self.key_locked_levels,
             "level_egg_requirements": self.level_egg_requirements,
             "level_gem_requirements": self.level_gem_requirements,
             "seed": self.multiworld.seed_name,  # to verify the server's multiworld

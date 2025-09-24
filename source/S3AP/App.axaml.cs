@@ -1404,12 +1404,12 @@ public partial class App : Application
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 65536);
             }
         }
-        if (_moneybagsOption == MoneybagsOptions.Vanilla && _gemsanityOption != GemsanityOptions.Off || _openWorld != 0)
+        if (_moneybagsOption == MoneybagsOptions.Vanilla && (_gemsanityOption != GemsanityOptions.Off || _openWorld != 0))
         {
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 0);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 0);
         }
         if (_moneybagsOption == MoneybagsOptions.Companionsanity && _gemsanityOption != GemsanityOptions.Off)
         {
