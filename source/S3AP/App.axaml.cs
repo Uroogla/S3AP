@@ -4,7 +4,6 @@ using Archipelago.Core.AvaloniaGUI.ViewModels;
 using Archipelago.Core.AvaloniaGUI.Views;
 using Archipelago.Core.GameClients;
 using Archipelago.Core.Models;
-using Archipelago.Core.Traps;
 using Archipelago.Core.Util;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Archipelago.MultiClient.Net.Packets;
@@ -12,15 +11,14 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media;
-using Avalonia.OpenGL;
 using Newtonsoft.Json;
 using ReactiveUI;
 using S3AP.Models;
 using Serilog;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Security.Principal;
@@ -32,6 +30,9 @@ namespace S3AP;
 
 public partial class App : Application
 {
+    // TODO: Remember to set this in S3AP.Desktop as well.
+    public static string Version = "1.2.0";
+
     public static MainWindowViewModel Context;
     public static ArchipelagoClient Client { get; set; }
     public static List<ILocation> GameLocations { get; set; }
@@ -41,15 +42,29 @@ public partial class App : Application
     private static bool _hasSubmittedGoal { get; set; }
     private static bool _useQuietHints { get; set; }
     private static List<string> _easyChallenges { get; set; }
-    private static ProgressiveSparxHealthOptions _sparxOption {  get; set; }
-    private static Timer _sparxTimer { get; set; }
-    private static Timer _loadGameTimer { get; set; }
     private static int _worldKeys { get; set; }
-    private static Timer _worldKeysTimer { get; set; }
     private static int _progressiveBasketBreaks { get; set; }
+    private static bool _checkNames { get; set; }
+    // AP Options and slot data
+    private static int _slot { get; set; }
+    private static Dictionary<string, object> _slotData { get; set; }
+    private static LevelLockOptions _levelLockOptions { get; set; }
+    private static Dictionary<string, int> _eggRequirements { get; set; }
+    private static Dictionary<string, int> _gemRequirements { get; set; }
+    private static GemsanityOptions _gemsanityOption { get; set; }
+    private static MoneybagsOptions _moneybagsOption { get; set; }
+    private static int _openWorld {  get; set; }
+    private static int _sparxPowerShuffle { get; set; }
+    private static CompletionGoal _goal { get; set; }
+    private static ProgressiveSparxHealthOptions _sparxOption { get; set; }
+    private static int _eggCountGoal { get; set; }
+    private static int _isWorldKeysOn { get; set; }
+    // Timers
+    private static Timer _loadGameTimer { get; set; }
     private static Timer _cosmeticsTimer { get; set; }
+    private static Timer _gameLoopTimer { get; set; }
     private static Timer _minigamesTimer { get; set; }
-    private static Timer _sparxPowerTimer { get; set; }
+    private static int _timerLoopCount { get; set; }
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -80,9 +95,10 @@ public partial class App : Application
         }
         base.OnFrameworkInitializationCompleted();
     }
+
     public void Start()
     {
-        Context = new MainWindowViewModel("0.6.2");
+        Context = new MainWindowViewModel("0.6.1 or later");
         Context.ClientVersion = Assembly.GetEntryAssembly().GetName().Version.ToString();
         Context.ConnectClicked += Context_ConnectClicked;
         Context.CommandReceived += (e, a) =>
@@ -96,16 +112,18 @@ public partial class App : Application
         _hasSubmittedGoal = false;
         _useQuietHints = true;
         _easyChallenges = new List<string>();
+        _eggRequirements = new Dictionary<string, int>();
+        _gemRequirements = new Dictionary<string, int>();
         _worldKeys = 0;
         _progressiveBasketBreaks = 0;
-        Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U 1.1 release of Spyro 3 (North America Greatest Hits version).");
-        Log.Logger.Information("Trying to play with a different version will not work and may release all of your locations at the start.");
+        Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America) releases of Spyro 3.");
         if (!IsRunningAsAdministrator())
         {
             Log.Logger.Warning("You do not appear to be running this client as an administrator.");
             Log.Logger.Warning("This may result in errors or crashes when trying to connect to Duckstation.");
         }
     }
+
     private void HandleCommand(string command)
     {
         if (Client == null || Client.GameState == null || Client.CurrentSession == null) return;
@@ -123,10 +141,12 @@ public partial class App : Application
                 Log.Logger.Information("Hints for found locations will be displayed.  Type 'useQuietHints' to show them.");
                 _useQuietHints = false;
                 break;
+            case "showUnlockedLevels":
+                showUnlockedLevels();
+                break;
             case "showGoal":
-                CompletionGoal goal = (CompletionGoal)(int.Parse(Client.Options?.GetValueOrDefault("goal", 0).ToString()));
                 string goalText = "";
-                switch (goal)
+                switch (_goal)
                 {
                     case CompletionGoal.Sorceress1:
                         goalText = "Collect 100 eggs and defeat the Sorceress in Sorceress' Lair";
@@ -161,6 +181,7 @@ public partial class App : Application
                 break;
         }
     }
+
     private async void Context_ConnectClicked(object? sender, ConnectClickedEventArgs e)
     {
         if (Client != null)
@@ -214,25 +235,98 @@ public partial class App : Application
         await Client.Login(e.Slot, !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
         if (Client.Options?.Count > 0)
         {
-            GemsanityOptions gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
-            int slot = Client.CurrentSession.ConnectionInfo.Slot;
-            Dictionary<string, object> obj = await Client.CurrentSession.DataStorage.GetSlotDataAsync(slot);
-            List<int> gemsanityIDs = new List<int>();
-            if (obj.TryGetValue("gemsanity_ids", out var value))
+            _gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
+            _moneybagsOption = (MoneybagsOptions)int.Parse(Client.Options?.GetValueOrDefault("moneybags_settings", "0").ToString());
+            _openWorld = int.Parse(Client.Options?.GetValueOrDefault("open_world", "0").ToString());
+            _sparxPowerShuffle = int.Parse(Client.Options?.GetValueOrDefault("sparx_power_settings", "0").ToString());
+            _goal = (CompletionGoal)int.Parse(Client.Options?.GetValueOrDefault("goal", "0").ToString());
+            _eggCountGoal = int.Parse(Client.Options?.GetValueOrDefault("egg_count", "0").ToString());
+            _isWorldKeysOn = int.Parse(Client.Options?.GetValueOrDefault("enable_world_keys", "0").ToString());
+            _sparxOption = (ProgressiveSparxHealthOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_progressive_sparx_health", "0").ToString());
+            _levelLockOptions = (LevelLockOptions)int.Parse(Client.Options?.GetValueOrDefault("level_lock_option", "0").ToString());
+
+            string[] easyModeOptions = [
+                "easy_skateboarding",
+                "easy_boxing",
+                "easy_sheila_bombing",
+                "easy_tanks",
+                "easy_subs",
+                "easy_bluto",
+                "easy_sleepyhead",
+                "easy_shark_riders",
+                "easy_whackamole",
+                "easy_tunnels",
+                "no_green_rockets"
+            ];
+            foreach (string optionName in easyModeOptions)
             {
-                if (value != null)
+                int isOptionOn = int.Parse(Client.Options?.GetValueOrDefault(optionName, "0").ToString());
+                if (isOptionOn != 0)
                 {
-                    gemsanityIDs = System.Text.Json.JsonSerializer.Deserialize<List<int>>(value.ToString());
+                    _easyChallenges.Add(optionName);
                 }
             }
-            GameLocations = Helpers.BuildLocationList(includeGemsanity: gemsanityOption != GemsanityOptions.Off, gemsanityIDs: gemsanityIDs);
+
+            _slot = Client.CurrentSession.ConnectionInfo.Slot;
+            _slotData = await Client.CurrentSession.DataStorage.GetSlotDataAsync(_slot);
+
+            if (_slotData.TryGetValue("level_egg_requirements", out var levelEggRequirements))
+            {
+                if (levelEggRequirements != null)
+                {
+                    _eggRequirements = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(levelEggRequirements.ToString());
+                }
+            }
+            if (_slotData.TryGetValue("level_gem_requirements", out var levelGemRequirements))
+            {
+                if (levelGemRequirements != null)
+                {
+                    _gemRequirements = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, int>>(levelGemRequirements.ToString());
+                }
+            }
+
+            if (_slotData.TryGetValue("apworldVersion", out var versionValue))
+            {
+                if (versionValue != null && versionValue.ToString().ToLower() != Version.ToLower())
+                {
+                    Log.Logger.Warning($"The host's AP world version is {versionValue.ToString()} but the client version is {Version}.");
+                    Log.Logger.Warning("Please ensure these are compatible before proceeding.");
+                }
+                else if (versionValue == null)
+                {
+                    Log.Logger.Error($"The host's AP world version predates 1.2.0, but the client version is {Version}.");
+                    Log.Logger.Error("This will almost certainly result in errors.");
+                }
+            }
+            else
+            {
+                Log.Logger.Error($"The host's AP world version predates 1.2.0, but the client version is {Version}.");
+                Log.Logger.Error("This will almost certainly result in errors.");
+            }
+
             int eggs = CalculateCurrentEggs();
             int skillPoints = CalculateCurrentSkillPoints();
             bool beatenSorceress = Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false;
             string defeatedSorceressText = beatenSorceress ? "you have defeated the sorceress" : "you have not defeated the sorceress";
             Log.Logger.Information($"You have {eggs} eggs, {skillPoints} skill points, and {defeatedSorceressText}.");
-            GameLocations = GameLocations.Where(x => x != null && !Client.CurrentSession.Locations.AllLocationsChecked.Contains(x.Id)).ToList();
-            Client.MonitorLocations(GameLocations);
+
+            _loadGameTimer = new Timer();
+            _loadGameTimer.Elapsed += new ElapsedEventHandler(StartSpyroGame);
+            _loadGameTimer.Interval = 5000;
+            _loadGameTimer.Enabled = true;
+
+            _cosmeticsTimer = new Timer();
+            _cosmeticsTimer.Elapsed += new ElapsedEventHandler(HandleCosmeticQueue);
+            _cosmeticsTimer.Interval = 5000;
+            _cosmeticsTimer.Enabled = true;
+
+            _progressiveBasketBreaks = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Basket Break").Count() ?? 0);
+            _worldKeys = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "World Key").Count() ?? 0);
+
+            _gameLoopTimer = new Timer();
+            _gameLoopTimer.Elapsed += new ElapsedEventHandler(ModifyGameLoop);
+            _gameLoopTimer.Interval = 100;
+            _gameLoopTimer.Enabled = true;
         }
         else
         {
@@ -244,8 +338,7 @@ public partial class App : Application
     {
         if (Client.GameState == null || Client.CurrentSession == null) return;
         var currentEggs = CalculateCurrentEggs();
-        GemsanityOptions gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
-        if (gemsanityOption != GemsanityOptions.Off)
+        if (_gemsanityOption != GemsanityOptions.Off)
         {
             CalculateCurrentGems();
         }
@@ -260,27 +353,25 @@ public partial class App : Application
         switch (args.Item.Name)
         {
             case "Egg":
-                var currentEggs = CalculateCurrentEggs();
+                _checkNames = true;
+                int eggs = CalculateCurrentEggs();
                 CheckGoalCondition();
                 break;
             case "Skill Point":
                 CheckGoalCondition();
                 break;
             case "Extra Life":
-                var currentLives = Memory.ReadShort(Addresses.PlayerLives);
-                Memory.Write(Addresses.PlayerLives, (short)(Math.Min(99, currentLives + 1)));
-                break;
-            case "Lag Trap":
-                //RunLagTrap();
+                var currentLives = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.PlayerLives));
+                Memory.Write(Addresses.GetVersionAddress(Addresses.PlayerLives), (short)(Math.Min(99, currentLives + 1)));
                 break;
             case "(Over)heal Sparx":
                 // Collecting a skill point provides a full heal, so wait for that to complete first.
                 await Task.Run(async () =>
                 {
                     await Task.Delay(3000);
-                    currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
+                    currentHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealth));
                     // Going too high creates too many particles for the game to handle.
-                    Memory.WriteByte(Addresses.PlayerHealth, (byte)(Math.Min(4, currentHealth + 1)));
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealth), (byte)(Math.Min(5, currentHealth + 1)));
                 });
                 break;
             case "Damage Sparx Trap":
@@ -288,8 +379,8 @@ public partial class App : Application
                 await Task.Run(async () =>
                 {
                     await Task.Delay(3000);
-                    currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
-                    Memory.WriteByte(Addresses.PlayerHealth, (byte)(Math.Max(currentHealth - 1, 0)));
+                    currentHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealth));
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealth), (byte)(Math.Max(currentHealth - 1, 0)));
                 });
                 break;
             case "Sparxless Trap":
@@ -297,7 +388,7 @@ public partial class App : Application
                 await Task.Run(async () =>
                 {
                     await Task.Delay(3000);
-                    Memory.WriteByte(Addresses.PlayerHealth, (byte)(0));
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealth), (byte)(0));
                 });
                 break;
             case "Big Head Mode":
@@ -308,6 +399,7 @@ public partial class App : Application
             case "Turn Spyro Pink":
             case "Turn Spyro Green":
             case "Turn Spyro Black":
+            case "Normal Spyro":
                 _cosmeticEffects.Enqueue(args.Item.Name);
                 break;
             case "Invincibility (15 seconds)":
@@ -318,41 +410,41 @@ public partial class App : Application
                 break;
             case "Moneybags Unlock - Cloud Spires Bellows":
                 // Special case this to prevent a rhynoc from spawning in the bellows.
-                Memory.Write(Addresses.CloudBellowsUnlock, 0);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 0);
                 Log.Logger.Information("You can talk to Moneybags to complete this unlock for free.");
                 break;
             case "Moneybags Unlock - Spooky Swamp Door":
-                UnlockMoneybags(Addresses.SpookyDoorUnlock);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock));
                 break;
             case "Moneybags Unlock - Sheila":
-                UnlockMoneybags(Addresses.SheilaUnlock, Addresses.SheilaCutscene);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.SheilaUnlock), Addresses.GetVersionAddress(Addresses.SheilaCutscene));
                 break;
             case "Moneybags Unlock - Icy Peak Nancy Door":
-                UnlockMoneybags(Addresses.IcyNancyUnlock);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock));
                 break;
             case "Moneybags Unlock - Molten Crater Thieves Door":
-                UnlockMoneybags(Addresses.MoltenThievesUnlock);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock));
                 break;
             case "Moneybags Unlock - Charmed Ridge Stairs":
-                UnlockMoneybags(Addresses.CharmedStairsUnlock);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock));
                 break;
             case "Moneybags Unlock - Sgt. Byrd":
-                UnlockMoneybags(Addresses.SgtByrdUnlock, Addresses.ByrdCutscene);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), Addresses.GetVersionAddress(Addresses.ByrdCutscene));
                 break;
             case "Moneybags Unlock - Bentley":
-                UnlockMoneybags(Addresses.BentleyUnlock, Addresses.BentleyCutscene);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.BentleyUnlock), Addresses.GetVersionAddress(Addresses.BentleyCutscene));
                 break;
             case "Moneybags Unlock - Desert Ruins Door":
-                UnlockMoneybags(Addresses.DesertDoorUnlock);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock));
                 break;
             case "Moneybags Unlock - Agent 9":
-                UnlockMoneybags(Addresses.Agent9Unlock, Addresses.Agent9Cutscene);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.Agent9Unlock), Addresses.GetVersionAddress(Addresses.Agent9Cutscene));
                 break;
             case "Moneybags Unlock - Frozen Altars Cat Hockey Door":
-                UnlockMoneybags(Addresses.FrozenHockeyUnlock);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock));
                 break;
             case "Moneybags Unlock - Crystal Islands Bridge":
-                UnlockMoneybags(Addresses.CrystalBridgeUnlock);
+                UnlockMoneybags(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock));
                 break;
             case "Hint 1":
             case "Hint 2":
@@ -373,20 +465,20 @@ public partial class App : Application
                 _worldKeys++;
                 break;
             case "Increased Sparx Range":
-                Memory.Write(Addresses.SparxRange, (short)3072);
-                Memory.Write(Addresses.SparxRangeHelper1, (short)525);
-                Memory.Write(Addresses.SparxRangeHelper2, (short)960);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRange), (short)3072);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRangeHelper1), (short)525);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRangeHelper2), (short)960);
                 break;
             case "Sparx Gem Finder":
-                Memory.WriteByte(Addresses.SparxGemFinder, 1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SparxGemFinder), 1);
                 break;
             case "Extra Hit Point":
-                Memory.WriteByte(Addresses.PlayerMaxHealth, 4);
-                Memory.WriteByte(Addresses.PlayerMaxHealthIsModded, 1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerMaxHealth), 4);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerMaxHealthIsModded), 1);
                 break;
             case "Progressive Sparx Basket Break":
                 _progressiveBasketBreaks++;
-                Memory.WriteByte(Addresses.SparxBreakBaskets, (byte)_progressiveBasketBreaks);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SparxBreakBaskets), (byte)_progressiveBasketBreaks);
                 break;
         }
         if (args.Item.Name.EndsWith(" Defeated") || args.Item.Name.EndsWith(" Complete")) {
@@ -394,21 +486,49 @@ public partial class App : Application
         }
         else if (args.Item.Name.EndsWith(" Gem") || args.Item.Name.EndsWith(" Gems"))
         {
-            CalculateCurrentGems();
+            _checkNames = true;
             CheckGoalCondition();
         }
+        else if (args.Item.Name.EndsWith(" Unlock")) {
+            _checkNames = true;
+            showUnlockedLevels();
+        }
     }
+
+    private void showUnlockedLevels()
+    {
+        List<Item> unlockedLevels = (Client.GameState?.ReceivedItems.Where(x => x.Name.EndsWith(" Unlock")).ToList() ?? new List<Item>());
+        Log.Logger.Information("You have unlocked: ");
+        string unlockedLevelsString = "";
+        int levelCount = 0;
+        foreach (Item unlockedLevel in unlockedLevels)
+        {
+            string newLevel = unlockedLevel.Name.Split(" ")[0];
+            unlockedLevelsString += (newLevel + "; ");
+            levelCount++;
+            // Print 6 per line so it is easier to read.
+            if (levelCount % 6 == 0)
+            {
+                Log.Logger.Information(unlockedLevelsString.Substring(0, unlockedLevelsString.Length - 2));
+                unlockedLevelsString = "";
+            }
+        }
+        if (unlockedLevelsString.Length > 0)
+        {
+            unlockedLevelsString = unlockedLevelsString.Substring(0, unlockedLevelsString.Length - 2);
+            Log.Logger.Information(unlockedLevelsString);
+        }
+    }
+
     private static async void GetZoeHint(string hintName)
     {
         if (_hintsList == null)
         {
-            int slot = Client.CurrentSession.ConnectionInfo.Slot;
-            Dictionary<string, object> obj = await Client.CurrentSession.DataStorage.GetSlotDataAsync(slot);
-            if (obj.TryGetValue("hints", out var value))
+            if (_slotData.TryGetValue("hints", out var hints))
             {
-                if (value != null)
+                if (hints != null)
                 {
-                    _hintsList = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(value.ToString());
+                    _hintsList = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(hints.ToString());
                 }
             }
         }
@@ -428,212 +548,223 @@ public partial class App : Application
             }
         }
     }
-    private static async void HandleMaxSparxHealth(object source, ElapsedEventArgs e)
+
+    private static async void ModifyGameLoop(object source, ElapsedEventArgs e)
     {
+        _timerLoopCount = (_timerLoopCount + 1) % 5;
         if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
         {
             return;
         }
-        byte currentHealth = Memory.ReadByte(Addresses.PlayerHealth);
-        byte _sparxUpgrades = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0);
-        _sparxUpgrades += (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0);
-        if (
-            (Client.GameState?.ReceivedItems.Where(x => x.Name == "Starfish Reef Complete").Count() ?? 0) > 0 &&
-            (int.Parse(Client.Options?.GetValueOrDefault("sparx_power_settings", "0").ToString()) == 0) 
-        )
+        if (_timerLoopCount == 1)
         {
-            _sparxUpgrades++;
+            HandleSparxPowers(source, e);
         }
-        if (_sparxOption == ProgressiveSparxHealthOptions.Blue)
-        {
-            _sparxUpgrades += 2;
-        }
-        else if (_sparxOption == ProgressiveSparxHealthOptions.Green)
-        {
-            _sparxUpgrades += 1;
-        }
-        else if (_sparxOption == ProgressiveSparxHealthOptions.TrueSparxless)
-        {
-            _sparxUpgrades = 0;
-        }
-        if (currentHealth > _sparxUpgrades)
-        {
-            Memory.WriteByte(Addresses.PlayerHealth, _sparxUpgrades);
-        }
-        LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.CurrentLevelAddress);
-        byte maxSparxHealth = (byte)(Math.Min(_sparxUpgrades * 2, 6));
-        if (maxSparxHealth == 0)
-        {
-            maxSparxHealth = 1;
-        }
-        if (currentLevel == LevelInGameIDs.CrawdadFarm)
-        {
-            byte currentSparxHealth = Memory.ReadByte(Addresses.PlayerHealthCrawdad);
-            if (currentSparxHealth > maxSparxHealth)
-            {
-                Memory.WriteByte(Addresses.PlayerHealthCrawdad, maxSparxHealth);
-            }
-        }
-        else if (currentLevel == LevelInGameIDs.SpiderTown)
-        {
-            byte currentSparxHealth = Memory.ReadByte(Addresses.PlayerHealthSpider);
-            if (currentSparxHealth > maxSparxHealth)
-            {
-                Memory.WriteByte(Addresses.PlayerHealthSpider, maxSparxHealth);
-            }
-        }
-        else if (currentLevel == LevelInGameIDs.StarfishReef)
-        {
-            byte currentSparxHealth = Memory.ReadByte(Addresses.PlayerHealthStarfish);
-            if (currentSparxHealth > maxSparxHealth)
-            {
-                Memory.WriteByte(Addresses.PlayerHealthStarfish, maxSparxHealth);
-            }
-        }
-        else if (currentLevel == LevelInGameIDs.BugbotFactory)
-        {
-            byte currentSparxHealth = Memory.ReadByte(Addresses.PlayerHealthBugbot);
-            if (currentSparxHealth > maxSparxHealth)
-            {
-                Memory.WriteByte(Addresses.PlayerHealthBugbot, maxSparxHealth);
-            }
-        }
-        if (_sparxUpgrades == 4)
-        {
-            _sparxTimer.Enabled = false;
-        }
+        CalculateCurrentEggs();
+        CalculateCurrentGems();
+        HandleWorldKeys(source, e);
+        HandleLevelUnlocks(source, e);
+        HandleMinigames(source, e);
     }
+
     private static async void HandleWorldKeys(object source, ElapsedEventArgs e)
     {
         if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
         {
             return;
         }
-        LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.CurrentLevelAddress);
-        byte transportWarpLocation = Memory.ReadByte(Addresses.TransportMenuAddress);
-        if (currentLevel == LevelInGameIDs.BuzzsDungeon && _worldKeys < 1)
+        if (_isWorldKeysOn != 0 && _worldKeys < 3)
         {
-            Memory.WriteByte(Addresses.NextWarpAddress, (byte)LevelInGameIDs.SunriseSpring);
-        }
-        else if (currentLevel == LevelInGameIDs.SpikesArena && _worldKeys < 2)
-        {
-            Memory.WriteByte(Addresses.NextWarpAddress, (byte)LevelInGameIDs.MiddayGardens);
-        }
-        else if (currentLevel == LevelInGameIDs.ScorchsPit && _worldKeys < 3)
-        {
-            Memory.WriteByte(Addresses.NextWarpAddress, (byte)LevelInGameIDs.EveningLake);
-        }
-        if (transportWarpLocation == 20 && _worldKeys < 1)
-        {
-            byte isBuzzDefeated = Memory.ReadByte(Addresses.BuzzDefeated);
-            if (isBuzzDefeated == 1)
+            LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
+            byte transportWarpLocation = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.TransportMenuAddress));
+            if (currentLevel == LevelInGameIDs.BuzzsDungeon && _worldKeys < 1)
             {
-                Memory.WriteByte(Addresses.TransportMenuAddress, (byte)LevelInGameIDs.SunriseSpring);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.NextWarpAddress), (byte)LevelInGameIDs.SunriseSpring);
             }
-        }
-        else if (transportWarpLocation == 30 && _worldKeys < 2)
-        {
-            byte isSpikeDefeated = Memory.ReadByte(Addresses.SpikeDefeated);
-            if (isSpikeDefeated == 1)
+            else if (currentLevel == LevelInGameIDs.SpikesArena && _worldKeys < 2)
             {
-                Memory.WriteByte(Addresses.TransportMenuAddress, (byte)LevelInGameIDs.MiddayGardens);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.NextWarpAddress), (byte)LevelInGameIDs.MiddayGardens);
             }
-        }
-        else if (transportWarpLocation == 40 && _worldKeys < 3)
-        {
-            byte isScorchDefeated = Memory.ReadByte(Addresses.ScorchDefeated);
-            if (isScorchDefeated == 1)
+            else if (currentLevel == LevelInGameIDs.ScorchsPit && _worldKeys < 3)
             {
-                Memory.WriteByte(Addresses.HunterRescuedCutscene, 1);
-                Memory.WriteByte(Addresses.TransportMenuAddress, (byte)LevelInGameIDs.EveningLake);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.NextWarpAddress), (byte)LevelInGameIDs.EveningLake);
             }
-        }
-        if (_worldKeys == 3)
-        {
-            _worldKeysTimer.Enabled = false;
+            if (transportWarpLocation == (byte)LevelInGameIDs.MiddayGardens && _worldKeys < 1)
+            {
+                byte isBuzzDefeated = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.BuzzDefeated));
+                if (isBuzzDefeated == 1)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TransportMenuAddress), (byte)LevelInGameIDs.SunriseSpring);
+                }
+            }
+            else if (transportWarpLocation == (byte)LevelInGameIDs.EveningLake && _worldKeys < 2)
+            {
+                byte isSpikeDefeated = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.SpikeDefeated));
+                if (isSpikeDefeated == 1)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TransportMenuAddress), (byte)LevelInGameIDs.MiddayGardens);
+                }
+            }
+            else if (transportWarpLocation == (byte)LevelInGameIDs.MidnightMountain && _worldKeys < 3)
+            {
+                byte isScorchDefeated = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.ScorchDefeated));
+                if (isScorchDefeated == 1)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HunterRescuedCutscene), 1);
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TransportMenuAddress), (byte)LevelInGameIDs.EveningLake);
+                }
+            }
         }
     }
+
     private static async void HandleSparxPowers(object source, ElapsedEventArgs e)
     {
         if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
         {
             return;
         }
-        // We need to override the powerups given by Zoe for completing a Sparx Level.
-        var extendedRange = Client.GameState?.ReceivedItems.Where(x => x.Name == "Increased Sparx Range").Count() ?? 0;
-        var gemFinder = Client.GameState?.ReceivedItems.Where(x => x.Name == "Sparx Gem Finder").Count() ?? 0;
-        var extraHitPoint = Client.GameState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0;
-        if (extendedRange == 0)
+        if (_sparxPowerShuffle != 0)
         {
-            Memory.Write(Addresses.SparxRange, (short)2062);
-            Memory.Write(Addresses.SparxRangeHelper1, (short)350);
-            Memory.Write(Addresses.SparxRangeHelper2, (short)640);
-        } else
-        {
-            Memory.Write(Addresses.SparxRange, (short)3072);
-            Memory.Write(Addresses.SparxRangeHelper1, (short)525);
-            Memory.Write(Addresses.SparxRangeHelper2, (short)960);
+            // We need to override the powerups given by Zoe for completing a Sparx Level.
+            var extendedRange = Client.GameState?.ReceivedItems.Where(x => x.Name == "Increased Sparx Range").Count() ?? 0;
+            var gemFinder = Client.GameState?.ReceivedItems.Where(x => x.Name == "Sparx Gem Finder").Count() ?? 0;
+            var extraHitPoint = Client.GameState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0;
+            if (extendedRange == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRange), (short)2062);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRangeHelper1), (short)350);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRangeHelper2), (short)640);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRange), (short)3072);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRangeHelper1), (short)525);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRangeHelper2), (short)960);
+            }
+            if (gemFinder == 0)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SparxGemFinder), 0);
+            }
+            else
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SparxGemFinder), 1);
+            }
+            if (extraHitPoint == 0)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerMaxHealth), 3);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerMaxHealthIsModded), 0);
+            }
+            else
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerMaxHealth), 4);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerMaxHealthIsModded), 1);
+            }
+            if (_progressiveBasketBreaks > 2) _progressiveBasketBreaks = 2;
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SparxBreakBaskets), (byte)_progressiveBasketBreaks);
         }
-        if (gemFinder == 0)
+
+        byte sparxHealth = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0);
+        if (_sparxOption == ProgressiveSparxHealthOptions.Blue)
         {
-            Memory.WriteByte(Addresses.SparxGemFinder, 0);
-        } else
-        {
-            Memory.WriteByte(Addresses.SparxGemFinder, 1);
+            sparxHealth += 2;
         }
-        if (extraHitPoint == 0)
+        else if (_sparxOption == ProgressiveSparxHealthOptions.Green)
         {
-            Memory.WriteByte(Addresses.PlayerMaxHealth, 3);
-            Memory.WriteByte(Addresses.PlayerMaxHealthIsModded, 0);
-        } else
-        {
-            Memory.WriteByte(Addresses.PlayerMaxHealth, 4);
-            Memory.WriteByte(Addresses.PlayerMaxHealthIsModded, 1);
+            sparxHealth += 1;
         }
-        Memory.WriteByte(Addresses.SparxBreakBaskets, (byte)_progressiveBasketBreaks);
+        if (_sparxOption != ProgressiveSparxHealthOptions.Off && sparxHealth < 3)
+        {
+            // TODO: Allow overheal to work for 15 seconds.
+            byte currentHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealth));
+            sparxHealth += (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0);
+            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Starfish Reef Complete").Count() ?? 0) > 0 && _sparxPowerShuffle == 0)
+            {
+                sparxHealth++;
+            }
+            if (_sparxOption == ProgressiveSparxHealthOptions.TrueSparxless)
+            {
+                sparxHealth = 0;
+            }
+            if (currentHealth > sparxHealth)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealth), sparxHealth);
+            }
+            LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
+            byte maxSparxHealth = (byte)(Math.Min(sparxHealth * 2, 6));
+            if (maxSparxHealth == 0)
+            {
+                maxSparxHealth = 1;
+            }
+            if (currentLevel == LevelInGameIDs.CrawdadFarm)
+            {
+                byte currentSparxHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealthCrawdad));
+                if (currentSparxHealth > maxSparxHealth)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealthCrawdad), maxSparxHealth);
+                }
+            }
+            else if (currentLevel == LevelInGameIDs.SpiderTown)
+            {
+                byte currentSparxHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealthSpider));
+                if (currentSparxHealth > maxSparxHealth)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealthSpider), maxSparxHealth);
+                }
+            }
+            else if (currentLevel == LevelInGameIDs.StarfishReef)
+            {
+                byte currentSparxHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealthStarfish));
+                if (currentSparxHealth > maxSparxHealth)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealthStarfish), maxSparxHealth);
+                }
+            }
+            else if (currentLevel == LevelInGameIDs.BugbotFactory)
+            {
+                byte currentSparxHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealthBugbot));
+                if (currentSparxHealth > maxSparxHealth)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealthBugbot), maxSparxHealth);
+                }
+            }
+        }
     }
+
+    /**
+     * Writes a block of text to memory. endAddress will generally be the null terminator and will not be written to.
+     */
+    private static void WriteStringToMemory(uint startAddress, uint endAddress, string stringToWrite, bool padWithSpaces=true)
+    {
+        uint address = startAddress;
+        int stringIndex = 0;
+        while (address < endAddress)
+        {
+            char charToWrite = ' ';
+            if (!padWithSpaces)
+            {
+                charToWrite = '\0';
+            }
+            if (stringIndex < stringToWrite.Length)
+            {
+                charToWrite = stringToWrite[stringIndex];
+            }
+            Memory.WriteByte(address, (byte)charToWrite);
+            stringIndex++;
+            address++;
+        }
+    }
+
     private static void HandleMinigames(object source, ElapsedEventArgs e)
     {
         // NOTE: Be very careful here, as writing to the wrong address or at the wrong time can crash the game.
-        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
+        if (!Helpers.IsInGame(false) || Client.GameState == null || Client.CurrentSession == null)
         {
             return;
         }
-        CalculateCurrentEggs();
-        CalculateCurrentGems();
-        LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.CurrentLevelAddress);
-        byte currentSubarea = Memory.ReadByte(Addresses.CurrentSubareaAddress);
-        CompletionGoal goal = (CompletionGoal)int.Parse(Client.Options?.GetValueOrDefault("goal", "0").ToString());
-        if (goal == CompletionGoal.EggHunt)
-        {
-            double multiplier = int.Parse(Client.Options?.GetValueOrDefault("egg_count", "0").ToString()) / 100.0;
-            if (currentLevel == LevelInGameIDs.SunriseSpring)
-            {
-                Memory.WriteByte(Addresses.MoltenEggReq, (byte)Math.Floor(10 * multiplier));
-                Memory.WriteByte(Addresses.SeashellEggReq, (byte)Math.Floor(14 * multiplier));
-                Memory.WriteByte(Addresses.MushroomEggReq, (byte)Math.Floor(20 * multiplier));
-            }
-            else if (currentLevel == LevelInGameIDs.MiddayGardens)
-            {
-                Memory.WriteByte(Addresses.SpookyEggReq, (byte)Math.Floor(25 * multiplier));
-                Memory.WriteByte(Addresses.BambooEggReq, (byte)Math.Floor(30 * multiplier));
-                Memory.WriteByte(Addresses.CountryEggReq, (byte)Math.Floor(36 * multiplier));
-            }
-            else if (currentLevel == LevelInGameIDs.EveningLake)
-            {
-                Memory.WriteByte(Addresses.FireworksEggReq, (byte)Math.Floor(50 * multiplier));
-                Memory.WriteByte(Addresses.CharmedEggReq, (byte)Math.Floor(58 * multiplier));
-                Memory.WriteByte(Addresses.HoneyEggReq, (byte)Math.Floor(65 * multiplier));
-            }
-            else if (currentLevel == LevelInGameIDs.MidnightMountain)
-            {
-                Memory.WriteByte(Addresses.HauntedEggReq, (byte)Math.Floor(70 * multiplier));
-                Memory.WriteByte(Addresses.DinoEggReq, (byte)Math.Floor(80 * multiplier));
-                Memory.WriteByte(Addresses.HarborEggReq, (byte)Math.Floor(90 * multiplier));
-            }
-        }
-
-
+        
+        LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
+        byte currentSubarea = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentSubareaAddress));
+        
         // For some challenges, it makes more sense to adjust local adaptive difficulty than modify other values.
         if (
             _easyChallenges.Contains("easy_tunnels") &&
@@ -647,7 +778,7 @@ public partial class App : Application
             )
         )
         {
-            Memory.WriteByte(Addresses.LocalDifficultySettingAddress, 0);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.LocalDifficultySettingAddress), 0);
         }
 
         // For other challenges, we can set values in RAM to make the challenge easier.
@@ -656,15 +787,15 @@ public partial class App : Application
             currentLevel == LevelInGameIDs.SunnyVilla && currentSubarea == 2              // Skatepark
         )
         {
-            byte currentLizards = Memory.ReadByte(Addresses.SunnyLizardsCount);
-            short currentScore = Memory.ReadShort(Addresses.SunnySkateScore);
+            byte currentLizards = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.SunnyLizardsCount));
+            short currentScore = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.SunnySkateScore));
             if (currentLizards < 14)
             {
-                Memory.Write(Addresses.SunnyLizardsCount, (byte)14);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SunnyLizardsCount), (byte)14);
             }
             if (currentScore < 3199)
             {
-                Memory.Write(Addresses.SunnySkateScore, (short)3199);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SunnySkateScore), (short)3199);
             }
         }
         else if (
@@ -672,10 +803,10 @@ public partial class App : Application
             currentLevel == LevelInGameIDs.SeashellShore && currentSubarea == 2          // Bluto
         )
         {
-            byte currentEnemyHealth = Memory.ReadByte(Addresses.BlutoHealth);
+            byte currentEnemyHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.BlutoHealth));
             if (currentEnemyHealth > 1)
             {
-                Memory.WriteByte(Addresses.BlutoHealth, (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BlutoHealth), (byte)1);
             }
         }
         else if (
@@ -683,10 +814,10 @@ public partial class App : Application
             currentLevel == LevelInGameIDs.EnchantedTowers && currentSubarea == 1        // Skatepark
         )
         {
-            short currentScore = Memory.ReadShort(Addresses.EnchantedSkateScore);
+            short currentScore = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.EnchantedSkateScore));
             if (currentScore < 9999)
             {
-                Memory.Write(Addresses.EnchantedSkateScore, (short)9999);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.EnchantedSkateScore), (short)9999);
             }
         }
         else if (
@@ -694,10 +825,10 @@ public partial class App : Application
             currentLevel == LevelInGameIDs.SpookySwamp && currentSubarea == 1            // Sleepyhead
         )
         {
-            byte currentEnemyHealth = Memory.ReadByte(Addresses.SleepyheadHealth);
+            byte currentEnemyHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.SleepyheadHealth));
             if (currentEnemyHealth > 1)
             {
-                Memory.WriteByte(Addresses.SleepyheadHealth, (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SleepyheadHealth), (byte)1);
             }
         }
         else if (
@@ -705,10 +836,10 @@ public partial class App : Application
             currentLevel == LevelInGameIDs.FrozenAltars && currentSubarea == 1           // Yeti Boxing
         )
         {
-            byte currentEnemyHealth = Memory.ReadByte(Addresses.YetiBoxingHealth);
+            byte currentEnemyHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.YetiBoxingHealth));
             if (currentEnemyHealth > 1)
             {
-                Memory.WriteByte(Addresses.YetiBoxingHealth, (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.YetiBoxingHealth), (byte)1);
             }
         }
         else if (
@@ -718,7 +849,7 @@ public partial class App : Application
         {
             foreach (uint address in Addresses.LostFleetSubAddresses)
             {
-                Memory.WriteByte(address, (byte)19);
+                Memory.WriteByte(Addresses.GetVersionAddress(address), (byte)19);
             }
         }
         else if (
@@ -726,17 +857,17 @@ public partial class App : Application
             currentLevel == LevelInGameIDs.LostFleet && currentSubarea == 2              // Skatepark
         )
         {
-            Memory.Write(Addresses.LostFleetNitro, (short)1000);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.LostFleetNitro), (short)1000);
         }
         else if (
             _easyChallenges.Contains("easy_whackamole") &&
             currentLevel == LevelInGameIDs.CrystalIslands && currentSubarea == 2         // Whack-A-Mole
         )
         {
-            byte currentMoleCount = Memory.ReadByte(Addresses.WhackAMoleCount);
+            byte currentMoleCount = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.WhackAMoleCount));
             if (currentMoleCount < 19)
             {
-                Memory.WriteByte(Addresses.WhackAMoleCount, (byte)19);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.WhackAMoleCount), (byte)19);
             }
         }
         else if (
@@ -746,7 +877,7 @@ public partial class App : Application
         {
             foreach (uint address in Addresses.DesertSharkAddresses)
             {
-                Memory.WriteByte(address, (byte)253);
+                Memory.WriteByte(Addresses.GetVersionAddress(address), (byte)253);
             }
         }
         else if (
@@ -754,15 +885,15 @@ public partial class App : Application
             currentLevel == LevelInGameIDs.HauntedTomb && currentSubarea == 1            // Tanks
         )
         {
-            byte currentTankCount = Memory.ReadByte(Addresses.TanksCount);
-            byte maxTankCount = Memory.ReadByte(Addresses.MaxTanksCount);
+            byte currentTankCount = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.TanksCount));
+            byte maxTankCount = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.MaxTanksCount));
             if (maxTankCount == 4 && currentTankCount < 4)
             {
-                Memory.WriteByte(Addresses.TanksCount, (byte)3);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TanksCount), (byte)3);
             }
             else if (maxTankCount == 10 && currentTankCount < 10)
             {
-                Memory.WriteByte(Addresses.TanksCount, (byte)9);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TanksCount), (byte)9);
             }
         }
         else if (
@@ -770,33 +901,342 @@ public partial class App : Application
             currentLevel == LevelInGameIDs.ScorchsPit
         )
         {
-            byte greenRockets = Memory.ReadByte(Addresses.GreenRocketCount);
-            int redRockets = (int)Memory.ReadByte(Addresses.RedRocketCount);
+            byte greenRockets = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.GreenRocketCount));
+            int redRockets = (int)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.RedRocketCount));
             if (greenRockets > 0)
             {
                 redRockets = Math.Min(200, redRockets + 50);
                 greenRockets--;
-                Memory.WriteByte(Addresses.RedRocketCount, (byte)redRockets);
-                Memory.WriteByte(Addresses.GreenRocketCount, greenRockets);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.RedRocketCount), (byte)redRockets);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.GreenRocketCount), greenRockets);
                 if (greenRockets == 0)
                 {
-                    Memory.WriteByte(Addresses.HasGreenRocketAddress, 0);
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HasGreenRocketAddress), 0);
                 }
             }
         }
         // TODO: Add SBR.
     }
+
+    private static bool HandleKeyUnlock(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
+    {
+        if ((Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
+        {
+            Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 6);
+            return true;
+        }
+        else
+        {
+            Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 0);
+            return false;
+        }
+    }
+
+    private static bool HandleKeyName(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
+    {
+        if ((Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
+        {
+            WriteStringToMemory(
+                Addresses.GetVersionAddress(nameAddress),
+                Addresses.GetVersionAddress(nameAddress) + nameLength,
+                levelName,
+                padWithSpaces: false
+            );
+            return true;
+        }
+        else
+        {
+            WriteStringToMemory(
+                Addresses.GetVersionAddress(nameAddress),
+                Addresses.GetVersionAddress(nameAddress) + nameLength,
+                "LOCKED",
+                padWithSpaces: false
+            );
+            return false;
+        }
+    }
+
+    private static bool HandleEggGemUnlock(string levelName, uint portalAddress, uint nameAddress, uint nameLength, int eggCount, int gemCount, double multiplier)
+    {
+        int eggReq = (int)Math.Floor(_eggRequirements.GetValueOrDefault(levelName, 0) * multiplier);
+        int gemReq = _gemRequirements.GetValueOrDefault(levelName, 0);
+        if (eggCount >= eggReq && gemCount >= gemReq)
+        {
+            Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 6);
+            return true;
+        }
+        else
+        {
+            Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 0);
+            return false;
+        }
+    }
+
+    private static bool HandleEggGemName(string levelName, uint portalAddress, uint nameAddress, uint nameLength, int eggCount, int gemCount, double multiplier)
+    {
+        int eggReq = (int)Math.Floor(_eggRequirements.GetValueOrDefault(levelName, 0) * multiplier);
+        int gemReq = _gemRequirements.GetValueOrDefault(levelName, 0);
+        if (eggCount >= eggReq && gemCount >= gemReq)
+        {
+            WriteStringToMemory(
+                Addresses.GetVersionAddress(nameAddress),
+                Addresses.GetVersionAddress(nameAddress) + nameLength,
+                levelName,
+                padWithSpaces: false
+            );
+            return true;
+        }
+        else
+        {
+            string req = $"Gem x{gemReq}";
+            if (eggReq > 0)
+            {
+                req = $"Egg x{eggReq}";
+            }
+            WriteStringToMemory(
+                Addresses.GetVersionAddress(nameAddress),
+                Addresses.GetVersionAddress(nameAddress) + nameLength,
+                req,
+                padWithSpaces: false
+            );
+            return false;
+        }
+    }
+
+    private static void HandleLevelUnlocks(object source, ElapsedEventArgs e)
+    {
+        LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
+        double multiplier = 1.0;
+        if (_goal == CompletionGoal.EggHunt)
+        {
+            multiplier = _eggCountGoal / 100.0;
+            if (multiplier > 1.0)
+            {
+                multiplier = 1.0;
+            }
+        }
+        int eggs = CalculateCurrentEggs();
+        int gems = CalculateCurrentGems();
+        if (_levelLockOptions == LevelLockOptions.Vanilla)
+        {
+            if (_openWorld != 0 && eggs >= Math.Floor(10 * multiplier))
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+            }
+            if (_openWorld != 0 && eggs >= Math.Floor(14 * multiplier))
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+            }
+
+            if (currentLevel == LevelInGameIDs.SunriseSpring)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)Math.Floor(10 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)Math.Floor(14 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)Math.Floor(20 * multiplier));
+            }
+            else if (currentLevel == LevelInGameIDs.MiddayGardens)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyEggReq), (byte)Math.Floor(25 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BambooEggReq), (byte)Math.Floor(30 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CountryEggReq), (byte)Math.Floor(36 * multiplier));
+            }
+            else if (currentLevel == LevelInGameIDs.EveningLake)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FireworksEggReq), (byte)Math.Floor(50 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedEggReq), (byte)Math.Floor(58 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HoneyEggReq), (byte)Math.Floor(65 * multiplier));
+            }
+            else if (currentLevel == LevelInGameIDs.MidnightMountain)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HauntedEggReq), (byte)Math.Floor(70 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DinoEggReq), (byte)Math.Floor(80 * multiplier));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HarborEggReq), (byte)Math.Floor(90 * multiplier));
+            }
+        }
+        else if (_levelLockOptions == LevelLockOptions.Keys)
+        {
+            if (_checkNames)
+            {
+                HandleKeyName("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12);
+                HandleKeyName("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16);
+                bool moltenUnlocked = HandleKeyName("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16);
+                bool seashellUnlocked = HandleKeyName("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16);
+                HandleKeyName("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20);
+                HandleKeyName("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20);
+                HandleKeyName("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12);
+                HandleKeyName("Spooky Swamp", Addresses.SpookySwampPortal, Addresses.SpookySwampName, 16);
+                HandleKeyName("Bamboo Terrace", Addresses.BambooTerracePortal, Addresses.BambooTerraceName, 16);
+                HandleKeyName("Country Speedway", Addresses.CountrySpeedwayPortal, Addresses.CountrySpeedwayName, 20);
+                HandleKeyName("Frozen Altars", Addresses.FrozenAltarsPortal, Addresses.FrozenAltarsName, 16);
+                HandleKeyName("Lost Fleet", Addresses.LostFleetPortal, Addresses.LostFleetName, 12);
+                HandleKeyName("Fireworks Factory", Addresses.FireworksFactoryPortal, Addresses.FireworksFactoryName, 20);
+                HandleKeyName("Charmed Ridge", Addresses.CharmedRidgePortal, Addresses.CharmedRidgeName, 16);
+                HandleKeyName("Honey Speedway", Addresses.HoneySpeedwayPortal, Addresses.HoneySpeedwayName, 16);
+                HandleKeyName("Crystal Islands", Addresses.CrystalIslandsPortal, Addresses.CrystalIslandsName, 16);
+                HandleKeyName("Desert Ruins", Addresses.DesertRuinsPortal, Addresses.DesertRuinsName, 16);
+                HandleKeyName("Haunted Tomb", Addresses.HauntedTombPortal, Addresses.HauntedTombName, 16);
+                HandleKeyName("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12);
+                HandleKeyName("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16);
+                if (_openWorld != 0 && moltenUnlocked)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+                }
+                if (_openWorld != 0 && seashellUnlocked)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+                }
+                _checkNames = false;
+            }
+            if (currentLevel == LevelInGameIDs.SunriseSpring)
+            {
+                HandleKeyUnlock("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12);
+                HandleKeyUnlock("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16);
+                HandleKeyUnlock("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16);
+                HandleKeyUnlock("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16);
+                HandleKeyUnlock("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.MiddayGardens)
+            {
+                HandleKeyUnlock("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20);
+                HandleKeyUnlock("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12);
+                HandleKeyUnlock("Spooky Swamp", Addresses.SpookySwampPortal, Addresses.SpookySwampName, 16);
+                HandleKeyUnlock("Bamboo Terrace", Addresses.BambooTerracePortal, Addresses.BambooTerraceName, 16);
+                HandleKeyUnlock("Country Speedway", Addresses.CountrySpeedwayPortal, Addresses.CountrySpeedwayName, 20);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BambooEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CountryEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.EveningLake)
+            {
+                HandleKeyUnlock("Frozen Altars", Addresses.FrozenAltarsPortal, Addresses.FrozenAltarsName, 16);
+                HandleKeyUnlock("Lost Fleet", Addresses.LostFleetPortal, Addresses.LostFleetName, 12);
+                HandleKeyUnlock("Fireworks Factory", Addresses.FireworksFactoryPortal, Addresses.FireworksFactoryName, 20);
+                HandleKeyUnlock("Charmed Ridge", Addresses.CharmedRidgePortal, Addresses.CharmedRidgeName, 16);
+                HandleKeyUnlock("Honey Speedway", Addresses.HoneySpeedwayPortal, Addresses.HoneySpeedwayName, 16);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FireworksEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HoneyEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.MidnightMountain)
+            {
+                HandleKeyUnlock("Crystal Islands", Addresses.CrystalIslandsPortal, Addresses.CrystalIslandsName, 16);
+                HandleKeyUnlock("Desert Ruins", Addresses.DesertRuinsPortal, Addresses.DesertRuinsName, 16);
+                HandleKeyUnlock("Haunted Tomb", Addresses.HauntedTombPortal, Addresses.HauntedTombName, 16);
+                HandleKeyUnlock("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12);
+                HandleKeyUnlock("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HauntedEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DinoEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HarborEggReq), (byte)1);
+            }
+        }
+        else
+        {
+            if (_checkNames)
+            {
+                HandleEggGemName("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12, eggs, gems, multiplier);
+                HandleEggGemName("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16, eggs, gems, multiplier);
+                bool moltenUnlocked = HandleEggGemName("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16, eggs, gems, multiplier);
+                bool seashellUnlocked = HandleEggGemName("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20, eggs, gems, multiplier);
+                HandleEggGemName("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20, eggs, gems, multiplier);
+                HandleEggGemName("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12, eggs, gems, multiplier);
+                HandleEggGemName("Spooky Swamp", Addresses.SpookySwampPortal, Addresses.SpookySwampName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Bamboo Terrace", Addresses.BambooTerracePortal, Addresses.BambooTerraceName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Country Speedway", Addresses.CountrySpeedwayPortal, Addresses.CountrySpeedwayName, 20, eggs, gems, multiplier);
+                HandleEggGemName("Frozen Altars", Addresses.FrozenAltarsPortal, Addresses.FrozenAltarsName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Lost Fleet", Addresses.LostFleetPortal, Addresses.LostFleetName, 12, eggs, gems, multiplier);
+                HandleEggGemName("Fireworks Factory", Addresses.FireworksFactoryPortal, Addresses.FireworksFactoryName, 20, eggs, gems, multiplier);
+                HandleEggGemName("Charmed Ridge", Addresses.CharmedRidgePortal, Addresses.CharmedRidgeName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Honey Speedway", Addresses.HoneySpeedwayPortal, Addresses.HoneySpeedwayName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Crystal Islands", Addresses.CrystalIslandsPortal, Addresses.CrystalIslandsName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Desert Ruins", Addresses.DesertRuinsPortal, Addresses.DesertRuinsName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Haunted Tomb", Addresses.HauntedTombPortal, Addresses.HauntedTombName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12, eggs, gems, multiplier);
+                HandleEggGemName("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16, eggs, gems, multiplier);
+
+                if (_openWorld != 0 && moltenUnlocked)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+                }
+                if (_openWorld != 0 && seashellUnlocked)
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+                }
+                _checkNames = false;
+            }
+            if (currentLevel == LevelInGameIDs.SunriseSpring)
+            {
+                HandleEggGemUnlock("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12, eggs, gems, multiplier);
+                HandleEggGemUnlock("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20, eggs, gems, multiplier);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.MiddayGardens)
+            {
+                HandleEggGemUnlock("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20, eggs, gems, multiplier);
+                HandleEggGemUnlock("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12, eggs, gems, multiplier);
+                HandleEggGemUnlock("Spooky Swamp", Addresses.SpookySwampPortal, Addresses.SpookySwampName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Bamboo Terrace", Addresses.BambooTerracePortal, Addresses.BambooTerraceName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Country Speedway", Addresses.CountrySpeedwayPortal, Addresses.CountrySpeedwayName, 20, eggs, gems, multiplier);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookyEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BambooEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CountryEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.EveningLake)
+            {
+                HandleEggGemUnlock("Frozen Altars", Addresses.FrozenAltarsPortal, Addresses.FrozenAltarsName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Lost Fleet", Addresses.LostFleetPortal, Addresses.LostFleetName, 12, eggs, gems, multiplier);
+                HandleEggGemUnlock("Fireworks Factory", Addresses.FireworksFactoryPortal, Addresses.FireworksFactoryName, 20, eggs, gems, multiplier);
+                HandleEggGemUnlock("Charmed Ridge", Addresses.CharmedRidgePortal, Addresses.CharmedRidgeName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Honey Speedway", Addresses.HoneySpeedwayPortal, Addresses.HoneySpeedwayName, 16, eggs, gems, multiplier);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.FireworksEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CharmedEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HoneyEggReq), (byte)1);
+            }
+            else if (currentLevel == LevelInGameIDs.MidnightMountain)
+            {
+                HandleEggGemUnlock("Crystal Islands", Addresses.CrystalIslandsPortal, Addresses.CrystalIslandsName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Desert Ruins", Addresses.DesertRuinsPortal, Addresses.DesertRuinsName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Haunted Tomb", Addresses.HauntedTombPortal, Addresses.HauntedTombName, 16, eggs, gems, multiplier);
+                HandleEggGemUnlock("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12, eggs, gems, multiplier);
+                HandleEggGemUnlock("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16, eggs, gems, multiplier);
+
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HauntedEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.DinoEggReq), (byte)1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HarborEggReq), (byte)1);
+            }
+        }
+    }
+
     private static async void HandleCosmeticQueue(object source, ElapsedEventArgs e)
     {
         // Avoid overwhelming the game when many cosmetic effects are received at once by processing only 1
         // every 5 seconds.  This also lets the user see effects when logging in asynchronously.
         if (Client.GameState == null || Client.CurrentSession == null) return;
-        if (Memory.ReadShort(Addresses.GameStatus) != (short)GameStatus.InGame) return;
+        if (Memory.ReadShort(Addresses.GetVersionAddress(Addresses.GameStatus)) != (short)GameStatus.InGame) return;
         if (_cosmeticEffects.Count > 0)
         {
             string effect = _cosmeticEffects.Dequeue();
             switch (effect)
             {
+                case "Normal Spyro":
+                    TurnSpyroColor(SpyroColor.SpyroColorDefault);
+                    DeactivateBigHeadMode();
+                    break;
                 case "Big Head Mode":
                     ActivateBigHeadMode();
                     break;
@@ -824,142 +1264,207 @@ public partial class App : Application
             }
         }
     }
+
     private static void StartSpyroGame(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
+        bool isInGame = Helpers.IsInGame();
+        bool nullGameState = Client.GameState == null;
+        bool nullCurrentSession = Client.CurrentSession == null;
+        if (!isInGame || nullGameState || nullCurrentSession)
         {
-            Log.Logger.Information("Player is not yet in game.");
+            if (nullGameState || nullCurrentSession)
+            {
+                Log.Logger.Warning("This client is not correctly connected to Archipelago.");
+                Log.Logger.Warning("If this warning persists, please restart the client and try again to connect.");
+            }
+            else
+            {
+                Log.Logger.Information("Player is not yet in control of Spyro.");
+                Log.Logger.Information("Please restart this client and Duckstation if incorrect.");
+            }
             return;
         }
-        MoneybagsOptions moneybagsOption = (MoneybagsOptions)int.Parse(Client.Options?.GetValueOrDefault("moneybags_settings", "0").ToString());
-        GemsanityOptions gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
-        if (moneybagsOption != MoneybagsOptions.Vanilla)
+        List<int> gemsanityIDs = new List<int>();
+        if (_slotData.TryGetValue("gemsanity_ids", out var gemIDs))
+        {
+            if (gemIDs != null)
+            {
+                gemsanityIDs = System.Text.Json.JsonSerializer.Deserialize<List<int>>(gemIDs.ToString());
+            }
+        }
+        GameLocations = Helpers.BuildLocationList(includeGemsanity: _gemsanityOption != GemsanityOptions.Off, gemsanityIDs: gemsanityIDs);
+        GameLocations = GameLocations.Where(x => x != null && !Client.CurrentSession.Locations.AllLocationsChecked.Contains(x.Id)).ToList();
+        Client.MonitorLocations(GameLocations);
+        _checkNames = true;
+
+        if (_moneybagsOption != MoneybagsOptions.Vanilla)
         {
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.SheilaUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.SheilaUnlock, 65536);
-                Memory.WriteByte(Addresses.SheilaCutscene, 1);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 65536);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaCutscene), 1);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.SgtByrdUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.SgtByrdUnlock, 65536);
-                Memory.WriteByte(Addresses.ByrdCutscene, 1);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 65536);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ByrdCutscene), 1);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.BentleyUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.BentleyUnlock, 65536);
-                Memory.WriteByte(Addresses.BentleyCutscene, 1);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 65536);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BentleyCutscene), 1);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.Agent9Unlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.Agent9Unlock, 65536);
-                Memory.WriteByte(Addresses.Agent9Cutscene, 1);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 65536);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.Agent9Cutscene), 1);
             }
         }
-        if (moneybagsOption == MoneybagsOptions.Moneybagssanity)
+        if (_moneybagsOption == MoneybagsOptions.Moneybagssanity)
         {
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Cloud Spires Bellows").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.CloudBellowsUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 20001);
             }
             else
             {
                 // Special case this to just reduce the price to 0, since otherwise a rhynoc despawns.
-                Memory.Write(Addresses.CloudBellowsUnlock, 0);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 0);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.SpookyDoorUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.SpookyDoorUnlock, 65536);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 65536);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Icy Peak Nancy Door").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.IcyNancyUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.IcyNancyUnlock, 65536);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 65536);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Molten Crater Thieves Door").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.MoltenThievesUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.MoltenThievesUnlock, 65536);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 65536);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Charmed Ridge Stairs").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.CharmedStairsUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.CharmedStairsUnlock, 65536);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 65536);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Desert Ruins Door").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.DesertDoorUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.DesertDoorUnlock, 65536);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 65536);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Frozen Altars Cat Hockey Door").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.FrozenHockeyUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.FrozenHockeyUnlock, 65536);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 65536);
             }
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Crystal Islands Bridge").Count() ?? 0) == 0)
             {
-                Memory.Write(Addresses.CrystalBridgeUnlock, 20001);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 20001);
             }
             else
             {
-                Memory.Write(Addresses.CrystalBridgeUnlock, 65536);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 65536);
             }
         }
-        if (moneybagsOption == MoneybagsOptions.Vanilla && gemsanityOption != GemsanityOptions.Off)
+        if (_moneybagsOption == MoneybagsOptions.Vanilla && (_gemsanityOption != GemsanityOptions.Off || _openWorld != 0))
         {
-            Memory.WriteByte(Addresses.SheilaUnlock, 0);
-            Memory.WriteByte(Addresses.SgtByrdUnlock, 0);
-            Memory.WriteByte(Addresses.BentleyUnlock, 0);
-            Memory.WriteByte(Addresses.Agent9Unlock, 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), (short)0);
         }
-        if (moneybagsOption == MoneybagsOptions.Companionsanity && gemsanityOption != GemsanityOptions.Off)
+        if (_moneybagsOption == MoneybagsOptions.Companionsanity && _gemsanityOption != GemsanityOptions.Off)
         {
-            Memory.WriteByte(Addresses.CloudBellowsUnlock, 0);
-            Memory.WriteByte(Addresses.SpookyDoorUnlock, 0);
-            Memory.WriteByte(Addresses.IcyNancyUnlock, 0);
-            Memory.WriteByte(Addresses.MoltenThievesUnlock, 0);
-            Memory.WriteByte(Addresses.CharmedStairsUnlock, 0);
-            Memory.WriteByte(Addresses.DesertDoorUnlock, 0);
-            Memory.WriteByte(Addresses.FrozenHockeyUnlock, 0);
-            Memory.WriteByte(Addresses.CrystalBridgeUnlock, 0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), (short)0);
         }
+        if (_openWorld != 0)
+        {
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunriseLevelsComplete), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MiddayLevelsComplete), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningLevelsComplete), 1);
+            // Mark level as entered in atlas, which changes transport behavior.
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunriseAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BuzzAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MiddayAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MidnightAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ScorchAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpikeAtlasUnlock), 1);
+            // Triggered when getting end of level eggs in sunrise.
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunnyCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CloudCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaCompletedFlags), 2);
+
+
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BuzzDefeated), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpikeDefeated), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ScorchDefeated), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningBianca), 1);
+            uint eggAddress = Addresses.GetVersionAddress(Addresses.EggStartAddress);
+            // Mark as collected the end of level eggs for the 15 "progression" levels and first 3 bosses.
+            List<uint> collectedEggLevels = new List<uint> { 1, 2, 3, 4, 6, 7, 10, 11, 12, 13, 15, 16, 19, 20, 21, 22, 24, 25 };
+            for (uint i = 0; i < 26; i++)
+            {
+                if (collectedEggLevels.Contains(i))
+                {
+                    Memory.WriteBit(eggAddress + i, 0, true);
+                }
+            }
+            var currentLives = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.PlayerLives));
+            Memory.Write(Addresses.GetVersionAddress(Addresses.PlayerLives), (short)(Math.Min(99, currentLives + 1)));
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroState), (byte)SpyroState.Dying);
+        }
+
         _loadGameTimer.Enabled = false;
     }
+
     private static void CheckGoalCondition()
     {
         if (_hasSubmittedGoal || Client.GameState == null || Client.CurrentSession == null)
@@ -968,8 +1473,7 @@ public partial class App : Application
         }
         var currentEggs = CalculateCurrentEggs();
         var currentSkillPoints = CalculateCurrentSkillPoints();
-        int goal = int.Parse(Client.Options?.GetValueOrDefault("goal", 0).ToString());
-        if ((CompletionGoal)goal == CompletionGoal.Sorceress1)
+        if (_goal == CompletionGoal.Sorceress1)
         {
             if (currentEggs >= 100 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
             {
@@ -977,7 +1481,7 @@ public partial class App : Application
                 _hasSubmittedGoal = true;
             }
         }
-        else if ((CompletionGoal)goal == CompletionGoal.EggForSale)
+        else if (_goal == CompletionGoal.EggForSale)
         {
             if ((Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Moneybags Chase Complete") ?? false))
             {
@@ -985,7 +1489,7 @@ public partial class App : Application
                 _hasSubmittedGoal = true;
             }
         }
-        else if ((CompletionGoal)goal == CompletionGoal.Sorceress2)
+        else if (_goal == CompletionGoal.Sorceress2)
         {
             if ((Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Super Bonus Round Complete") ?? false))
             {
@@ -993,7 +1497,7 @@ public partial class App : Application
                 _hasSubmittedGoal = true;
             }
         }
-        else if ((CompletionGoal)goal == CompletionGoal.AllSkillPoints)
+        else if (_goal == CompletionGoal.AllSkillPoints)
         {
             if (currentSkillPoints >= 20)
             {
@@ -1001,7 +1505,7 @@ public partial class App : Application
                 _hasSubmittedGoal = true;
             }
         }
-        else if ((CompletionGoal)goal == CompletionGoal.Epilogue)
+        else if (_goal == CompletionGoal.Epilogue)
         {
             if (currentSkillPoints >= 20 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
             {
@@ -1009,7 +1513,7 @@ public partial class App : Application
                 _hasSubmittedGoal = true;
             }
         }
-        else if ((CompletionGoal)goal == CompletionGoal.Spike)
+        else if (_goal == CompletionGoal.Spike)
         {
             if (currentEggs >= 36 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Spike Defeated") ?? false))
             {
@@ -1017,7 +1521,7 @@ public partial class App : Application
                 _hasSubmittedGoal = true;
             }
         }
-        else if ((CompletionGoal)goal == CompletionGoal.Scorch)
+        else if (_goal == CompletionGoal.Scorch)
         {
             if (currentEggs >= 65 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Scorch Defeated") ?? false))
             {
@@ -1025,41 +1529,45 @@ public partial class App : Application
                 _hasSubmittedGoal = true;
             }
         }
-        else if ((CompletionGoal)goal == CompletionGoal.EggHunt)
+        else if (_goal == CompletionGoal.EggHunt)
         {
-            if (currentEggs >= int.Parse(Client.Options?.GetValueOrDefault("egg_count", 0).ToString()))
+            if (currentEggs >= _eggCountGoal)
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
             }
         }
     }
-    private static async void RunLagTrap()
+
+    private static async void DeactivateBigHeadMode()
     {
-        using (var lagTrap = new LagTrap(TimeSpan.FromSeconds(20)))
-        {
-            lagTrap.Start();
-            await lagTrap.WaitForCompletionAsync();
-        }
+        Memory.Write(Addresses.GetVersionAddress(Addresses.BigHeadMode), (short)(0));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroHeight), (byte)(0));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroLength), (byte)(0));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroWidth), (byte)(0));
     }
+
     private static async void ActivateBigHeadMode()
     {
-        Memory.WriteByte(Addresses.SpyroHeight, (byte)(32));
-        Memory.WriteByte(Addresses.SpyroLength, (byte)(32));
-        Memory.WriteByte(Addresses.SpyroWidth, (byte)(32));
-        Memory.Write(Addresses.BigHeadMode, (short)(1));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroHeight), (byte)(32));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroLength), (byte)(32));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroWidth), (byte)(32));
+        Memory.Write(Addresses.GetVersionAddress(Addresses.BigHeadMode), (short)(1));
     }
+
     private static async void ActivateFlatSpyroMode()
     {
-        Memory.WriteByte(Addresses.SpyroHeight, (byte)(16));
-        Memory.WriteByte(Addresses.SpyroLength, (byte)(16));
-        Memory.WriteByte(Addresses.SpyroWidth, (byte)(2));
-        Memory.Write(Addresses.BigHeadMode, (short)(256));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroHeight), (byte)(16));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroLength), (byte)(16));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroWidth), (byte)(2));
+        Memory.Write(Addresses.GetVersionAddress(Addresses.BigHeadMode), (short)(256));
     }
+
     private static async void TurnSpyroColor(SpyroColor colorEnum)
     {
-        Memory.Write(Addresses.SpyroColorAddress, (short)colorEnum);
+        Memory.Write(Addresses.GetVersionAddress(Addresses.SpyroColorAddress), (short)colorEnum);
     }
+
     private static async void ActivateInvincibility(int seconds)
     {
         // The counter ticks down every frame (60 fps for in game calcs)
@@ -1070,9 +1578,10 @@ public partial class App : Application
         await Task.Run(async () =>
         {
             await Task.Delay(6000);
-            Memory.Write(Addresses.InvincibilityDurationAddress, (short)seconds);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.InvincibilityDurationAddress), (short)seconds);
         });
     }
+
     private static async void UnlockMoneybags(uint address, uint cutsceneTriggerAddress = 0x00)
     {
         // Flag the cutscene as completed to avoid issues with warping softlocks.
@@ -1084,6 +1593,7 @@ public partial class App : Application
         Memory.Write(address, 65536);
         Log.Logger.Information("If you are in the same zone as Moneybags, you can talk to him to complete the unlock for free.");
     }
+
     private static void LogItem(Item item)
     {
         // Not supported at this time.
@@ -1113,6 +1623,7 @@ public partial class App : Application
             Log.Logger.Information(JsonConvert.SerializeObject(e.Message));
         }
     }
+
     private static void LogHint(LogMessage message)
     {
         var newMessage = message.Parts.Select(x => x.Text);
@@ -1154,6 +1665,7 @@ public partial class App : Application
             });
         }
     }
+
     private static void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations)
     {
         if (Client.GameState == null || Client.CurrentSession == null) return;
@@ -1165,25 +1677,27 @@ public partial class App : Application
         CheckGoalCondition();
 
     }
+
     private static int CalculateCurrentEggs()
     {
         var count = Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Count() ?? 0;
         count = Math.Min(count, 150);
-        Memory.WriteByte(Addresses.TotalEggAddress, (byte)(count));
+        Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TotalEggAddress), (byte)(count));
         return count;
     }
+
     private static int CalculateCurrentSkillPoints()
     {
         return Client.GameState?.ReceivedItems.Where(x => x.Name == "Skill Point").Count() ?? 0;
     }
+
     private static int CalculateCurrentGems()
     {
-        GemsanityOptions gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
-        if (gemsanityOption == GemsanityOptions.Off)
+        if (_gemsanityOption == GemsanityOptions.Off)
         {
-            return Memory.ReadShort(Addresses.TotalGemAddress);
+            return Memory.ReadShort(Addresses.GetVersionAddress(Addresses.TotalGemAddress));
         }
-        uint levelGemCountAddress = Addresses.SunriseSpringGems;
+        uint levelGemCountAddress = Addresses.GetVersionAddress(Addresses.SunriseSpringGems);
         int totalGems = 0;
         int i = 0;
         foreach (LevelData level in Helpers.GetLevelData())
@@ -1203,82 +1717,14 @@ public partial class App : Application
             i++;
             levelGemCountAddress += 4;
         }
-        Memory.Write(Addresses.TotalGemAddress, totalGems);
+        Memory.Write(Addresses.GetVersionAddress(Addresses.TotalGemAddress), totalGems);
         return totalGems;
     }
+
     private static void OnConnected(object sender, EventArgs args)
     {
         Log.Logger.Information("Connected to Archipelago");
         Log.Logger.Information($"Playing {Client.CurrentSession.ConnectionInfo.Game} as {Client.CurrentSession.Players.GetPlayerName(Client.CurrentSession.ConnectionInfo.Slot)}");
-
-        // There is a tradeoff here when creating new threads.  Separate timers allow for better control over when
-        // memory reads and writes will happen, but they take away threads for other client tasks.
-        // This solution is fine with the current item pool size but won't scale with gemsanity.
-        // TODO: Test which of these can be combined without impacting the end result.
-        _loadGameTimer = new Timer();
-        _loadGameTimer.Elapsed += new ElapsedEventHandler(StartSpyroGame);
-        _loadGameTimer.Interval = 5000;
-        _loadGameTimer.Enabled = true;
-
-        _cosmeticsTimer = new Timer();
-        _cosmeticsTimer.Elapsed += new ElapsedEventHandler(HandleCosmeticQueue);
-        _cosmeticsTimer.Interval = 5000;
-        _cosmeticsTimer.Enabled = true;
-
-        string[] easyModeOptions = [
-            "easy_skateboarding",
-                "easy_boxing",
-                "easy_sheila_bombing",
-                "easy_tanks",
-                "easy_subs",
-                "easy_bluto",
-                "easy_sleepyhead",
-                "easy_shark_riders",
-                "easy_whackamole",
-                "easy_tunnels",
-                "no_green_rockets"
-        ];
-        foreach (string optionName in easyModeOptions)
-        {
-            int isOptionOn = int.Parse(Client.Options?.GetValueOrDefault(optionName, "0").ToString());
-            if (isOptionOn != 0)
-            {
-                _easyChallenges.Add(optionName);
-            }
-        }
-        _minigamesTimer = new Timer();
-        _minigamesTimer.Elapsed += new ElapsedEventHandler(HandleMinigames);
-        _minigamesTimer.Interval = 100;
-        _minigamesTimer.Enabled = true;
-
-        int isWorldKeysOn = int.Parse(Client.Options?.GetValueOrDefault("enable_world_keys", "0").ToString());
-        if (isWorldKeysOn != 0)
-        {
-            _worldKeys = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "World Key").Count() ?? 0);
-            _worldKeysTimer = new Timer();
-            _worldKeysTimer.Elapsed += new ElapsedEventHandler(HandleWorldKeys);
-            _worldKeysTimer.Interval = 100; // Critical to update quickly enough to prevent loading crashes.
-            _worldKeysTimer.Enabled = true;
-        }
-
-        int isSparxSanityOn = int.Parse(Client.Options?.GetValueOrDefault("sparx_power_settings", "0").ToString());
-        if (isSparxSanityOn != 0)
-        {
-            _progressiveBasketBreaks = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Basket Break").Count() ?? 0);
-            _sparxPowerTimer = new Timer();
-            _sparxPowerTimer.Elapsed += new ElapsedEventHandler(HandleSparxPowers);
-            _sparxPowerTimer.Interval = 500;
-            _sparxPowerTimer.Enabled = true;
-        }
-
-        _sparxOption = (ProgressiveSparxHealthOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_progressive_sparx_health", "0").ToString());
-        if (_sparxOption != ProgressiveSparxHealthOptions.Off)
-        {
-            _sparxTimer = new Timer();
-            _sparxTimer.Elapsed += new ElapsedEventHandler(HandleMaxSparxHealth);
-            _sparxTimer.Interval = 500;
-            _sparxTimer.Enabled = true;
-        }
 
         // Repopulate hint list.  There is likely a better way to do this using the Get network protocol
         // with keys=[$"hints_{team}_{slot}"].
@@ -1288,15 +1734,26 @@ public partial class App : Application
     private static void OnDisconnected(object sender=null, EventArgs args=null)
     {
         Log.Logger.Information("Disconnected from Archipelago");
-        // Avoid ongoing timers affecting a new game.
+        // Avoid ongoing timers and settings affecting a new game.
+        _gemsanityOption = GemsanityOptions.Off;
+        _moneybagsOption = MoneybagsOptions.Vanilla;
+        _openWorld = 0;
+        _sparxPowerShuffle = 0;
+        _slot = 0;
+        _goal = 0;
+        _eggCountGoal = 150;
+        _slotData = null;
         _hintsList = null;
         _hasSubmittedGoal = false;
         _useQuietHints = true;
         _easyChallenges = new List<string>();
         _worldKeys = 0;
         _progressiveBasketBreaks = 0;
-        Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U 1.1 release of Spyro 3 (North America Greatest Hits version).");
-        Log.Logger.Information("Trying to play with a different version will not work and may release all of your locations at the start.");
+        _levelLockOptions = LevelLockOptions.Vanilla;
+        _eggRequirements = new Dictionary<string, int>();
+        _gemRequirements = new Dictionary<string, int>();
+
+        Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America) releases of Spyro 3.");
 
         if (_loadGameTimer != null)
         {
@@ -1309,25 +1766,10 @@ public partial class App : Application
             _cosmeticsTimer.Enabled = false;
             _cosmeticsTimer = null;
         }
-        if (_sparxTimer != null)
+        if (_gameLoopTimer != null)
         {
-            _sparxTimer.Enabled = false;
-            _sparxTimer = null;
-        }
-        if (_worldKeysTimer != null)
-        {
-            _worldKeysTimer.Enabled = false;
-            _worldKeysTimer = null;
-        }
-        if (_minigamesTimer != null)
-        {
-            _minigamesTimer.Enabled = false;
-            _minigamesTimer = null;
-        }
-        if (_sparxPowerTimer != null)
-        {
-            _sparxPowerTimer.Enabled = false;
-            _sparxPowerTimer = null;
+            _gameLoopTimer.Enabled = false;
+            _gameLoopTimer = null;
         }
     }
 }

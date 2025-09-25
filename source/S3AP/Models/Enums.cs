@@ -15,7 +15,11 @@
             LoadingHomeworld = 12,
             GettingEgg = 15,
             StartingGame = 16
+        }
 
+        public enum SpyroState
+        {
+            Dying = 31
         }
 
         public enum CompletionGoal
@@ -63,6 +67,15 @@
             Green = 2,
             Sparxless = 3,
             TrueSparxless = 4
+        }
+
+        public enum LevelLockOptions
+        {
+            Vanilla = 0,
+            Keys = 1,
+            RandomReqs = 3,
+            AddReqs = 4,
+            AddGemReqs = 5
         }
 
         public enum LevelInGameIDs : byte

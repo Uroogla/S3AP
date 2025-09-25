@@ -2,7 +2,7 @@ from enum import IntEnum
 import math
 from typing import NamedTuple
 from BaseClasses import Item
-from .Options import MoneybagsOptions, SparxUpgradeOptions, GemsanityOptions, GoalOptions, SparxForGemsOptions
+from .Options import MoneybagsOptions, SparxUpgradeOptions, GemsanityOptions, GoalOptions, SparxForGemsOptions, LevelLockOptions
 from Options import OptionError
 
 
@@ -17,7 +17,9 @@ class Spyro3ItemCategory(IntEnum):
     HINT = 7,
     GEMSANITY = 8,
     SPARX_POWERUP = 13,
-    WORLD_KEY = 14
+    WORLD_KEY = 14,
+    LEVEL_KEY = 15,
+    UT_ITEM = 99  # Ultimate tracker
 
 
 class Spyro3ItemData(NamedTuple):
@@ -100,6 +102,7 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Extra Hit Point", 1021, Spyro3ItemCategory.SPARX_POWERUP),
     ("Progressive Sparx Basket Break", 1022, Spyro3ItemCategory.SPARX_POWERUP),
     ("World Key", 1023, Spyro3ItemCategory.WORLD_KEY),
+    ("Normal Spyro", 1024, Spyro3ItemCategory.MISC),
 
     ("Moneybags Unlock - Cloud Spires Bellows", 3000, Spyro3ItemCategory.MONEYBAGS),
     ("Moneybags Unlock - Spooky Swamp Door", 3001, Spyro3ItemCategory.MONEYBAGS),
@@ -158,13 +161,37 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Harbor Speedway 100 Gems", 5029, Spyro3ItemCategory.GEMSANITY),
     ("Agent 9's Lab 100 Gems", 5030, Spyro3ItemCategory.GEMSANITY),
     ("Bugbot Factory 50 Gems", 5031, Spyro3ItemCategory.GEMSANITY),
+
+    ("Molten Crater Unlock", 6000, Spyro3ItemCategory.LEVEL_KEY),
+    ("Seashell Shore Unlock", 6001, Spyro3ItemCategory.LEVEL_KEY),
+    ("Mushroom Speedway Unlock", 6002, Spyro3ItemCategory.LEVEL_KEY),
+    ("Spooky Swamp Unlock", 6003, Spyro3ItemCategory.LEVEL_KEY),
+    ("Bamboo Terrace Unlock", 6004, Spyro3ItemCategory.LEVEL_KEY),
+    ("Country Speedway Unlock", 6005, Spyro3ItemCategory.LEVEL_KEY),
+    ("Fireworks Factory Unlock", 6006, Spyro3ItemCategory.LEVEL_KEY),
+    ("Charmed Ridge Unlock", 6007, Spyro3ItemCategory.LEVEL_KEY),
+    ("Honey Speedway Unlock", 6008, Spyro3ItemCategory.LEVEL_KEY),
+    ("Haunted Tomb Unlock", 6009, Spyro3ItemCategory.LEVEL_KEY),
+    ("Dino Mines Unlock", 6010, Spyro3ItemCategory.LEVEL_KEY),
+    ("Harbor Speedway Unlock", 6011, Spyro3ItemCategory.LEVEL_KEY),
+    ("Sunny Villa Unlock", 6012, Spyro3ItemCategory.LEVEL_KEY),
+    ("Cloud Spires Unlock", 6013, Spyro3ItemCategory.LEVEL_KEY),
+    ("Icy Peak Unlock", 6014, Spyro3ItemCategory.LEVEL_KEY),
+    ("Enchanted Towers Unlock", 6015, Spyro3ItemCategory.LEVEL_KEY),
+    ("Frozen Altars Unlock", 6016, Spyro3ItemCategory.LEVEL_KEY),
+    ("Lost Fleet Unlock", 6017, Spyro3ItemCategory.LEVEL_KEY),
+    ("Crystal Islands Unlock", 6018, Spyro3ItemCategory.LEVEL_KEY),
+    ("Desert Ruins Unlock", 6019, Spyro3ItemCategory.LEVEL_KEY),
+
+    ("Glitched Item", 9000, Spyro3ItemCategory.UT_ITEM)
 ]]
 
 item_descriptions = {}
 
 item_dictionary = {item_data.name: item_data for item_data in _all_items}
 
-def BuildItemPool(world, count, preplaced_eggs, options):
+
+def BuildItemPool(world, count, preplaced_eggs, options, locked_levels):
     item_pool = []
     included_itemcount = 0
     multiworld = world.multiworld
@@ -178,7 +205,15 @@ def BuildItemPool(world, count, preplaced_eggs, options):
     eggs_to_place = 150
     if options.goal == GoalOptions.EGG_HUNT:
         eggs_to_place = math.ceil(options.egg_count * (1.0 + options.percent_extra_eggs / 100.0))
+        # Game caps egg count at 150 and can encounter issues above this number.
+        if eggs_to_place > 150:
+            eggs_to_place = 150
     eggs_to_place = eggs_to_place - preplaced_eggs
+    # Portals with egg requirements can't be set to require 0, so start with 1 egg to ensure level unlocks
+    # work correctly when unlocks are not vanilla or keys and eggs.
+    if options.level_lock_option.value not in [LevelLockOptions.VANILLA]:
+        multiworld.push_precollected(world.create_item("Egg"))
+        eggs_to_place = eggs_to_place - 1
     for i in range(eggs_to_place):
         item_pool.append(item_dictionary["Egg"])
     remaining_count = remaining_count - eggs_to_place
@@ -188,10 +223,10 @@ def BuildItemPool(world, count, preplaced_eggs, options):
             item_pool.append(item_dictionary["Crawdad Farm 50 Gems"])
             item_pool.append(item_dictionary["Spider Town 50 Gems"])
             item_pool.append(item_dictionary["Starfish Reef 50 Gems"])
-            if options.goal != GoalOptions.EGG_HUNT:
+            if options.goal != GoalOptions.EGG_HUNT or options.egg_count > 100:
                 item_pool.append(item_dictionary["Bugbot Factory 50 Gems"])
             else:
-                remaining_count = remaining_count + 4
+                remaining_count = remaining_count + 1
         for i in range(4):
             item_pool.append(item_dictionary["Sunrise Spring 100 Gems"])
             item_pool.append(item_dictionary["Sunny Villa 100 Gems"])
@@ -265,6 +300,21 @@ def BuildItemPool(world, count, preplaced_eggs, options):
         item_pool.append(item_dictionary["Progressive Sparx Basket Break"])
         remaining_count = remaining_count - 5
 
+    if options.level_lock_option.value == LevelLockOptions.KEYS:
+        possible_locked_levels = [
+            "Sunny Villa", "Cloud Spires", "Molten Crater", "Seashell Shore", "Mushroom Speedway",
+            "Icy Peak", "Enchanted Towers", "Spooky Swamp", "Bamboo Terrace", "Country Speedway",
+            "Frozen Altars", "Lost Fleet", "Fireworks Factory", "Charmed Ridge", "Honey Speedway",
+            "Crystal Islands", "Desert Ruins", "Haunted Tomb", "Dino Mines", "Harbor Speedway"
+        ]
+
+        for level in possible_locked_levels:
+            if level in locked_levels:
+                item_pool.append((item_dictionary[f"{level} Unlock"]))
+                remaining_count = remaining_count - 1
+            else:
+                multiworld.push_precollected(world.create_item(f"{level} Unlock"))
+
     if options.enable_world_keys.value:
         for i in range(3):
             item_pool.append(item_dictionary["World Key"])
@@ -297,8 +347,9 @@ def BuildItemPool(world, count, preplaced_eggs, options):
             allowed_trap_items.append(item)
         elif item.name == 'Sparxless Trap' and options.enable_trap_sparxless:
             allowed_trap_items.append(item)
-        #elif item.name == 'Lag Trap' and options.enable_trap_lag:
-        #    allowed_trap_items.append(item)
+        elif item.name == "Normal Spyro" and (options.enable_filler_color_change or options.enable_filler_big_head_mode or len(allowed_misc_items) == 0):
+            for i in range(0, 4):
+                allowed_misc_items.append(item)
 
     if remaining_count > 0 and options.trap_filler_percent.value > 0 and len(allowed_trap_items) == 0:
         raise OptionError(f"Trap percentage is set to {options.trap_filler_percent.value}, but none have been turned on.")

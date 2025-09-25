@@ -41,6 +41,14 @@ class GemsanityOptions():
     FULL = 2
     FULL_GLOBAL = 3
 
+class LevelLockOptions():
+    VANILLA = 0
+    KEYS = 1
+    KEYS_AND_EGGS = 2
+    RANDOM_REQS = 3
+    ADD_REQS = 4
+    ADD_GEM_REQS = 5
+
 
 class GoalOption(Choice):
     """Lets the user choose the completion goal
@@ -68,12 +76,13 @@ class EggCount(Range):
     """The number of eggs needed to win in Egg Hunt."""
     display_name = "Eggs to Win Egg Hunt"
     range_start = 10
-    range_end = 100
+    range_end = 150
     default = 50
 
 class PercentExtraEggs(Range):
     """The percentage of extra eggs in the pool for Egg Hunt.
     For example, if 50 eggs are needed and there are 20% extra eggs, 60 eggs will be in the pool.
+    The total number of available eggs caps at 150 regardless of this option.
     Rounds up."""
     display_name = "Percent Extra Egg Hunt Eggs"
     range_start = 0
@@ -83,6 +92,46 @@ class PercentExtraEggs(Range):
 class GuaranteedItemsOption(ItemDict):
     """Guarantees that the specified items will be in the item pool"""
     display_name = "Guaranteed Items"
+
+class OpenWorldOption(Toggle):
+    """Grants access to all 4 homeworlds from the start.
+    End of level and boss eggs are removed as checks.
+    If you are in Sunrise when you unlock Molten or Seashell, you may need to enter another level and come back for
+    the unlock to take effect.
+    Progressive Sparx Health Logic will be different
+    If Moneybags is Vanilla, companion unlocks will be free.
+    Disables world keys."""
+    display_name = "Open World Mode"
+
+class LevelLockOption(Choice):
+    """Determines the rules locking levels.  Sparx levels, companion levels, homeworlds, Super Bonus Round, and bosses
+    are not affected by these settings.
+    At least one of Sunny, Cloud, Molten, and Seashell will always start unlocked.
+    For any setting other than Vanilla or Keys and Eggs, you start with 1 egg to make level unlocks work correctly.
+    Settings other than Vanilla also prevent entering non-companion levels from out of bounds.
+    Vanilla: Levels have their vanilla unlock requirements, though egg hunt can lower them.
+    Keys: 20 Level Unlock items are added to the item pool.
+    Randomize Requirements: The number of eggs required for levels locked in vanilla will be randomized.
+    Add Requirements: Any level can have an egg requirement added.
+    Add Gem Requirements: Any level can have an egg OR gem requirement added. Only works when Moneybagssanity and Gemsanity are on.
+    """
+    display_name = "Level Lock Options"
+    default = LevelLockOptions.VANILLA
+    option_vanilla = LevelLockOptions.VANILLA
+    option_keys = LevelLockOptions.KEYS
+    option_randomize_requirements = LevelLockOptions.RANDOM_REQS
+    option_add_requirements = LevelLockOptions.ADD_REQS
+    option_add_gem_requirements = LevelLockOptions.ADD_GEM_REQS
+
+class StartingLevels(Range):
+    """When Level Lock Options is not Vanilla or Randomize Requirements,
+    determines how many non-companion levels start unlocked.
+    The recommended value when Keys are in use is 2 or 3.
+    One Sunrise level will always be unlocked."""
+    display_name = "Number of Starting Levels"
+    range_start = 1
+    range_end = 20
+    default = 2
 
 class Enable25PctGemChecksOption(Toggle):
     """Adds checks for getting 25% of the gems in a level"""
@@ -117,7 +166,7 @@ class MaxTotalGemCheckOption(Range):
 class EnableGemsanityOption(Choice):
     """Adds checks for each individual gem.
     WARNING: To avoid logic issues, this setting is meant for Moneybagssanity only.  If Moneybagssanity is off,
-    all Moneybags prices will be set to 0 in game. Additionally, this may break with hwd's randomizer on.
+    all Moneybags prices will be set to 0 in game.
     Off: Individual gems are not checks.
     Partial: Every gem has a chance to be a check, but only 200 will be (chosen at random).  For every level with loose
         gems, items giving 50 or 100 gems for that level will be added to the pool."""
@@ -168,7 +217,8 @@ class EnableWorldKeys(Toggle):
     Trying to go to Midday without any World Keys will warp you to Sunrise.  Evening Lake requires 2 World Keys,
     Midnight Mountain requires 3.
     This reduces the chances that an item that another player needs early will be in a late level but
-    increases the chances of becoming stuck waiting for other players to find your World Keys."""
+    increases the chances of becoming stuck waiting for other players to find your World Keys.
+    Disabled in Open World mode."""
     display_name = "Enable World Keys"
 
 class EnableFillerExtraLives(DefaultOnToggle):
@@ -259,14 +309,6 @@ class ZoeGivesHints(Range):
     range_start = 0
     range_end = 11
     default = 0
-
-class EnableHWDRandomizer(Toggle):
-    """Choose this setting if you plan to use hwd405's standalone randomizer with this seed.
-    Due to its partial entrance randomizer, seeds may not be beatable otherwise.
-    Since Moneybags prices are randomized, if Moneybagssanity is not on, total gem checks are logically locked behind
-    defeating the Sorceress.
-    NOTE: This will push eggs and Moneybags unlocks sooner in the seed to ensure a beatable seed."""
-    display_name = "Use hwd405's Randomizer"
 
 class EasySkateboarding(Toggle):
     """Makes most skateboarding challenges and skill points much easier.
@@ -481,6 +523,9 @@ class Spyro3Option(PerGameCommonOptions):
     egg_count: EggCount
     percent_extra_eggs: PercentExtraEggs
     guaranteed_items: GuaranteedItemsOption
+    open_world: OpenWorldOption
+    level_lock_option: LevelLockOption
+    starting_levels_count: StartingLevels
     enable_25_pct_gem_checks: Enable25PctGemChecksOption
     enable_50_pct_gem_checks: Enable50PctGemChecksOption
     enable_75_pct_gem_checks: Enable75PctGemChecksOption
@@ -501,12 +546,10 @@ class Spyro3Option(PerGameCommonOptions):
     trap_filler_percent: TrapFillerPercent
     enable_trap_damage_sparx: EnableTrapDamageSparx
     enable_trap_sparxless: EnableTrapSparxless
-    #enable_trap_lag: EnableTrapLag
     enable_progressive_sparx_health: EnableProgressiveSparxHealth
     enable_progressive_sparx_logic: ProgressiveSparxHealthLogic
     require_sparx_for_max_gems: RequireSparxForMaxGems
     zoe_gives_hints: ZoeGivesHints
-    enable_hwd_randomizer: EnableHWDRandomizer
     easy_skateboarding: EasySkateboarding
     easy_boxing: EasyBoxing
     easy_sheila_bombing: EasySheilaBombing

@@ -62,9 +62,8 @@ When the player completes a task (such as collecting an egg), an item is sent. C
 while a check received from another game may do so.
 
 This does not randomize the location of eggs or gems, shuffle entrances, or make large-scale cosmetic changes to the game.
-Players who wish for this sort of randomization as part of their Archipelago experience may make use of
-[Hwd405's randomizer](https://archive.org/details/spyro-yotd-randomiser-v1.0.0-v1.1.1), which is compatible with
-this Archipelago implementation, provided that the NTSC-U revision 1 version is the one randomized.
+While previous versions of this Archipelago implementation were compatible with the standalone Spyro 3 randomizer,
+support has been removed based on community feedback and developer time constraints.
 
 Further, the underlying game logic is unchanged.  For instance, accessing the balloon to Buzz in Sunrise Spring requires
 helping all 5 NPCs in this world, whether or not they give an egg for the assistance.  The HUD's egg count
