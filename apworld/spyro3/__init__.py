@@ -44,7 +44,7 @@ class Spyro3World(World):
     base_id = 1230000
     required_client_version = (0, 5, 0)
     # TODO: Remember to update this!
-    ap_world_version = "1.2.0-RC3"
+    ap_world_version = "1.2.0"
     item_name_to_id = Spyro3Item.get_name_to_id()
     location_name_to_id = Spyro3Location.get_name_to_id()
     item_name_groups = {}
@@ -617,7 +617,6 @@ class Spyro3World(World):
                 elif item_data.category in [Spyro3ItemCategory.SKIP] or \
                         location.category in [Spyro3LocationCategory.EVENT] or \
                         (self.options.open_world.value and location.category == Spyro3LocationCategory.EGG_EOL) or \
-                        (self.options.open_world.value and location.name == "Midnight Mountain Home: Egg for sale. (Al)") or \
                         (self.options.goal.value in [GoalOptions.ALL_SKILLPOINTS, GoalOptions.EPILOGUE] and location.category == Spyro3LocationCategory.SKILLPOINT_GOAL):
                     item = self.create_item(location.default_item_name)
                     self.multiworld.get_location(location.name, self.player).place_locked_item(item)

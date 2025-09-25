@@ -333,8 +333,40 @@ namespace S3AP
                 {
                     return 0x199cf4;
                 }
+                if (greenLabelAddress == YetiBoxingHealth)
+                {
+                    return 0x15ce90;
+                }
+                if (greenLabelAddress == BlutoHealth)
+                {
+                    return 0x1623b4;
+                }
+                if (greenLabelAddress == SunnyLizardsCount)
+                {
+                    return 0x18647c;
+                }
+                if (greenLabelAddress == SunnySkateScore)
+                {
+                    return 0x187574;
+                }
+                if (greenLabelAddress == WhackAMoleCount)
+                {
+                    return 0x16bba4;
+                }
+                if (greenLabelAddress == TanksCount)
+                {
+                    return 0x1777a4;
+                }
+                if (greenLabelAddress == PlayerHealthSpider)
+                {
+                    return 0x102df0;
+                }
+                if (greenLabelAddress == PlayerHealthBugbot)
+                {
+                    return 0xf12f0;
+                }
                 // TODO: Level names from SBR through Sorceress' Lair have no offset.
-                // Those afteer are greenLabelAddress - 0x4
+                // Those after are greenLabelAddress - 0x4
                 if (
                     greenLabelAddress == SunnyVillaName ||
                     greenLabelAddress == CloudSpiresName ||

@@ -31,7 +31,7 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.2.0-RC3";
+    public static string Version = "1.2.0";
 
     public static MainWindowViewModel Context;
     public static ArchipelagoClient Client { get; set; }
@@ -663,34 +663,34 @@ public partial class App : Application
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SparxBreakBaskets), (byte)_progressiveBasketBreaks);
         }
 
-        if (_sparxOption != ProgressiveSparxHealthOptions.Off && (Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0) != 3)
+        byte sparxHealth = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0);
+        if (_sparxOption == ProgressiveSparxHealthOptions.Blue)
+        {
+            sparxHealth += 2;
+        }
+        else if (_sparxOption == ProgressiveSparxHealthOptions.Green)
+        {
+            sparxHealth += 1;
+        }
+        if (_sparxOption != ProgressiveSparxHealthOptions.Off && sparxHealth < 3)
         {
             // TODO: Allow overheal to work for 15 seconds.
             byte currentHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealth));
-            byte sparxUpgrades = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0);
-            sparxUpgrades += (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0);
+            sparxHealth += (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0);
             if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Starfish Reef Complete").Count() ?? 0) > 0 && _sparxPowerShuffle == 0)
             {
-                sparxUpgrades++;
+                sparxHealth++;
             }
-            if (_sparxOption == ProgressiveSparxHealthOptions.Blue)
+            if (_sparxOption == ProgressiveSparxHealthOptions.TrueSparxless)
             {
-                sparxUpgrades += 2;
+                sparxHealth = 0;
             }
-            else if (_sparxOption == ProgressiveSparxHealthOptions.Green)
+            if (currentHealth > sparxHealth)
             {
-                sparxUpgrades += 1;
-            }
-            else if (_sparxOption == ProgressiveSparxHealthOptions.TrueSparxless)
-            {
-                sparxUpgrades = 0;
-            }
-            if (currentHealth > sparxUpgrades)
-            {
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealth), sparxUpgrades);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealth), sparxHealth);
             }
             LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
-            byte maxSparxHealth = (byte)(Math.Min(sparxUpgrades * 2, 6));
+            byte maxSparxHealth = (byte)(Math.Min(sparxHealth * 2, 6));
             if (maxSparxHealth == 0)
             {
                 maxSparxHealth = 1;
