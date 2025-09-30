@@ -31,7 +31,8 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.2.0";
+    public static string Version = "1.2.1";
+    public static List<string> SupportedVersions = ["1.2.0", "1.2.1"];
 
     public static MainWindowViewModel Context;
     public static ArchipelagoClient Client { get; set; }
@@ -287,7 +288,12 @@ public partial class App : Application
 
             if (_slotData.TryGetValue("apworldVersion", out var versionValue))
             {
-                if (versionValue != null && versionValue.ToString().ToLower() != Version.ToLower())
+                if (versionValue != null && SupportedVersions.Contains(versionValue.ToString().ToLower()))
+                {
+                    Log.Logger.Information($"The host's AP world version is {versionValue.ToString()} and the client version is {Version}.");
+                    Log.Logger.Information("These versions are known to be compatible.");
+                }
+                else if (versionValue != null && versionValue.ToString().ToLower() != Version.ToLower())
                 {
                     Log.Logger.Warning($"The host's AP world version is {versionValue.ToString()} but the client version is {Version}.");
                     Log.Logger.Warning("Please ensure these are compatible before proceeding.");
@@ -1019,15 +1025,6 @@ public partial class App : Application
         int gems = CalculateCurrentGems();
         if (_levelLockOptions == LevelLockOptions.Vanilla)
         {
-            if (_openWorld != 0 && eggs >= Math.Floor(10 * multiplier))
-            {
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
-            }
-            if (_openWorld != 0 && eggs >= Math.Floor(14 * multiplier))
-            {
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
-            }
-
             if (currentLevel == LevelInGameIDs.SunriseSpring)
             {
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)Math.Floor(10 * multiplier));
@@ -1059,8 +1056,8 @@ public partial class App : Application
             {
                 HandleKeyName("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12);
                 HandleKeyName("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16);
-                bool moltenUnlocked = HandleKeyName("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16);
-                bool seashellUnlocked = HandleKeyName("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16);
+                HandleKeyName("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16);
+                HandleKeyName("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16);
                 HandleKeyName("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20);
                 HandleKeyName("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20);
                 HandleKeyName("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12);
@@ -1077,14 +1074,6 @@ public partial class App : Application
                 HandleKeyName("Haunted Tomb", Addresses.HauntedTombPortal, Addresses.HauntedTombName, 16);
                 HandleKeyName("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12);
                 HandleKeyName("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16);
-                if (_openWorld != 0 && moltenUnlocked)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
-                }
-                if (_openWorld != 0 && seashellUnlocked)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
-                }
                 _checkNames = false;
             }
             if (currentLevel == LevelInGameIDs.SunriseSpring)
@@ -1142,8 +1131,8 @@ public partial class App : Application
             {
                 HandleEggGemName("Sunny Villa", Addresses.SunnyVillaPortal, Addresses.SunnyVillaName, 12, eggs, gems, multiplier);
                 HandleEggGemName("Cloud Spires", Addresses.CloudSpiresPortal, Addresses.CloudSpiresName, 16, eggs, gems, multiplier);
-                bool moltenUnlocked = HandleEggGemName("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16, eggs, gems, multiplier);
-                bool seashellUnlocked = HandleEggGemName("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Molten Crater", Addresses.MoltenCraterPortal, Addresses.MoltenCraterName, 16, eggs, gems, multiplier);
+                HandleEggGemName("Seashell Shore", Addresses.SeashellShorePortal, Addresses.SeashellShoreName, 16, eggs, gems, multiplier);
                 HandleEggGemName("Mushroom Speedway", Addresses.MushroomSpeedwayPortal, Addresses.MushroomSpeedwayName, 20, eggs, gems, multiplier);
                 HandleEggGemName("Enchanted Towers", Addresses.EnchantedTowersPortal, Addresses.EnchantedTowersName, 20, eggs, gems, multiplier);
                 HandleEggGemName("Icy Peak", Addresses.IcyPeakPortal, Addresses.IcyPeakName, 12, eggs, gems, multiplier);
@@ -1161,14 +1150,6 @@ public partial class App : Application
                 HandleEggGemName("Dino Mines", Addresses.DinoMinesPortal, Addresses.DinoMinesName, 12, eggs, gems, multiplier);
                 HandleEggGemName("Harbor Speedway", Addresses.HarborSpeedwayPortal, Addresses.HarborSpeedwayName, 16, eggs, gems, multiplier);
 
-                if (_openWorld != 0 && moltenUnlocked)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
-                }
-                if (_openWorld != 0 && seashellUnlocked)
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
-                }
                 _checkNames = false;
             }
             if (currentLevel == LevelInGameIDs.SunriseSpring)
@@ -1447,6 +1428,8 @@ public partial class App : Application
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpikeDefeated), 1);
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ScorchDefeated), 1);
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningBianca), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
             uint eggAddress = Addresses.GetVersionAddress(Addresses.EggStartAddress);
             // Mark as collected the end of level eggs for the 15 "progression" levels and first 3 bosses.
             List<uint> collectedEggLevels = new List<uint> { 1, 2, 3, 4, 6, 7, 10, 11, 12, 13, 15, 16, 19, 20, 21, 22, 24, 25 };
@@ -1457,9 +1440,14 @@ public partial class App : Application
                     Memory.WriteBit(eggAddress + i, 0, true);
                 }
             }
-            var currentLives = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.PlayerLives));
-            Memory.Write(Addresses.GetVersionAddress(Addresses.PlayerLives), (short)(Math.Min(99, currentLives + 1)));
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroState), (byte)SpyroState.Dying);
+            // Ensure the rocket appears in Sunrise.
+            LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
+            if (currentLevel == LevelInGameIDs.SunriseSpring)
+            {
+                var currentLives = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.PlayerLives));
+                Memory.Write(Addresses.GetVersionAddress(Addresses.PlayerLives), (short)(Math.Min(99, currentLives + 1)));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroState), (byte)SpyroState.Dying);
+            }   
         }
 
         _loadGameTimer.Enabled = false;
