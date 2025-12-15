@@ -31,7 +31,8 @@
             Epilogue = 4,
             Spike = 5,
             Scorch = 6,
-            EggHunt = 7
+            EggHunt = 7,
+            NotLoaded = 99
         }
 
         public enum GemsanityOptions

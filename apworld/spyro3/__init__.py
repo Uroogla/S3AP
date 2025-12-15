@@ -44,7 +44,7 @@ class Spyro3World(World):
     base_id = 1230000
     required_client_version = (0, 5, 0)
     # TODO: Remember to update this!
-    ap_world_version = "1.2.1"
+    ap_world_version = "1.2.2"
     item_name_to_id = Spyro3Item.get_name_to_id()
     location_name_to_id = Spyro3Location.get_name_to_id()
     item_name_groups = {}
@@ -527,7 +527,7 @@ class Spyro3World(World):
                     location.name,
                     location.category,
                     "Filler",
-                    self.location_name_to_id[location.name],
+                    None,
                     new_region
                 )
                 new_location.place_locked_item(filler_item)
@@ -576,6 +576,21 @@ class Spyro3World(World):
                     self.location_name_to_id[location.name],
                     new_region
                 )
+                new_region.locations.append(new_location)
+            elif location.category == Spyro3LocationCategory.EVENT and self.options.open_world.value and \
+                    (location.name.endswith(" Complete") and location.name != "Super Bonus Round Complete" or
+                        location.name.endswith(" Defeated") and location.name != "Sorceress Defeated"):
+                event_item = self.create_item(location.default_item)
+                new_location = Spyro3Location(
+                    self.player,
+                    location.name,
+                    location.category,
+                    location.default_item,
+                    None,
+                    new_region
+                )
+                event_item.code = None
+                new_location.place_locked_item(event_item)
                 new_region.locations.append(new_location)
             elif location.category == Spyro3LocationCategory.EVENT:
                 event_item = self.create_item(location.default_item)
@@ -658,7 +673,9 @@ class Spyro3World(World):
                     name == "Moneybags Unlock - Charmed Ridge Stairs" and self.options.logic_charmed_no_moneybags or \
                     name == "Moneybags Unlock - Desert Ruins Door" and self.options.logic_desert_no_moneybags or \
                     name == "Moneybags Unlock - Frozen Altars Cat Hockey Door" and self.options.logic_frozen_cat_hockey_no_moneybags or \
-                    name == "Moneybags Unlock - Crystal Islands Bridge" and self.options.logic_crystal_no_moneybags:
+                    name == "Moneybags Unlock - Crystal Islands Bridge" and self.options.logic_crystal_no_moneybags or \
+                    name == "Moneybags Unlock - Spooky Swamp Door" and self.options.open_world or \
+                    name == "Moneybags Unlock - Charmed Ridge Stairs" and self.options.open_world:
                 item_classification = ItemClassification.useful
             else:
                 item_classification = ItemClassification.progression
@@ -673,7 +690,7 @@ class Spyro3World(World):
         return Spyro3Item(name, item_classification, data, self.player)
 
     def get_filler_item_name(self) -> str:
-        return "Egg"
+        return "Extra Life"
     
     def set_rules(self) -> None:          
         def is_level_completed(self, level, state):
@@ -690,7 +707,7 @@ class Spyro3World(World):
             return state.has(boss + " Defeated", self.player)
 
         def is_companion_unlocked(self, companion, state):
-            return state.has(f"Moneybags Unlock - {companion}", self.player)
+            return state.has(f"Moneybags Unlock - {companion}", self.player) or is_boss_defeated(self, "Sorceress", state)
 
         def has_world_keys(self, key_count, state):
             return state.count("World Key", self.player) >= key_count
@@ -800,7 +817,7 @@ class Spyro3World(World):
             elif level == "Sheila's Alp":
                 if not self.options.logic_sheila_early.value and \
                         self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and \
-                        not state.has("Moneybags Unlock - Sheila", self.player):
+                        not (state.has("Moneybags Unlock - Sheila", self.player) or is_boss_defeated(self, "Sorceress", state)):
                     return 0
                 level_gems = 400
             elif level == "Crawdad Farm":
@@ -840,7 +857,7 @@ class Spyro3World(World):
                 if not can_enter_non_companion_portal(self, level, state, self.options.logic_spooky_early.value):
                     return 0
                 level_gems = 219
-                if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_spooky_no_moneybags.value or state.has("Moneybags Unlock - Spooky Swamp Door", self.player):
+                if self.options.open_world.value or self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_spooky_no_moneybags.value or state.has("Moneybags Unlock - Spooky Swamp Door", self.player):
                     level_gems += 281
             elif level == 'Bamboo Terrace':
                 if not is_boss_defeated(self, "Buzz", state) or \
@@ -863,7 +880,7 @@ class Spyro3World(World):
                 ignore_sparx_restrictions = True
             elif level == "Sgt. Byrd's Base":
                 if not is_boss_defeated(self, 'Buzz', state) or \
-                        not self.options.logic_byrd_early.value and self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not state.has("Moneybags Unlock - Sgt. Byrd", self.player) or \
+                        not self.options.logic_byrd_early.value and self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not (state.has("Moneybags Unlock - Sgt. Byrd", self.player) or is_boss_defeated(self, "Sorceress", state)) or \
                         (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state)) or \
                         (self.options.enable_world_keys.value and not has_world_keys(self, 1, state)):
                     return 0
@@ -917,7 +934,7 @@ class Spyro3World(World):
                     return 0
                 # Moneybags blocks 472 gems.
                 level_gems = 128
-                if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_charmed_no_moneybags.value or state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player):
+                if self.options.open_world.value or self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_charmed_no_moneybags.value or state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player):
                     level_gems += 472
             elif level == 'Honey Speedway':
                 if not is_boss_defeated(self, "Spike", state) or \
@@ -929,7 +946,7 @@ class Spyro3World(World):
                 ignore_sparx_restrictions = True
             elif level == "Bentley's Outpost":
                 if not is_boss_defeated(self, 'Spike', state) or \
-                        not self.options.logic_bentley_early.value and self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not state.has("Moneybags Unlock - Bentley", self.player) or \
+                        not self.options.logic_bentley_early.value and self.options.moneybags_settings.value != MoneybagsOptions.VANILLA and not (state.has("Moneybags Unlock - Bentley", self.player) or is_boss_defeated(self, "Sorceress", state)) or \
                         (self.options.enable_progressive_sparx_logic.value and not has_sparx_health(self, 1, state)) or \
                         (self.options.enable_world_keys.value and not has_world_keys(self, 2, state)):
                     return 0
@@ -1121,8 +1138,8 @@ class Spyro3World(World):
             sheila_gems = [105, 106, 107, 108, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124,
                            125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
                            144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 155, 156, 157, 158, 159, 160]
-            empty_bits = [13, 33, 34, 58, 109, 154, 172, 173, 174, 175, 193, 194, 195, 196, 197, 203, 205, 206, 211, 212,
-                          214]
+            empty_bits = [13, 33, 34, 58, 109, 154, 172, 173, 174, 175, 193, 194, 195, 196, 197, 203, 205, 206, 213, 214,
+                          216]
             if not self.options.logic_sunny_sheila_early.value:
                 for gem in sheila_gems:
                     skipped_bits = 0
@@ -1430,7 +1447,7 @@ class Spyro3World(World):
                 lambda state: can_enter_non_companion_portal(self, "Spooky Swamp", state, self.options.logic_spooky_early.value)
             )
         # Can skip Moneybags by damage boosting from the island egg to the end of level.
-        if self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_spooky_no_moneybags.value:
+        if self.options.open_world.value or self.options.moneybags_settings.value != MoneybagsOptions.MONEYBAGSSANITY or self.options.logic_spooky_no_moneybags.value:
             # Technically possible without Sheila completion with a glide out of bounds, but there's no reason to add an option for this at this time.
             set_rule(self.multiworld.get_location("Spooky Swamp: Escort the twins I. (Peggy)", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state))
             set_rule(self.multiworld.get_location("Spooky Swamp: Escort the twins II. (Michele)", self.player), lambda state: is_level_completed(self,"Sheila's Alp", state) and state.can_reach_location("Spooky Swamp: Escort the twins I. (Peggy)", self.player))
@@ -1461,7 +1478,7 @@ class Spyro3World(World):
                               140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157,
                               158, 159, 160]
             empty_bits = [5, 18, 54, 59, 76, 80, 104, 110, 122]
-            if self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_spooky_no_moneybags.value:
+            if not self.options.open_world.value and self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_spooky_no_moneybags.value:
                 for gem in moneybags_gems:
                     skipped_bits = 0
                     for bit in empty_bits:
@@ -1691,10 +1708,10 @@ class Spyro3World(World):
                         lambda state: are_gems_accessible(self, state)
                     )
             # Bits of the gems, not accounting for empty bits
-            agent_gems = [161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 172, 173, 174, 175, 176, 178, 179,
-                          180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 192, 194, 195, 196, 197, 198,
+            agent_gems = [161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 178, 179,
+                          180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198,
                           199, 200, 201]
-            empty_bits = [14, 20, 42, 47, 77, 82, 97, 98, 104, 105, 106, 108, 141, 153, 155, 177]
+            empty_bits = [14, 20, 46, 51, 77, 82, 97, 98, 104, 105, 106, 108, 141, 153, 155, 177]
             if not self.options.logic_fireworks_agent_9_early.value:
                 for gem in agent_gems:
                     skipped_bits = 0
@@ -1724,7 +1741,7 @@ class Spyro3World(World):
                 lambda state: can_enter_non_companion_portal(self, "Charmed Ridge", state, self.options.logic_charmed_early.value)
             )
         # Can glide through a part of the wall with no collision.  A proxy to end of level is possible, but this is harder and grants less access.
-        if self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_charmed_no_moneybags.value:
+        if not self.options.open_world.value and self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_charmed_no_moneybags.value:
             if not self.options.open_world.value:
                 set_rule(self.multiworld.get_location("Charmed Ridge: Rescue the Fairy Princess. (Sakura)", self.player), lambda state: state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player))
             set_rule(self.multiworld.get_location("Charmed Ridge: Glide to the tower. (Moe)", self.player), lambda state: state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player))
@@ -1763,7 +1780,7 @@ class Spyro3World(World):
                               184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197]
             empty_bits = [20, 21, 53, 58, 59, 60, 61, 66, 100, 101, 102, 129, 130, 136, 137, 144, 145, 146, 147, 150,
                           152, 162]
-            if self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_charmed_no_moneybags.value:
+            if not self.options.open_world.value and self.options.moneybags_settings.value == MoneybagsOptions.MONEYBAGSSANITY and not self.options.logic_charmed_no_moneybags.value:
                 for gem in moneybags_gems:
                     skipped_bits = 0
                     for bit in empty_bits:

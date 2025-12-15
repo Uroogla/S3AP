@@ -31,8 +31,8 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.2.1";
-    public static List<string> SupportedVersions = ["1.2.0", "1.2.1"];
+    public static string Version = "1.2.2";
+    public static List<string> SupportedVersions = ["1.2.0", "1.2.1", "1.2.2"];
 
     public static MainWindowViewModel Context;
     public static ArchipelagoClient Client { get; set; }
@@ -333,6 +333,8 @@ public partial class App : Application
             _gameLoopTimer.Elapsed += new ElapsedEventHandler(ModifyGameLoop);
             _gameLoopTimer.Interval = 100;
             _gameLoopTimer.Enabled = true;
+
+            CheckGoalCondition();
         }
         else
         {
@@ -530,7 +532,7 @@ public partial class App : Application
     {
         if (_hintsList == null)
         {
-            if (_slotData.TryGetValue("hints", out var hints))
+            if (_slotData != null && _slotData.TryGetValue("hints", out var hints))
             {
                 if (hints != null)
                 {
@@ -770,6 +772,21 @@ public partial class App : Application
         
         LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
         byte currentSubarea = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentSubareaAddress));
+
+        if (_openWorld != 0 && currentLevel == LevelInGameIDs.SpookySwamp)
+        {
+            if (!Memory.ReadBit(Addresses.GetVersionAddress(Addresses.SpookyOpenWorldGem), 7))
+            {
+                Memory.WriteBit(Addresses.GetVersionAddress(Addresses.SpookyOpenWorldGem), 7, true);
+                if (_gemsanityOption == GemsanityOptions.Off)
+                {
+                    int spookyGemCount = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.SpookySwampGems));
+                    int totalGemCount = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.TotalGemAddress));
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpookySwampGems), (byte)(spookyGemCount + 1));
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TotalGemAddress), (byte)(totalGemCount + 1));
+                }
+            }
+        }
         
         // For some challenges, it makes more sense to adjust local adaptive difficulty than modify other values.
         if (
@@ -1728,7 +1745,7 @@ public partial class App : Application
         _openWorld = 0;
         _sparxPowerShuffle = 0;
         _slot = 0;
-        _goal = 0;
+        _goal = CompletionGoal.NotLoaded;
         _eggCountGoal = 150;
         _slotData = null;
         _hintsList = null;

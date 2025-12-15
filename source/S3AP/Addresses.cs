@@ -276,6 +276,8 @@ namespace S3AP
         public const uint DinoMinesPortal = 0xDA7B0;
         public const uint HarborSpeedwayPortal = 0xDA7B8;
 
+        public const uint SpookyOpenWorldGem = 0x71D18;  // bit 0x80
+
         public static uint GetVersionAddress(uint greenLabelAddress)
         {
             if (Helpers.gameVersion == "1.0")
