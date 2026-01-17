@@ -109,6 +109,7 @@ public partial class App : Application
             HandleCommand(a.Command);
         };
         Context.ConnectButtonEnabled = true;
+        Context.AutoscrollEnabled = true;
         _hintsList = null;
         _hasSubmittedGoal = false;
         _useQuietHints = true;

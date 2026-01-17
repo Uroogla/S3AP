@@ -19,7 +19,7 @@ class Spyro3ItemCategory(IntEnum):
     SPARX_POWERUP = 13,
     WORLD_KEY = 14,
     LEVEL_KEY = 15,
-    UT_ITEM = 99  # Ultimate tracker
+    UT_ITEM = 99  # Universal tracker
 
 
 class Spyro3ItemData(NamedTuple):

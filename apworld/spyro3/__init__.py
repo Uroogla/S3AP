@@ -393,7 +393,7 @@ class Spyro3World(World):
                 if location_dictionary[location].category == Spyro3LocationCategory.GEMSANITY:
                     if self.options.goal != GoalOptions.EGG_HUNT or self.options.egg_count > 100 or not location.startswith("Bugbot "):
                         all_gem_locations.append(location)
-            # Ultimate Tracker does not know which gems were picked.  Have it assume all gems were picked when it
+            # Universal Tracker does not know which gems were picked.  Have it assume all gems were picked when it
             # creates its seed.  The location list on the AP server will then remove all non-selected gems.
             if is_ut:
                 self.chosen_gem_locations = []
