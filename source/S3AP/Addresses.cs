@@ -280,6 +280,11 @@ namespace S3AP
 
         public static uint GetVersionAddress(uint greenLabelAddress)
         {
+            // Avoid async issues where items or ItemState is processed prior to this populating correctly.
+            if (Helpers.gameVersion == "")
+            {
+                Helpers.IsCorrectVersion();
+            }
             if (Helpers.gameVersion == "1.0")
             {
                 // Moneybags unlocks, Sparx powerups, and skill points have a different offset than most other items.
@@ -367,7 +372,7 @@ namespace S3AP
                 {
                     return 0xf12f0;
                 }
-                // TODO: Level names from SBR through Sorceress' Lair have no offset.
+                // NOTE: Level names from SBR through Sorceress' Lair have no offset.
                 // Those after are greenLabelAddress - 0x4
                 if (
                     greenLabelAddress == SunnyVillaName ||

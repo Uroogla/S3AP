@@ -31,8 +31,8 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.2.2";
-    public static List<string> SupportedVersions = ["1.2.0", "1.2.1", "1.2.2"];
+    public static string Version = "1.2.3";
+    public static List<string> SupportedVersions = ["1.2.0", "1.2.1", "1.2.2", "1.2.3"];
 
     public static MainWindowViewModel Context;
     public static ArchipelagoClient Client { get; set; }
@@ -42,6 +42,7 @@ public partial class App : Application
     private static Dictionary<string, string> _hintsList { get; set; }
     private static bool _hasSubmittedGoal { get; set; }
     private static bool _useQuietHints { get; set; }
+    private static int _unlockedLevels { get; set; }
     private static List<string> _easyChallenges { get; set; }
     private static int _worldKeys { get; set; }
     private static int _progressiveBasketBreaks { get; set; }
@@ -128,7 +129,7 @@ public partial class App : Application
 
     private void HandleCommand(string command)
     {
-        if (Client == null || Client.GameState == null || Client.CurrentSession == null) return;
+        if (Client == null || Client.ItemState == null || Client.CurrentSession == null) return;
         switch (command)
         {
             case "clearSpyroGameState":
@@ -222,7 +223,7 @@ public partial class App : Application
         Client.Connected += OnConnected;
         Client.Disconnected += OnDisconnected;
 
-        await Client.Connect(e.Host, "Spyro 3");
+        await Client.Connect(e.Host, "Spyro 3", "save1");
         if (!Client.IsConnected)
         {
             Log.Logger.Error("Your host seems to be invalid.  Please confirm that you have entered it correctly.");
@@ -313,7 +314,7 @@ public partial class App : Application
 
             int eggs = CalculateCurrentEggs();
             int skillPoints = CalculateCurrentSkillPoints();
-            bool beatenSorceress = Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false;
+            bool beatenSorceress = Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false;
             string defeatedSorceressText = beatenSorceress ? "you have defeated the sorceress" : "you have not defeated the sorceress";
             Log.Logger.Information($"You have {eggs} eggs, {skillPoints} skill points, and {defeatedSorceressText}.");
 
@@ -327,8 +328,8 @@ public partial class App : Application
             _cosmeticsTimer.Interval = 5000;
             _cosmeticsTimer.Enabled = true;
 
-            _progressiveBasketBreaks = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Basket Break").Count() ?? 0);
-            _worldKeys = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "World Key").Count() ?? 0);
+            _progressiveBasketBreaks = (byte)(Client.ItemState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Basket Break").Count() ?? 0);
+            _worldKeys = (byte)(Client.ItemState?.ReceivedItems.Where(x => x.Name == "World Key").Count() ?? 0);
 
             _gameLoopTimer = new Timer();
             _gameLoopTimer.Elapsed += new ElapsedEventHandler(ModifyGameLoop);
@@ -345,7 +346,7 @@ public partial class App : Application
 
     private void Client_LocationCompleted(object? sender, LocationCompletedEventArgs e)
     {
-        if (Client.GameState == null || Client.CurrentSession == null) return;
+        if (Client.ItemState == null || Client.CurrentSession == null) return;
         var currentEggs = CalculateCurrentEggs();
         if (_gemsanityOption != GemsanityOptions.Off)
         {
@@ -356,8 +357,10 @@ public partial class App : Application
 
     private async void ItemReceived(object? o, ItemReceivedEventArgs args)
     {
-        if (Client.GameState == null || Client.CurrentSession == null) return;
+        if (Client.ItemState == null || Client.CurrentSession == null) return;
         Log.Logger.Debug($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
+        // Give items a moment to update before printing values.
+        await Task.Delay(200);
         int currentHealth;
         switch (args.Item.Name)
         {
@@ -506,7 +509,15 @@ public partial class App : Application
 
     private void showUnlockedLevels()
     {
-        List<Item> unlockedLevels = (Client.GameState?.ReceivedItems.Where(x => x.Name.EndsWith(" Unlock")).ToList() ?? new List<Item>());
+        List<Item> unlockedLevels = (Client.ItemState?.ReceivedItems.Where(x => x.Name.EndsWith(" Unlock")).ToList() ?? new List<Item>());
+        if (unlockedLevels.Count > _unlockedLevels)
+        {
+            _unlockedLevels = unlockedLevels.Count;
+        }
+        else
+        {
+            return;
+        }
         Log.Logger.Information("You have unlocked: ");
         string unlockedLevelsString = "";
         int levelCount = 0;
@@ -560,11 +571,18 @@ public partial class App : Application
 
     private static async void ModifyGameLoop(object source, ElapsedEventArgs e)
     {
-        _timerLoopCount = (_timerLoopCount + 1) % 5;
-        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
+        if (!Helpers.IsInGame() || Client.ItemState == null || Client.CurrentSession == null)
         {
             return;
         }
+        GameStatus status = (GameStatus)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.GameStatus));
+        // Avoid inadvertantly messing with the Atlas and Options overlays when loaded in on the pause screen.
+        // This can result in corrupted save files.
+        if (status == GameStatus.Paused)
+        {
+            return;
+        }
+        _timerLoopCount = (_timerLoopCount + 1) % 5;
         if (_timerLoopCount == 1)
         {
             HandleSparxPowers(source, e);
@@ -578,7 +596,7 @@ public partial class App : Application
 
     private static async void HandleWorldKeys(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
+        if (!Helpers.IsInGame() || Client.ItemState == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -628,16 +646,16 @@ public partial class App : Application
 
     private static async void HandleSparxPowers(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame() || Client.GameState == null || Client.CurrentSession == null)
+        if (!Helpers.IsInGame() || Client.ItemState == null || Client.CurrentSession == null)
         {
             return;
         }
         if (_sparxPowerShuffle != 0)
         {
             // We need to override the powerups given by Zoe for completing a Sparx Level.
-            var extendedRange = Client.GameState?.ReceivedItems.Where(x => x.Name == "Increased Sparx Range").Count() ?? 0;
-            var gemFinder = Client.GameState?.ReceivedItems.Where(x => x.Name == "Sparx Gem Finder").Count() ?? 0;
-            var extraHitPoint = Client.GameState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0;
+            var extendedRange = Client.ItemState?.ReceivedItems.Where(x => x.Name == "Increased Sparx Range").Count() ?? 0;
+            var gemFinder = Client.ItemState?.ReceivedItems.Where(x => x.Name == "Sparx Gem Finder").Count() ?? 0;
+            var extraHitPoint = Client.ItemState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0;
             if (extendedRange == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRange), (short)2062);
@@ -672,7 +690,7 @@ public partial class App : Application
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SparxBreakBaskets), (byte)_progressiveBasketBreaks);
         }
 
-        byte sparxHealth = (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0);
+        byte sparxHealth = (byte)(Client.ItemState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0);
         if (_sparxOption == ProgressiveSparxHealthOptions.Blue)
         {
             sparxHealth += 2;
@@ -685,8 +703,8 @@ public partial class App : Application
         {
             // TODO: Allow overheal to work for 15 seconds.
             byte currentHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealth));
-            sparxHealth += (byte)(Client.GameState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0);
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Starfish Reef Complete").Count() ?? 0) > 0 && _sparxPowerShuffle == 0)
+            sparxHealth += (byte)(Client.ItemState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0);
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Starfish Reef Complete").Count() ?? 0) > 0 && _sparxPowerShuffle == 0)
             {
                 sparxHealth++;
             }
@@ -766,7 +784,7 @@ public partial class App : Application
     private static void HandleMinigames(object source, ElapsedEventArgs e)
     {
         // NOTE: Be very careful here, as writing to the wrong address or at the wrong time can crash the game.
-        if (!Helpers.IsInGame(false) || Client.GameState == null || Client.CurrentSession == null)
+        if (!Helpers.IsInGame(false) || Client.ItemState == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -944,7 +962,7 @@ public partial class App : Application
 
     private static bool HandleKeyUnlock(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
     {
-        if ((Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
+        if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
         {
             Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 6);
             return true;
@@ -958,7 +976,7 @@ public partial class App : Application
 
     private static bool HandleKeyName(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
     {
-        if ((Client.GameState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
+        if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
         {
             WriteStringToMemory(
                 Addresses.GetVersionAddress(nameAddress),
@@ -1225,7 +1243,7 @@ public partial class App : Application
     {
         // Avoid overwhelming the game when many cosmetic effects are received at once by processing only 1
         // every 5 seconds.  This also lets the user see effects when logging in asynchronously.
-        if (Client.GameState == null || Client.CurrentSession == null) return;
+        if (Client.ItemState == null || Client.CurrentSession == null) return;
         if (Memory.ReadShort(Addresses.GetVersionAddress(Addresses.GameStatus)) != (short)GameStatus.InGame) return;
         if (_cosmeticEffects.Count > 0)
         {
@@ -1267,7 +1285,7 @@ public partial class App : Application
     private static void StartSpyroGame(object source, ElapsedEventArgs e)
     {
         bool isInGame = Helpers.IsInGame();
-        bool nullGameState = Client.GameState == null;
+        bool nullGameState = Client.ItemState == null;
         bool nullCurrentSession = Client.CurrentSession == null;
         if (!isInGame || nullGameState || nullCurrentSession)
         {
@@ -1298,7 +1316,7 @@ public partial class App : Application
 
         if (_moneybagsOption != MoneybagsOptions.Vanilla)
         {
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 20001);
             }
@@ -1307,7 +1325,7 @@ public partial class App : Application
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 65536);
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaCutscene), 1);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 20001);
             }
@@ -1316,7 +1334,7 @@ public partial class App : Application
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 65536);
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ByrdCutscene), 1);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 20001);
             }
@@ -1325,7 +1343,7 @@ public partial class App : Application
                 Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 65536);
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BentleyCutscene), 1);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 20001);
             }
@@ -1337,7 +1355,7 @@ public partial class App : Application
         }
         if (_moneybagsOption == MoneybagsOptions.Moneybagssanity)
         {
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Cloud Spires Bellows").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Cloud Spires Bellows").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 20001);
             }
@@ -1346,7 +1364,7 @@ public partial class App : Application
                 // Special case this to just reduce the price to 0, since otherwise a rhynoc despawns.
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 0);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 20001);
             }
@@ -1354,7 +1372,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 65536);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Icy Peak Nancy Door").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Icy Peak Nancy Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 20001);
             }
@@ -1362,7 +1380,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 65536);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Molten Crater Thieves Door").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Molten Crater Thieves Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 20001);
             }
@@ -1370,7 +1388,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 65536);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Charmed Ridge Stairs").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Charmed Ridge Stairs").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 20001);
             }
@@ -1378,7 +1396,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 65536);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Desert Ruins Door").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Desert Ruins Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 20001);
             }
@@ -1386,7 +1404,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 65536);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Frozen Altars Cat Hockey Door").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Frozen Altars Cat Hockey Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 20001);
             }
@@ -1394,7 +1412,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 65536);
             }
-            if ((Client.GameState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Crystal Islands Bridge").Count() ?? 0) == 0)
+            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Crystal Islands Bridge").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 20001);
             }
@@ -1473,7 +1491,7 @@ public partial class App : Application
 
     private static void CheckGoalCondition()
     {
-        if (_hasSubmittedGoal || Client.GameState == null || Client.CurrentSession == null)
+        if (_hasSubmittedGoal || Client.ItemState == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -1481,7 +1499,7 @@ public partial class App : Application
         var currentSkillPoints = CalculateCurrentSkillPoints();
         if (_goal == CompletionGoal.Sorceress1)
         {
-            if (currentEggs >= 100 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
+            if (currentEggs >= 100 && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1489,7 +1507,7 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.EggForSale)
         {
-            if ((Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Moneybags Chase Complete") ?? false))
+            if ((Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Moneybags Chase Complete") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1497,7 +1515,7 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.Sorceress2)
         {
-            if ((Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Super Bonus Round Complete") ?? false))
+            if ((Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Super Bonus Round Complete") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1513,7 +1531,7 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.Epilogue)
         {
-            if (currentSkillPoints >= 20 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
+            if (currentSkillPoints >= 20 && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1521,7 +1539,7 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.Spike)
         {
-            if (currentEggs >= 36 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Spike Defeated") ?? false))
+            if (currentEggs >= 36 && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Spike Defeated") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1529,7 +1547,7 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.Scorch)
         {
-            if (currentEggs >= 65 && (Client.GameState?.ReceivedItems.Any(x => x != null && x.Name == "Scorch Defeated") ?? false))
+            if (currentEggs >= 65 && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Scorch Defeated") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1576,6 +1594,18 @@ public partial class App : Application
 
     private static async void ActivateInvincibility(int seconds)
     {
+        // Speedway time attacks won't end during invincibility. Prevent the effect in these levels.
+        // TODO: Review the feedback on this change - invincibility also stops the timer, making the time attack easier.
+        List<LevelInGameIDs> speedways = new List<LevelInGameIDs>() {
+            LevelInGameIDs.MushroomSpeedway,
+            LevelInGameIDs.CountrySpeedway,
+            LevelInGameIDs.HoneySpeedway,
+            LevelInGameIDs.HarborSpeedway
+        };
+        LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
+        if (speedways.Contains(currentLevel)) {
+            return;
+        }
         // The counter ticks down every frame (60 fps for in game calcs)
         seconds = seconds * 60;
         // Collecting an egg removes invincibility, so try to avoid a user's own egg
@@ -1674,7 +1704,7 @@ public partial class App : Application
 
     private static void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations)
     {
-        if (Client.GameState == null || Client.CurrentSession == null) return;
+        if (Client.ItemState == null || Client.CurrentSession == null) return;
         if (!Helpers.IsInGame())
         {
             Log.Logger.Error("Sending location while not in game - please report this error in the Discord.");
@@ -1686,7 +1716,7 @@ public partial class App : Application
 
     private static int CalculateCurrentEggs()
     {
-        var count = Client.GameState?.ReceivedItems.Where(x => x.Name == "Egg").Count() ?? 0;
+        var count = Client.ItemState?.ReceivedItems.Where(x => x.Name == "Egg").Count() ?? 0;
         count = Math.Min(count, 150);
         Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TotalEggAddress), (byte)(count));
         return count;
@@ -1694,7 +1724,7 @@ public partial class App : Application
 
     private static int CalculateCurrentSkillPoints()
     {
-        return Client.GameState?.ReceivedItems.Where(x => x.Name == "Skill Point").Count() ?? 0;
+        return Client.ItemState?.ReceivedItems.Where(x => x.Name == "Skill Point").Count() ?? 0;
     }
 
     private static int CalculateCurrentGems()
@@ -1711,8 +1741,8 @@ public partial class App : Application
             if (level.Name != "Super Bonus Round")
             {
                 string levelName = level.Name;
-                int levelGemCount = 50 * (Client.GameState?.ReceivedItems?.Where(x => x != null && x.Name == $"{levelName} 50 Gems").Count() ?? 0) +
-                    100 * (Client.GameState?.ReceivedItems?.Where(x => x != null && x.Name == $"{levelName} 100 Gems").Count() ?? 0);
+                int levelGemCount = 50 * (Client.ItemState?.ReceivedItems?.Where(x => x != null && x.Name == $"{levelName} 50 Gems").Count() ?? 0) +
+                    100 * (Client.ItemState?.ReceivedItems?.Where(x => x != null && x.Name == $"{levelName} 100 Gems").Count() ?? 0);
                 Memory.Write(levelGemCountAddress, levelGemCount);
                 totalGems += levelGemCount;
             }
@@ -1752,6 +1782,7 @@ public partial class App : Application
         _hintsList = null;
         _hasSubmittedGoal = false;
         _useQuietHints = true;
+        _unlockedLevels = 0;
         _easyChallenges = new List<string>();
         _worldKeys = 0;
         _progressiveBasketBreaks = 0;

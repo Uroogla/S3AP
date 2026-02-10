@@ -76,6 +76,10 @@ namespace S3AP
         {
             if (Memory.ReadString(Addresses.GreenLabelAtlasAddress, 5) == "Atlas")
             {
+                if (gameVersion != "1.1")
+                {
+                    Log.Logger.Information("You are playing on the NTSC-U 1.1 release of Spyro 3.");
+                }
                 gameVersion = "1.1";
                 return true;
             }

@@ -279,7 +279,7 @@ class EnableProgressiveSparxHealth(Choice):
 
 class ProgressiveSparxHealthLogic(Toggle):
     """Ensures that sufficient max Sparx health is in logic before various required checks.
-    Entering Crawdad Farm or any Midday level logically requires green Sparx.  Entering Fireworks Factory and
+    Entering Super Bonus Round, Crawdad Farm or any Midday level logically requires green Sparx.  Entering Fireworks Factory and
     Charmed Ridge logically requires blue Sparx, and entering Dino Mines and the Sorceress logically requires
     gold Sparx.  The Extra Health item/bonus from Starfish Reef is not considered for this logic.
     Note: This does nothing unless Enable Progressive Sparx Health Upgrades is set to blue, green, or Sparxless,"""
@@ -500,11 +500,6 @@ class LogicDesertNoMoneybags(Toggle):
     This option only matters if Moneybagssanity is turned on."""
     display_name = "Complete Desert Ruins without Moneybags"
 
-class LogicHauntedAgent9Early(Toggle):
-    """Puts entering the Agent 9 sub-area of Haunted Tomb without completing Agent 9 into logic.
-    See https://www.youtube.com/watch?v=GAr-E1pha7c"""
-    display_name = "Enter Haunted Tomb Agent 9 Area Early"
-
 class LogicDinoAgent9Early(Toggle):
     """Puts entering the Agent 9 sub-area of Dino Mines without completing Agent 9 into logic.
     This can be done with a swim in air or getting on top of the level's terrain."""
@@ -586,7 +581,6 @@ class Spyro3Option(PerGameCommonOptions):
     logic_bentley_early: LogicBentleyEarly
     logic_crystal_no_moneybags: LogicCrystalNoMoneybags
     logic_desert_no_moneybags: LogicDesertNoMoneybags
-    logic_haunted_agent_9_early: LogicHauntedAgent9Early
     logic_dino_agent_9_early: LogicDinoAgent9Early
     logic_sorceress_early: LogicSorceressEarly
 
@@ -638,7 +632,6 @@ spyro_options_groups = [
             LogicBentleyEarly,
             LogicCrystalNoMoneybags,
             LogicDesertNoMoneybags,
-            LogicHauntedAgent9Early,
             LogicDinoAgent9Early,
             LogicSorceressEarly
         ],

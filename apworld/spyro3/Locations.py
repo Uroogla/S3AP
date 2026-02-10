@@ -740,3 +740,15 @@ location_tables["Bugbot Factory"] = location_tables["Bugbot Factory"] + bugbot_g
 location_dictionary: Dict[str, Spyro3LocationData] = {}
 for location_table in location_tables.values():
     location_dictionary.update({location_data.name: location_data for location_data in location_table})
+
+location_name_groups = {"Speedways": set(), "Sparx Levels": set()}
+speedways = ["Mushroom Speedway", "Country Speedway", "Honey Speedway", "Harbor Speedway"]
+for location in location_dictionary.keys():
+    for speedway in speedways:
+        if location.startswith(speedway):
+            location_name_groups["Speedways"].add(location)
+sparx_levels = ["Crawdad Farm", "Spider Town", "Starfish Reef", "Bugbot Factory"]
+for location in location_dictionary.keys():
+    for sparx_level in sparx_levels:
+        if location.startswith(sparx_level):
+            location_name_groups["Sparx Levels"].add(location)
