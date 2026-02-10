@@ -86,7 +86,9 @@ hint_locations = [
     "Molten Crater: Fodder Zoe",
     "Seashell Shore: Atlas Zoe",
     "Seashell Shore: Hover Zoe",
-    "Sheila's Alp: Controls Zoe"
+    "Sheila's Alp: Controls Zoe",
+    "Midday Gardens: Fireball Zoe",
+    "Evening Lake: Invincibility Zoe"
 ]
 
 # To ensure backwards compatibility, do not reorder locations or insert new ones in the middle of a list.
@@ -190,6 +192,7 @@ location_tables = {
         Spyro3LocationData("Midday Gardens Home: Catch the thief. (Trixie)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Midday Gardens Home: Superflame the flowerpots. (Matt)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Midday Gardens Home: Climb to the ledge. (Modesty)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Midday Gardens: Fireball Zoe", "Hint 12", Spyro3LocationCategory.HINT),
     ],
     "Icy Peak": [
         Spyro3LocationData("Icy Peak: Find Doug the polar bear. (Chet)", "Egg", Spyro3LocationCategory.EGG_EOL),
@@ -269,6 +272,7 @@ location_tables = {
         Spyro3LocationData("Evening Lake Home: Break the tower wall. (Stooby)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Evening Lake Home: Belly of the whale. (Jonah)", "Egg", Spyro3LocationCategory.EGG),
         Spyro3LocationData("Evening Lake Home: I'm invincible! (Stuart)", "Egg", Spyro3LocationCategory.EGG),
+        Spyro3LocationData("Evening Lake: Invincibility Zoe", "Hint 13", Spyro3LocationCategory.HINT),
         Spyro3LocationData("Evening Lake: Life Bottle on Upper Path", "Filler", Spyro3LocationCategory.LIFE_BOTTLE),
     ],
     "Frozen Altars": [

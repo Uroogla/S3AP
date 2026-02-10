@@ -52,15 +52,14 @@ class LevelLockOptions():
 
 class GoalOption(Choice):
     """Lets the user choose the completion goal
-    Sorceress 1 - Beat the sorceress *and* obtain 100 eggs
+    Sorceress 1 - Beat the sorceress *and* obtain the specified number of eggs.
     Egg For Sale - Chase Moneybags after defeating the sorceress the first time.
-    Sorceress 2 - Beat the sorceress in Super Bonus Round
+    Sorceress 2 - Beat the sorceress in Super Bonus Round *and* obtain the specified number of eggs.
     All Skillpoints - Collect all 20 skill points in the game. Excluded locations are still required for this goal.
     Epilogue - Unlock the full epilogue by collecting all 20 skill points and defeating the sorceress. Excluded locations are still required for this goal.
-    Spike - Beat Spike with 36 eggs.
-    Scorch - Beat Scorch with 65 eggs.
-    Egg Hunt - Find a certain number of eggs to win. Portal requirements are reduced.  The Sorceress and SBR are
-         inaccessible."""
+    Spike - Beat Spike *and* obtain the specified number of eggs.
+    Scorch - Beat Scorch *and* obtain the specified number of eggs.
+    Egg Hunt - Find the specified number of eggs to win. Portal requirements are reduced."""
     display_name = "Completion Goal"
     default = GoalOptions.SORCERESS_ONE
     option_sorceress_1 = GoalOptions.SORCERESS_ONE
@@ -73,11 +72,12 @@ class GoalOption(Choice):
     option_egg_hunt = GoalOptions.EGG_HUNT
 
 class EggCount(Range):
-    """The number of eggs needed to win in Egg Hunt."""
-    display_name = "Eggs to Win Egg Hunt"
+    """The number of eggs needed to win when goal is Sorceress 1,
+    Sorceress 2, Spike, Scorch, and Egg Hunt."""
+    display_name = "Eggs to Win"
     range_start = 10
     range_end = 150
-    default = 50
+    default = 100
 
 class PercentExtraEggs(Range):
     """The percentage of extra eggs in the pool for Egg Hunt.
@@ -326,7 +326,8 @@ class RequireSparxForMaxGems(Choice):
     option_sparx_finder = SparxForGemsOptions.SPARX_FINDER
 
 class ZoeGivesHints(Range):
-    """Enables some or all of the 11 Tutorial Zoes across Sunrise Spring and its levels giving hints.
+    """Enables some or all of the 13 Tutorial Zoes giving hints.
+    There are 11 across Sunrise Spring, plus 1 each in Midday home and Evening home.
     Which Zoes give hints are random.  Those in Crawdad Farm never will, as this tutorial can be accessed only once.
     Hints fit into 3 categories, with hints evenly distributed between the categories:
     - Difficult or slow locations
@@ -334,15 +335,29 @@ class ZoeGivesHints(Range):
     - Joke hints."""
     display_name = "Number of Zoe Hints"
     range_start = 0
-    range_end = 11
+    range_end = 13
     default = 0
 
-class EasySkateboarding(Toggle):
-    """Makes most skateboarding challenges and skill points much easier.
-    Sunny Villa: Both eggs require only 1 lizard.  Skill point requires 1 trick. Lizards will remain after the eggs.
-    Enchanted Towers: Hunter cannot beat you.  Skill point requires 1 trick.
-    Lost Fleet and Super Bonus Round: Your have infinite turbo without doing tricks."""
-    display_name = "Easy Skateboarding"
+class EasySkateboardingLizards(Toggle):
+    """Makes lizard skateboarding challenges in Sunny Villa much easier.
+    Sunny Villa: Both eggs require only 1 lizard."""
+    display_name = "Easy Skateboarding Lizards"
+
+class EasySkateboardingPoints(Toggle):
+    """Makes point-based skateboarding challenges much easier.
+    Sunny Villa: The skill point requires only 1 trick to obtain.
+    Enchanted Towers: Hunter cannot beat you. The skill point requires only 1 trick to obtain."""
+    display_name = "Easy Skateboarding Points"
+
+class EasySkateboardingLostFleet(Toggle):
+    """Makes the Lost Fleet skateboarding challenges much easier.
+    Lost Fleet: Your turbo cannot run out."""
+    display_name = "Easy Skateboarding Lost Fleet"
+
+class EasySkateboardingSuperBonusRound(Toggle):
+    """Makes the Super Bonus Round skateboarding challenge much easier.
+    Super Bonus Round: Your turbo cannot run out."""
+    display_name = "Easy Skateboarding Super Bonus Round"
 
 class EasySubs(Toggle):
     """Makes Lost Fleet submarine challenges much easier by removing all but 1 sub (behind and right of the ship).
@@ -573,7 +588,10 @@ class Spyro3Option(PerGameCommonOptions):
     enable_progressive_sparx_logic: ProgressiveSparxHealthLogic
     require_sparx_for_max_gems: RequireSparxForMaxGems
     zoe_gives_hints: ZoeGivesHints
-    easy_skateboarding: EasySkateboarding
+    easy_skateboarding_lizards: EasySkateboardingLizards
+    easy_skateboarding_points: EasySkateboardingPoints
+    easy_skateboarding_lost_fleet: EasySkateboardingLostFleet
+    easy_skateboarding_super_bonus_round: EasySkateboardingSuperBonusRound
     easy_boxing: EasyBoxing
     easy_sheila_bombing: EasySheilaBombing
     easy_tanks: EasyTanks
@@ -618,7 +636,10 @@ spyro_options_groups = [
     OptionGroup(
         "Game Difficulty",
         [
-            EasySkateboarding,
+            EasySkateboardingLizards,
+            EasySkateboardingPoints,
+            EasySkateboardingLostFleet,
+            EasySkateboardingSuperBonusRound,
             EasyBoxing,
             EasySheilaBombing,
             EasyTanks,

@@ -1196,7 +1196,7 @@ class Spyro3World(World):
             for location in region.locations:
                     set_rule(location, lambda state: True)
         if self.generation_options["goal"] == GoalOptions.SORCERESS_TWO:
-            self.multiworld.completion_condition[self.player] = lambda state: state.has("Super Bonus Round Complete", self.player)
+            self.multiworld.completion_condition[self.player] = lambda state: state.has("Super Bonus Round Complete", self.player) and state.has("Egg", self.player, self.generation_options["egg_count"])
         elif self.generation_options["goal"] == GoalOptions.EGG_FOR_SALE:
             self.multiworld.completion_condition[self.player] = lambda state: state.has("Moneybags Chase Complete", self.player)
         elif self.generation_options["goal"] == GoalOptions.ALL_SKILLPOINTS:
@@ -1204,13 +1204,13 @@ class Spyro3World(World):
         elif self.generation_options["goal"] == GoalOptions.EPILOGUE:
             self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Sorceress", state) and state.has("Skill Point", self.player, 20)
         elif self.generation_options["goal"] == GoalOptions.SPIKE:
-            self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Spike", state) and state.has("Egg", self.player, 30)
+            self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Spike", state) and state.has("Egg", self.player, self.generation_options["egg_count"])
         elif self.generation_options["goal"] == GoalOptions.SCORCH:
-            self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Scorch", state) and state.has("Egg", self.player, 58)
+            self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Scorch", state) and state.has("Egg", self.player, self.generation_options["egg_count"])
         elif self.generation_options["goal"] == GoalOptions.EGG_HUNT:
             self.multiworld.completion_condition[self.player] = lambda state: state.has("Egg", self.player, self.generation_options["egg_count"])
         else:
-            self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Sorceress", state) and state.has("Egg", self.player, 100)
+            self.multiworld.completion_condition[self.player] = lambda state: is_boss_defeated(self, "Sorceress", state) and state.has("Egg", self.player, self.generation_options["egg_count"])
 
         # After completing 3 levels in Evening Lake, the player is unable to complete any Hunter challenges until defeating Scorch.
         # To prevent the player from locking themselves out of progression, these must be logically locked behind Scorch.
@@ -2364,7 +2364,10 @@ class Spyro3World(World):
                 "enable_progressive_sparx_logic": self.options.enable_progressive_sparx_logic.value,
                 "require_sparx_for_max_gems": self.options.require_sparx_for_max_gems.value,
                 "zoe_gives_hints": self.options.zoe_gives_hints.value,
-                "easy_skateboarding": self.options.easy_skateboarding.value,
+                "easy_skateboarding_lizards": self.options.easy_skateboarding_lizards.value,
+                "easy_skateboarding_points": self.options.easy_skateboarding_points.value,
+                "easy_skateboarding_lost_fleet": self.options.easy_skateboarding_lost_fleet.value,
+                "easy_skateboarding_super_bonus_round": self.options.easy_skateboarding_super_bonus_round.value,
                 "easy_boxing": self.options.easy_boxing.value,
                 "easy_sheila_bombing": self.options.easy_sheila_bombing.value,
                 "easy_tanks": self.options.easy_tanks.value,

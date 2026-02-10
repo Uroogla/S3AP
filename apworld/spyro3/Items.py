@@ -128,6 +128,8 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Hint 9", 4008, Spyro3ItemCategory.HINT),
     ("Hint 10", 4009, Spyro3ItemCategory.HINT),
     ("Hint 11", 4010, Spyro3ItemCategory.HINT),
+    ("Hint 12", 4011, Spyro3ItemCategory.HINT),
+    ("Hint 13", 4012, Spyro3ItemCategory.HINT),
 
     ("Sunrise Spring 100 Gems", 5000, Spyro3ItemCategory.GEMSANITY),
     ("Sunny Villa 100 Gems", 5001, Spyro3ItemCategory.GEMSANITY),

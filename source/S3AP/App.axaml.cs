@@ -33,7 +33,8 @@ public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
     public static string Version = "1.2.3";
-    public static List<string> SupportedVersions = ["1.2.0", "1.2.1", "1.2.2", "1.2.3"];
+    public static List<string> SupportedVersions = ["1.2.3"];
+    public static List<string> PartiallySupportedVersions = ["1.2.0", "1.2.1", "1.2.2"];
 
     public static MainWindowViewModel Context;
     public static ArchipelagoClient Client { get; set; }
@@ -153,16 +154,17 @@ public partial class App : Application
                 break;
             case "showGoal":
                 string goalText = "";
+                int eggsNeeded = int.Parse(Client.Options?.GetValueOrDefault("egg_count", 150).ToString());
                 switch (_goal)
                 {
                     case CompletionGoal.Sorceress1:
-                        goalText = "Collect 100 eggs and defeat the Sorceress in Sorceress' Lair";
+                        goalText = $"Collect {eggsNeeded} eggs and defeat the Sorceress in Sorceress' Lair";
                         break;
                     case CompletionGoal.EggForSale:
                         goalText = "Chase Moneybags in Midnight Mountain";
                         break;
                     case CompletionGoal.Sorceress2:
-                        goalText = "Defeat the Sorceress in Super Bonus Round";
+                        goalText = $"Collect {eggsNeeded} eggs and defeat the Sorceress in Super Bonus Round";
                         break;
                     case CompletionGoal.AllSkillPoints:
                         goalText = "Collect all 20 Skill Points";
@@ -171,13 +173,12 @@ public partial class App : Application
                         goalText = "Defeat the Sorceress in Sorceress' Lair and collect all 20 skill points";
                         break;
                     case CompletionGoal.Spike:
-                        goalText = "Defeat Spike in Spike's Arena and collect 36 eggs";
+                        goalText = $"Collect {eggsNeeded} eggs and defeat Spike in Spike's Arena";
                         break;
                     case CompletionGoal.Scorch:
-                        goalText = "Defeat Scorch in Scorch's Pit and collect 65 eggs";
+                        goalText = $"Collect {eggsNeeded} eggs and defeat Scorch in Scorch's Pit";
                         break;
                     case CompletionGoal.EggHunt:
-                        int eggsNeeded = int.Parse(Client.Options?.GetValueOrDefault("egg_count", 0).ToString());
                         goalText = $"Collect {eggsNeeded} eggs from a reduced egg pool";
                         break;
                     default:
@@ -256,7 +257,11 @@ public partial class App : Application
             _levelLockOptions = (LevelLockOptions)int.Parse(Client.Options?.GetValueOrDefault("level_lock_option", "0").ToString());
 
             string[] easyModeOptions = [
-                "easy_skateboarding",
+                "easy_skateboarding",  // Support backwards compatibility
+                "easy_skateboarding_lizards",
+                "easy_skateboarding_points",
+                "easy_skateboarding_lost_fleet",
+                "easy_skateboarding_super_bonus_round",
                 "easy_boxing",
                 "easy_sheila_bombing",
                 "easy_tanks",
@@ -301,6 +306,12 @@ public partial class App : Application
                 {
                     Log.Logger.Information($"The host's AP world version is {versionValue.ToString()} and the client version is {Version}.");
                     Log.Logger.Information("These versions are known to be compatible.");
+                }
+                else if (versionValue != null && PartiallySupportedVersions.Contains(versionValue.ToString().ToLower()))
+                {
+                    Log.Logger.Warning($"The host's AP world version is {versionValue.ToString()} and the client version is {Version}.");
+                    Log.Logger.Warning("These versions are known to be mostly compatible but may bave some unexpected behavior.");
+                    Log.Logger.Warning("Please be sure to read the release notes to see what may break.");
                 }
                 else if (versionValue != null && versionValue.ToString().ToLower() != Version.ToLower())
                 {
@@ -476,6 +487,8 @@ public partial class App : Application
             case "Hint 9":
             case "Hint 10":
             case "Hint 11":
+            case "Hint 12":
+            case "Hint 13":
                 GetZoeHint(args.Item.Name);
                 break;
             case "Progressive Sparx Health Upgrade":
@@ -833,19 +846,24 @@ public partial class App : Application
 
         // For other challenges, we can set values in RAM to make the challenge easier.
         if (
-            _easyChallenges.Contains("easy_skateboarding") &&
             currentLevel == LevelInGameIDs.SunnyVilla && currentSubarea == 2              // Skatepark
         )
         {
-            byte currentLizards = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.SunnyLizardsCount));
-            short currentScore = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.SunnySkateScore));
-            if (currentLizards < 14)
+            if (_easyChallenges.Contains("easy_skateboarding") || _easyChallenges.Contains("easy_skateboarding_lizards"))
             {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.SunnyLizardsCount), (byte)14);
+                byte currentLizards = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.SunnyLizardsCount));
+                if (currentLizards < 14)
+                {
+                    Memory.Write(Addresses.GetVersionAddress(Addresses.SunnyLizardsCount), (byte)14);
+                }
             }
-            if (currentScore < 3199)
+            if (_easyChallenges.Contains("easy_skateboarding") || _easyChallenges.Contains("easy_skateboarding_points"))
             {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.SunnySkateScore), (short)3199);
+                short currentScore = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.SunnySkateScore));
+                if (currentScore < 3199)
+                {
+                    Memory.Write(Addresses.GetVersionAddress(Addresses.SunnySkateScore), (short)3199);
+                }
             }
         }
         else if (
@@ -860,7 +878,7 @@ public partial class App : Application
             }
         }
         else if (
-            _easyChallenges.Contains("easy_skateboarding") &&
+            (_easyChallenges.Contains("easy_skateboarding") || _easyChallenges.Contains("easy_skateboarding_points")) &&
             currentLevel == LevelInGameIDs.EnchantedTowers && currentSubarea == 1        // Skatepark
         )
         {
@@ -903,7 +921,7 @@ public partial class App : Application
             }
         }
         else if (
-            _easyChallenges.Contains("easy_skateboarding") &&
+            (_easyChallenges.Contains("easy_skateboarding") || _easyChallenges.Contains("easy_skateboarding_lost_fleet")) &&
             currentLevel == LevelInGameIDs.LostFleet && currentSubarea == 2              // Skatepark
         )
         {
@@ -966,11 +984,11 @@ public partial class App : Application
             }
         }
         else if (
-            _easyChallenges.Contains("easy_skateboarding") &&
+            (_easyChallenges.Contains("easy_skateboarding") || _easyChallenges.Contains("easy_skateboarding_super_bonus_round")) &&
             currentLevel == LevelInGameIDs.SuperBonusRound && currentSubarea == 2              // Skatepark
         )
         {
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SuperBonusRoundNitro), (short)1000);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SuperBonusRoundNitro), (short)1300);
         }
         else if (
             currentLevel == LevelInGameIDs.MidnightMountain && gameStatus == GameStatus.InGame  // Protect this write carefully or it crashes warping to Midnight.
@@ -1121,6 +1139,14 @@ public partial class App : Application
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)Math.Floor(10 * multiplier));
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)Math.Floor(14 * multiplier));
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)Math.Floor(20 * multiplier));
+                if (_openWorld != 0 && eggs >= Math.Floor(10 * multiplier))
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+                }
+                if (_openWorld != 0 && eggs >= Math.Floor(14 * multiplier))
+                {
+                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+                }
             }
             else if (currentLevel == LevelInGameIDs.MiddayGardens)
             {
@@ -1519,8 +1545,11 @@ public partial class App : Application
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpikeDefeated), 1);
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ScorchDefeated), 1);
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningBianca), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+            if (_levelLockOptions != LevelLockOptions.Vanilla)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+            }
             uint eggAddress = Addresses.GetVersionAddress(Addresses.EggStartAddress);
             // Mark as collected the end of level eggs for the 15 "progression" levels and first 3 bosses.
             List<uint> collectedEggLevels = new List<uint> { 1, 2, 3, 4, 6, 7, 10, 11, 12, 13, 15, 16, 19, 20, 21, 22, 24, 25 };
@@ -1554,7 +1583,7 @@ public partial class App : Application
         var currentSkillPoints = CalculateCurrentSkillPoints();
         if (_goal == CompletionGoal.Sorceress1)
         {
-            if (currentEggs >= 100 && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
+            if (currentEggs >= _eggCountGoal && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1570,7 +1599,7 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.Sorceress2)
         {
-            if ((Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Super Bonus Round Complete") ?? false))
+            if (currentEggs >= _eggCountGoal && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Super Bonus Round Complete") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1594,7 +1623,7 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.Spike)
         {
-            if (currentEggs >= 36 && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Spike Defeated") ?? false))
+            if (currentEggs >= _eggCountGoal && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Spike Defeated") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
@@ -1602,7 +1631,7 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.Scorch)
         {
-            if (currentEggs >= 65 && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Scorch Defeated") ?? false))
+            if (currentEggs >= _eggCountGoal && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Scorch Defeated") ?? false))
             {
                 Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;

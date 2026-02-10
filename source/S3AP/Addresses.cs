@@ -106,6 +106,8 @@ namespace S3AP
         public static readonly List<uint> SeashellAtlasZoeAddress = [0x00071c1c, 2];
         public static readonly List<uint> SeashellHoverZoeAddress = [0x00071c17, 3];
         public static readonly List<uint> SheilaControlsZoeAddress = [0x00071c56, 1];
+        public static readonly List<uint> MiddayFireballZoeAddress = [0x00071cbb, 0];
+        public static readonly List<uint> EveningInvincibilityZoeAddress = [0x00071dd8, 1];
 
         public const uint SheilaCutscene = 0x007166a;
         public const uint BuzzDefeated = 0x007166c;
@@ -169,7 +171,7 @@ namespace S3AP
         public const uint RedRocketCount = 0x000705f0;
         public const uint GreenRocketCount = 0x0015bf64;
         public const uint HasGreenRocketAddress = 0x0015bf68;
-        public const uint SuperBonusRoundNitro = 0x16a884; // short
+        public const uint SuperBonusRoundNitro = 0x16ae84; // short
 
         public const uint SunriseGemMask = 0x00071b90;
         public const uint SunnyGemMask = 0x00071bb0;
