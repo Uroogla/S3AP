@@ -374,6 +374,9 @@ class Spyro3World(World):
             self.generation_options["enable_gemsanity"] = slot_data["options"]["enable_gemsanity"]
             self.generation_options["zoe_gives_hints"] = slot_data["options"]["zoe_gives_hints"]
             self.generation_options["goal"] = slot_data["options"]["goal"]
+            self.generation_options["sorceress_door_requirement"] = slot_data["options"]["sorceress_door_requirement"]
+            self.generation_options["sbr_door_gem_requirement"] = slot_data["options"]["sbr_door_gem_requirement"]
+            self.generation_options["sbr_door_egg_requirement"] = slot_data["options"]["sbr_door_egg_requirement"]
             self.generation_options["enable_25_pct_gem_checks"] = slot_data["options"]["enable_25_pct_gem_checks"]
             self.generation_options["enable_50_pct_gem_checks"] = slot_data["options"]["enable_50_pct_gem_checks"]
             self.generation_options["enable_75_pct_gem_checks"] = slot_data["options"]["enable_75_pct_gem_checks"]
@@ -430,6 +433,9 @@ class Spyro3World(World):
             self.generation_options["enable_gemsanity"] = self.options.enable_gemsanity.value
             self.generation_options["zoe_gives_hints"] = self.options.zoe_gives_hints.value
             self.generation_options["goal"] = self.options.goal.value
+            self.generation_options["sorceress_door_requirement"] = self.options.sorceress_door_requirement.value
+            self.generation_options["sbr_door_gem_requirement"] = self.options.sbr_door_gem_requirement.value
+            self.generation_options["sbr_door_egg_requirement"] = self.options.sbr_door_egg_requirement.value
             self.generation_options["enable_25_pct_gem_checks"] = self.options.enable_25_pct_gem_checks.value
             self.generation_options["enable_50_pct_gem_checks"] = self.options.enable_50_pct_gem_checks.value
             self.generation_options["enable_75_pct_gem_checks"] = self.options.enable_75_pct_gem_checks.value
@@ -507,7 +513,7 @@ class Spyro3World(World):
             all_gem_locations = []
             for location in location_dictionary:
                 if location_dictionary[location].category == Spyro3LocationCategory.GEMSANITY:
-                    if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100 or not location.startswith("Bugbot "):
+                    if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"] or not location.startswith("Bugbot "):
                         all_gem_locations.append(location)
             # Universal Tracker does not know which gems were picked.  Have it assume all gems were picked when it
             # creates its seed.  The location list on the AP server will then remove all non-selected gems.
@@ -520,13 +526,16 @@ class Spyro3World(World):
                 if item.category == Spyro3ItemCategory.GEMSANITY:
                     self.options.local_items.value.add(item)
         # Egg Hunt may not contain enough eggs to reach all areas.
-        # If required egg count is 100 or fewer, change the access requirements for levels.
+        # If required egg count is generation_options["sorceress_door_requirement"] or fewer, change the access requirements for levels.
         if self.generation_options["goal"] == GoalOptions.EGG_HUNT:
-            if self.generation_options["egg_count"] <= 100:
+            if self.generation_options["egg_count"] <= self.generation_options["sorceress_door_requirement"]:
                 self.all_levels.remove("Sorceress")
                 self.all_levels.remove("Bugbot Factory")
+            if self.generation_options["egg_count"] <= 100:
+                # Use 100 as the weight regardless of the door requirement.
                 self.requirement_multiplier = 1.0 * self.generation_options["egg_count"] / 100
-            if self.generation_options["egg_count"] <= 149:
+            if self.generation_options["egg_count"] <= self.generation_options["sbr_door_egg_requirement"] or \
+                    self.generation_options["egg_count"] <= self.generation_options["sorceress_door_requirement"] and self.generation_options["sbr_door_gem_requirement"] > 14800:
                 self.all_levels.remove("Super Bonus Round")
 
         if hasattr(self.multiworld, "re_gen_passthrough"):
@@ -610,10 +619,11 @@ class Spyro3World(World):
         create_connection("Midnight Mountain", "Harbor Speedway")
         create_connection("Midnight Mountain", "Agent 9's Lab")
 
-        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100:
+        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]:
             create_connection("Midnight Mountain", "Sorceress")
             create_connection("Midnight Mountain", "Bugbot Factory")
-        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 149:
+        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sbr_door_egg_requirement"] and \
+                (self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"] or self.generation_options["sbr_door_gem_requirement"] <= 14800):
             create_connection("Midnight Mountain", "Super Bonus Round")
 
     # For each region, add the associated locations retrieved from the corresponding location_table
@@ -621,11 +631,11 @@ class Spyro3World(World):
         new_region = Region(region_name, self.player, self.multiworld)
         for location in location_table:
             if self.generation_options["goal"] == GoalOptions.EGG_HUNT and \
-                    ((self.generation_options["egg_count"] <= 100 and (location.name.startswith("Bugbot ") or
+                    ((self.generation_options["egg_count"] <= self.generation_options["sorceress_door_requirement"] and (location.name.startswith("Bugbot ") or
                     location.name.startswith == "Sorceress" or
                     location.name == "Midnight Mountain Home: Moneybags Chase Complete" or
                     location.name == "Midnight Mountain Home: Egg for sale. (Al)")) or
-                    (self.generation_options["egg_count"] <= 149 and location.name.startswith("Super Bonus Round"))):
+                    ((self.generation_options["egg_count"] <= self.generation_options["sbr_door_egg_requirement"] or self.generation_options["egg_count"] <= self.generation_options["sorceress_door_requirement"] and self.generation_options["sbr_door_gem_requirement"] > 14800) and location.name.startswith("Super Bonus Round"))):
                 continue
             if location.category in self.enabled_location_categories and location.category == Spyro3LocationCategory.EGG_EOL and self.generation_options["open_world"]:
                 filler_item = self.create_item("Filler")
@@ -663,7 +673,6 @@ class Spyro3World(World):
                 new_region.locations.append(new_location)
             elif location.category in self.enabled_location_categories and location.category == Spyro3LocationCategory.TOTAL_GEM:
                 gems_needed = int(location.name.split("Total Gems: ")[1])
-                # TODO: Work out correct logic here.
                 if gems_needed <= self.generation_options["max_total_gem_checks"] and not (self.generation_options["goal"] == GoalOptions.EGG_HUNT and gems_needed > 14800):
                     new_location = Spyro3Location(
                         self.player,
@@ -842,7 +851,7 @@ class Spyro3World(World):
         def has_optional_moneybags_unlock(self, unlock, state):
             if self.generation_options["moneybags_settings"] != MoneybagsOptions.MONEYBAGSSANITY:
                 return True
-            return state.has(f"Moneybags Unlock - {unlock}", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state)
+            return state.has(f"Moneybags Unlock - {unlock}", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state)
 
         def are_gems_accessible(self, state):
             if self.generation_options["enable_gemsanity"] != GemsanityOptions.OFF:
@@ -1129,7 +1138,7 @@ class Spyro3World(World):
                 level_gems = 200
                 ignore_sparx_restrictions = True
             elif level == 'Super Bonus Round':
-                if not is_boss_defeated(self, 'Sorceress', state) or not state.has("Egg", self.player, 149) or not has_all_gems(self, state):
+                if not state.has("Egg", self.player, self.generation_options["sbr_door_egg_requirement"]) or not has_gems_for_sbr(self, state):
                     return 0
                 level_gems = 5000
             if not are_gems_accessible(self, state) and not ignore_sparx_restrictions and not is_glitched_logic(self, state):
@@ -1145,11 +1154,11 @@ class Spyro3World(World):
 
             if include_moneybags and \
                     self.generation_options["moneybags_settings"] != MoneybagsOptions.MONEYBAGSSANITY and \
-                    (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and \
+                    (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and \
                     not is_boss_defeated(self, "Sorceress", state) and \
                     self.generation_options["enable_gemsanity"] == GemsanityOptions.OFF:
                 # Remove gems for possible Moneybags payments.  To avoid a player locking themselves out of progression,
-                # we have to assume every possible payment is made, including any where the player can skip into the level
+                # we have to assume every possible payment is made, including anywhere the player can skip into the level
                 # out of logic and then pay Moneybags.
                 # Further, because total gem checks cannot go out of logic by progressing, group all the payments
                 # together at the start.  This means that in logic, total gem checks are unavailable early.
@@ -1162,9 +1171,9 @@ class Spyro3World(World):
                 accessible_gems -= 4700
             return accessible_gems >= max_gems
 
-        def has_all_gems(self, state):
+        def has_gems_for_sbr(self, state):
             # Don't include SBR in gem calculations to avoid recursion issues.
-            return has_total_accessible_gems(self, state, 15000, include_sbr=False)
+            return has_total_accessible_gems(self, state, self.generation_options["sbr_door_gem_requirement"], include_sbr=False)
 
         def has_sparx_health(self, health, state):
             if self.generation_options["enable_progressive_sparx_health"] in [SparxUpgradeOptions.OFF, SparxUpgradeOptions.TRUE_SPARXLESS]:
@@ -1327,14 +1336,14 @@ class Spyro3World(World):
             if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Molten Crater: Assemble tiki heads (Goal)", self.player), lambda state: is_level_completed(self, "Sgt. Byrd's Base", state))
         if self.generation_options["moneybags_settings"] == MoneybagsOptions.MONEYBAGSSANITY and not self.generation_options["logic_molten_thieves_no_moneybags"]:
-            set_rule(self.multiworld.get_location("Molten Crater: Catch the thief. (Moira)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state))
-            set_rule(self.multiworld.get_location("Molten Crater: Supercharge after the thief. (Kermitt)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state))
+            set_rule(self.multiworld.get_location("Molten Crater: Catch the thief. (Moira)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state))
+            set_rule(self.multiworld.get_location("Molten Crater: Supercharge after the thief. (Kermitt)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state))
             if Spyro3LocationCategory.SKILLPOINT in self.enabled_location_categories:
-                set_rule(self.multiworld.get_location("Molten Crater: Supercharge the wall (Skill Point)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state))
+                set_rule(self.multiworld.get_location("Molten Crater: Supercharge the wall (Skill Point)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state))
             if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
-                set_rule(self.multiworld.get_location("Molten Crater: Supercharge the wall (Goal)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state))
+                set_rule(self.multiworld.get_location("Molten Crater: Supercharge the wall (Goal)", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state))
             if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
-                set_rule(self.multiworld.get_location("Molten Crater: Life Bottle in Breakable Wall in Thief Area", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state))
+                set_rule(self.multiworld.get_location("Molten Crater: Life Bottle in Breakable Wall in Thief Area", self.player), lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(147):
                 if len(self.chosen_gem_locations) == 0 or f"Molten Crater: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1360,7 +1369,7 @@ class Spyro3World(World):
                     if len(self.chosen_gem_locations) == 0 or f"Molten Crater: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Molten Crater: Gem {gem - skipped_bits}", self.player),
-                            lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state)
+                            lambda state: state.has("Moneybags Unlock - Molten Crater Thieves Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state)
                         )
             if not self.generation_options["logic_molten_byrd_early"]:
                 for gem in byrd_gems:
@@ -1484,7 +1493,7 @@ class Spyro3World(World):
         # This can be entered without paying Moneybags, but shooting the crystal you need to jump on with the cannon renders the skip impossible.
         if self.generation_options["moneybags_settings"] == MoneybagsOptions.MONEYBAGSSANITY:
             # No gems in Nancy area.
-            set_rule(self.multiworld.get_location("Icy Peak: Protect Nancy the skater. (Cerny)", self.player), lambda state: state.has("Moneybags Unlock - Icy Peak Nancy Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state))
+            set_rule(self.multiworld.get_location("Icy Peak: Protect Nancy the skater. (Cerny)", self.player), lambda state: state.has("Moneybags Unlock - Icy Peak Nancy Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(175):
                 if len(self.chosen_gem_locations) == 0 or f"Icy Peak: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1740,7 +1749,7 @@ class Spyro3World(World):
         # Requires a proxy.
         if self.generation_options["moneybags_settings"] == MoneybagsOptions.MONEYBAGSSANITY and not self.generation_options["logic_frozen_cat_hockey_no_moneybags"]:
             # 0 gems in cat hockey subarea.
-            set_rule(self.multiworld.get_location("Frozen Altars: Catch the ice cats. (Ba'ah)", self.player), lambda state: state.has("Moneybags Unlock - Frozen Altars Cat Hockey Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state))
+            set_rule(self.multiworld.get_location("Frozen Altars: Catch the ice cats. (Ba'ah)", self.player), lambda state: state.has("Moneybags Unlock - Frozen Altars Cat Hockey Door", self.player) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(129):
                 if len(self.chosen_gem_locations) == 0 or f"Frozen Altars: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1978,7 +1987,7 @@ class Spyro3World(World):
             set_indirect_rule(self, "Midnight Mountain", lambda state: is_boss_defeated(self, "Scorch", state) and has_world_keys(self, 3, state))
         else:
             set_indirect_rule(self, "Midnight Mountain", lambda state: is_boss_defeated(self, "Scorch", state))
-        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100:
+        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]:
             set_rule(self.multiworld.get_location("Midnight Mountain Home: Egg for sale. (Al)", self.player), lambda state: is_boss_defeated(self,"Sorceress", state))
             set_rule(self.multiworld.get_location("Midnight Mountain Home: Moneybags Chase Complete", self.player), lambda state: is_boss_defeated(self, "Sorceress", state))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
@@ -2006,12 +2015,12 @@ class Spyro3World(World):
         # Can defeat the Sorceress or perform a swim in air.
         if self.generation_options["moneybags_settings"] == MoneybagsOptions.MONEYBAGSSANITY and not self.generation_options["logic_crystal_no_moneybags"]:
             # Moneybags locks 475 gems.
-            set_rule(self.multiworld.get_location("Crystal Islands: Reach the crystal tower. (Lloyd)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
-            set_rule(self.multiworld.get_location("Crystal Islands: Ride the slide. (Elloise)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
-            set_rule(self.multiworld.get_location("Crystal Islands: Fly to the hidden egg. (Grace)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
-            set_rule(self.multiworld.get_location("Crystal Islands: Catch the flying thief. (Max)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
-            set_rule(self.multiworld.get_location("Crystal Islands Complete", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
-            set_rule(self.multiworld.get_location("Crystal Islands: Whack a mole. (Hank)", self.player), lambda state: is_level_completed(self, "Bentley's Outpost", state) and ((self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)))
+            set_rule(self.multiworld.get_location("Crystal Islands: Reach the crystal tower. (Lloyd)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
+            set_rule(self.multiworld.get_location("Crystal Islands: Ride the slide. (Elloise)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
+            set_rule(self.multiworld.get_location("Crystal Islands: Fly to the hidden egg. (Grace)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
+            set_rule(self.multiworld.get_location("Crystal Islands: Catch the flying thief. (Max)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
+            set_rule(self.multiworld.get_location("Crystal Islands Complete", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
+            set_rule(self.multiworld.get_location("Crystal Islands: Whack a mole. (Hank)", self.player), lambda state: is_level_completed(self, "Bentley's Outpost", state) and ((self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)))
         else:
             set_rule(self.multiworld.get_location("Crystal Islands: Whack a mole. (Hank)", self.player), lambda state: is_level_completed(self,"Bentley's Outpost", state))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
@@ -2042,7 +2051,7 @@ class Spyro3World(World):
                     if len(self.chosen_gem_locations) == 0 or f"Crystal Islands: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Crystal Islands: Gem {gem - skipped_bits}", self.player),
-                            lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)
+                            lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)
                         )
 
 
@@ -2064,15 +2073,15 @@ class Spyro3World(World):
         # Can defeat the Sorceress, proxy off a scorpion, or do a terrain jump to end of level.
         if self.generation_options["moneybags_settings"] == MoneybagsOptions.MONEYBAGSSANITY and not self.generation_options["logic_desert_no_moneybags"]:
             # 79 gems in Sheila subarea. 252 are locked behind Moneybags.
-            set_rule(self.multiworld.get_location("Desert Ruins: Raid the tomb. (Marty)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
-            set_rule(self.multiworld.get_location("Desert Ruins: Shark shootin'. (Sadie)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
-            set_rule(self.multiworld.get_location("Desert Ruins Complete", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
+            set_rule(self.multiworld.get_location("Desert Ruins: Raid the tomb. (Marty)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
+            set_rule(self.multiworld.get_location("Desert Ruins: Shark shootin'. (Sadie)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
+            set_rule(self.multiworld.get_location("Desert Ruins Complete", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
             if Spyro3LocationCategory.SKILLPOINT in self.enabled_location_categories:
-                set_rule(self.multiworld.get_location("Desert Ruins: Destroy all seaweed (Skill Point)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
+                set_rule(self.multiworld.get_location("Desert Ruins: Destroy all seaweed (Skill Point)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
             if Spyro3LocationCategory.SKILLPOINT_GOAL in self.enabled_location_categories:
-                set_rule(self.multiworld.get_location("Desert Ruins: Destroy all seaweed (Goal)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
+                set_rule(self.multiworld.get_location("Desert Ruins: Destroy all seaweed (Goal)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
             if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
-                set_rule(self.multiworld.get_location("Desert Ruins: Life Bottle near Sharks Sub-Area", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
+                set_rule(self.multiworld.get_location("Desert Ruins: Life Bottle near Sharks Sub-Area", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(144):
                 if len(self.chosen_gem_locations) == 0 or f"Desert Ruins: Gem {i + 1}" in self.chosen_gem_locations:
@@ -2098,7 +2107,7 @@ class Spyro3World(World):
                     if len(self.chosen_gem_locations) == 0 or f"Desert Ruins: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Desert Ruins: Gem {gem - skipped_bits}", self.player),
-                            lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player)
+                            lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Desert Ruins Door", self.player)
                         )
 
 
@@ -2190,10 +2199,10 @@ class Spyro3World(World):
             set_indirect_rule(
                 self,
                 "Agent 9's Lab",
-                lambda state: (has_sparx_health(self, 2, state) or is_glitched_logic(self, state)) and (is_companion_unlocked(self, "Agent 9", state) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state))
+                lambda state: (has_sparx_health(self, 2, state) or is_glitched_logic(self, state)) and (is_companion_unlocked(self, "Agent 9", state) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state))
             )
         elif self.generation_options["moneybags_settings"] != MoneybagsOptions.VANILLA:
-            set_indirect_rule(self, "Agent 9's Lab", lambda state: (is_companion_unlocked(self, "Agent 9", state) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100) and is_boss_defeated(self, "Sorceress", state)))
+            set_indirect_rule(self, "Agent 9's Lab", lambda state: (is_companion_unlocked(self, "Agent 9", state) or (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state)))
         elif self.generation_options["enable_progressive_sparx_logic"]:
             set_indirect_rule(self, "Agent 9's Lab", lambda state: has_sparx_health(self, 2, state))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
@@ -2205,16 +2214,16 @@ class Spyro3World(World):
                     )
 
         # Sorceress' Lair Rules
-        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100:
+        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]:
             if not self.generation_options["logic_sorceress_early"] and self.generation_options["enable_progressive_sparx_logic"]:
-                set_indirect_rule(self, "Sorceress", lambda state: (has_sparx_health(self, 3, state) or is_glitched_logic(self, state)) and state.has("Egg", self.player, 100))
+                set_indirect_rule(self, "Sorceress", lambda state: (has_sparx_health(self, 3, state) or is_glitched_logic(self, state)) and state.has("Egg", self.player, self.generation_options["sorceress_door_requirement"]))
             elif not self.generation_options["logic_sorceress_early"]:
-                set_indirect_rule(self, "Sorceress", lambda state: state.has("Egg", self.player, 100))
+                set_indirect_rule(self, "Sorceress", lambda state: state.has("Egg", self.player, self.generation_options["sorceress_door_requirement"]))
             elif self.generation_options["enable_progressive_sparx_logic"]:
                 set_indirect_rule(self, "Sorceress", lambda state: (has_sparx_health(self, 3, state) or is_glitched_logic(self, state)))
 
         # Bugbot Factory Rules
-        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 100:
+        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]:
             if self.generation_options["enable_progressive_sparx_logic"]:
                 set_indirect_rule(self, "Bugbot Factory", lambda state: is_boss_defeated(self, "Sorceress", state) and \
                     is_level_completed(self, 'Starfish Reef', state) and \
@@ -2227,19 +2236,20 @@ class Spyro3World(World):
 
 
         # Super Bonus Round Rules
-        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > 149:
+        if self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sbr_door_egg_requirement"] and \
+                (self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"] or self.generation_options["sbr_door_gem_requirement"] <= 14800):
             # Ensure all gems are in logic.
             if self.generation_options["enable_progressive_sparx_logic"]:
                 set_indirect_rule(
                     self,
                     "Super Bonus Round",
-                    lambda state: state.has("Egg", self.player, 149) and has_all_gems(self, state) and (has_sparx_health(self, 1, state) or is_glitched_logic(self, state))
+                    lambda state: state.has("Egg", self.player, self.generation_options["sbr_door_egg_requirement"]) and has_gems_for_sbr(self, state) and (has_sparx_health(self, 1, state) or is_glitched_logic(self, state))
                 )
             else:
                 set_indirect_rule(
                     self,
                     "Super Bonus Round",
-                    lambda state: state.has("Egg", self.player, 149) and has_all_gems(self, state)
+                    lambda state: state.has("Egg", self.player, self.generation_options["sbr_door_egg_requirement"]) and has_gems_for_sbr(self, state)
                 )
 
         # Level Gem Count rules
@@ -2272,7 +2282,6 @@ class Spyro3World(World):
         if Spyro3LocationCategory.TOTAL_GEM in self.enabled_location_categories:
             for i in range(40):
                 gems = 500 * (i + 1)
-                # TODO: Work out correct logic.
                 if gems <= self.generation_options["max_total_gem_checks"] and not (self.generation_options["goal"] == GoalOptions.EGG_HUNT and gems > 14800):
                     set_rule(self.multiworld.get_location(f"Total Gems: {gems}", self.player), lambda state, gems=gems: has_total_accessible_gems(self, state, gems) or is_glitched_logic(self, state) and has_total_accessible_gems(self, state, gems, include_moneybags=False))
                 else:
@@ -2328,6 +2337,9 @@ class Spyro3World(World):
                 "open_world": self.options.open_world.value,
                 "level_lock_option": self.options.level_lock_option.value,
                 "starting_levels_count": self.options.starting_levels_count.value,
+                "sorceress_door_requirement": self.options.sorceress_door_requirement.value,
+                "sbr_door_egg_requirement": self.options.sbr_door_egg_requirement.value,
+                "sbr_door_gem_requirement": self.options.sbr_door_gem_requirement.value,
                 "enable_25_pct_gem_checks": self.options.enable_25_pct_gem_checks.value,
                 "enable_50_pct_gem_checks": self.options.enable_50_pct_gem_checks.value,
                 "enable_75_pct_gem_checks": self.options.enable_75_pct_gem_checks.value,

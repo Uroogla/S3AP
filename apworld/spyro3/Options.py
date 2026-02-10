@@ -133,6 +133,33 @@ class StartingLevels(Range):
     range_end = 20
     default = 2
 
+class SorceressDoorRequirement(Range):
+    """Determines how many eggs are required to open the door to the Sorceress
+    in Midnight Mountain. Due to technical limitations, this cannot exceed 100.
+    NOTE: This only works if Duckstation is set to interpreter mode."""
+    display_name = "Eggs to Open Sorceress Door"
+    range_start = 1
+    range_end = 100
+    default = 100
+
+class SBRDoorEggRequirement(Range):
+    """Determines how many eggs are required to open the door to Super Bonus Round.
+    NOTE: This only works if Duckstation is set to interpreter mode."""
+    display_name = "Eggs to Open Super Bonus Round"
+    range_start = 1
+    range_end = 149
+    default = 149
+
+class SBRDoorGemRequirement(Range):
+    """Determines how many gems are required to open the door to Super Bonus Round.
+    Gem requirements within Super Bonus Round are based on this number.
+    NOTE: This only works if Duckstation is set to interpreter mode.
+    The door displays will be inaccurate due to limitations in the Spyro 3 game code."""
+    display_name = "Eggs to Open Super Bonus Round"
+    range_start = 1
+    range_end = 15000
+    default = 15000
+
 class Enable25PctGemChecksOption(Toggle):
     """Adds checks for getting 25% of the gems in a level"""
     display_name = "Enable 25% Gem Checks"
@@ -315,13 +342,11 @@ class EasySkateboarding(Toggle):
     Sunny Villa: Both eggs require only 1 lizard.  Skill point requires 1 trick. Lizards will remain after the eggs.
     Enchanted Towers: Hunter cannot beat you.  Skill point requires 1 trick.
     Lost Fleet and Super Bonus Round: Your have infinite turbo without doing tricks."""
-    # TODO: Implement Super Bonus Round
     display_name = "Easy Skateboarding"
 
 class EasySubs(Toggle):
     """Makes Lost Fleet submarine challenges much easier by removing all but 1 sub (behind and right of the ship).
     The HUD will incorrectly display 1/1."""
-    # TODO: Implement Super Bonus Round
     display_name = "Easy Subs"
 
 class EasyBoxing(Toggle):
@@ -521,6 +546,9 @@ class Spyro3Option(PerGameCommonOptions):
     open_world: OpenWorldOption
     level_lock_option: LevelLockOption
     starting_levels_count: StartingLevels
+    sorceress_door_requirement: SorceressDoorRequirement
+    sbr_door_egg_requirement: SBRDoorEggRequirement
+    sbr_door_gem_requirement: SBRDoorGemRequirement
     enable_25_pct_gem_checks: Enable25PctGemChecksOption
     enable_50_pct_gem_checks: Enable50PctGemChecksOption
     enable_75_pct_gem_checks: Enable75PctGemChecksOption

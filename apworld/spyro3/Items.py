@@ -223,7 +223,7 @@ def BuildItemPool(world, count, preplaced_eggs, options, locked_levels):
             item_pool.append(item_dictionary["Crawdad Farm 50 Gems"])
             item_pool.append(item_dictionary["Spider Town 50 Gems"])
             item_pool.append(item_dictionary["Starfish Reef 50 Gems"])
-            if world.generation_options["goal"] != GoalOptions.EGG_HUNT or world.generation_options["egg_count"] > 100:
+            if world.generation_options["goal"] != GoalOptions.EGG_HUNT or world.generation_options["egg_count"] > world.generation_options["sorceress_door_requirement"]:
                 item_pool.append(item_dictionary["Bugbot Factory 50 Gems"])
             else:
                 remaining_count = remaining_count + 1

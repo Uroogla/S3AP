@@ -169,6 +169,7 @@ namespace S3AP
         public const uint RedRocketCount = 0x000705f0;
         public const uint GreenRocketCount = 0x0015bf64;
         public const uint HasGreenRocketAddress = 0x0015bf68;
+        public const uint SuperBonusRoundNitro = 0x16a884; // short
 
         public const uint SunriseGemMask = 0x00071b90;
         public const uint SunnyGemMask = 0x00071bb0;
@@ -278,6 +279,26 @@ namespace S3AP
 
         public const uint SpookyOpenWorldGem = 0x71D18;  // bit 0x80
 
+        public const uint SorceressDoorReq1 = 0x75844;  // Game code, short gives egg req.
+        public const uint SorceressDoorReq2 = 0x764c0;  // Game code, short gives egg req.
+        public const uint SorceressDoorReq3 = 0x799dc;  // Game code, short gives egg req.
+        public const uint SorceressDoorReqDisplay = 0x19b8dc;
+        public const uint SBRGemReq1 = 0x78000;  // Game code, short gives gem req.
+        public const uint SBRGemReq2 = 0x7835c;  // Game code, short gives gem req.
+        public const uint SBRGemReq3 = 0x786f0;  // Game code, short gives gem req.
+        public const uint SBRGemReq4 = 0x7f520;  // Game code, short gives gem req.
+        public const uint SBRGemReq5 = 0x7f5c0;  // Game code, short gives gem req.
+        public const uint SBRGemReq6 = 0x7f660;  // Game code, short gives gem req.
+        public const uint SBRGemDisplayFirstDigit = 0x7f4cc;  // Game code, byte - 0x1d for 1 or 0x1c for 0.
+        public const uint SBRGemDisplaySecondDigit = 0x7f4e0;  // Game code, byte - 0x1c for 0 through 0x25 for 9.
+        public const uint SBREggReq1 = 0x77fe8;  // Game code, short gives egg req.
+        public const uint SBREggReq2 = 0x78374;  // Game code, short gives egg req.
+        public const uint SBREggReq3 = 0x19beb4;
+        public const uint SBRSubsGemReq = 0x170cf4;  // word
+        public const uint SBRSkateboardingGemReq = 0x16f9e0;  // word
+        public const uint SBRUFOsGemReq = 0x1712a8;  // word
+        public const uint SBRSorcGemReq = 0x170d04;  // word
+
         public static uint GetVersionAddress(uint greenLabelAddress)
         {
             // Avoid async issues where items or ItemState is processed prior to this populating correctly.
@@ -371,6 +392,46 @@ namespace S3AP
                 if (greenLabelAddress == PlayerHealthBugbot)
                 {
                     return 0xf12f0;
+                }
+                if (greenLabelAddress == SuperBonusRoundNitro)
+                {
+                    return 0x16ade8;
+                }
+                if (greenLabelAddress == SBRGemReq4)
+                {
+                    return 0x7f428;
+                }
+                if (greenLabelAddress == SBRGemReq5)
+                {
+                    return 0x7f4c8;
+                }
+                if (greenLabelAddress == SBRGemReq6)
+                {
+                    return 0x7f568;
+                }
+                if (greenLabelAddress == SBRGemDisplayFirstDigit)
+                {
+                    return 0x7f3d4;
+                }
+                if (greenLabelAddress == SBRGemDisplaySecondDigit)
+                {
+                    return 0x7f3e8;
+                }
+                if (greenLabelAddress == SBRSubsGemReq)
+                {
+                    return 0x170c58;
+                }
+                if (greenLabelAddress == SBRSkateboardingGemReq)
+                {
+                    return 0x16f944;
+                }
+                if (greenLabelAddress == SBRUFOsGemReq)
+                {
+                    return 0x17120c;
+                }
+                if (greenLabelAddress == SBRSorcGemReq)
+                {
+                    return 0x170c68;
                 }
                 // NOTE: Level names from SBR through Sorceress' Lair have no offset.
                 // Those after are greenLabelAddress - 0x4

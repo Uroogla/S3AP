@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using ReactiveUI;
 using S3AP.Models;
 using Serilog;
+using Silk.NET.OpenGL;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -60,6 +61,9 @@ public partial class App : Application
     private static CompletionGoal _goal { get; set; }
     private static ProgressiveSparxHealthOptions _sparxOption { get; set; }
     private static int _eggCountGoal { get; set; }
+    private static int _sorceressDoorEggReq { get; set; }
+    private static int _sbrDoorEggReq { get; set; }
+    private static int _sbrDoorGemReq { get; set; }
     private static int _isWorldKeysOn { get; set; }
     // Timers
     private static Timer _loadGameTimer { get; set; }
@@ -244,6 +248,9 @@ public partial class App : Application
             _sparxPowerShuffle = int.Parse(Client.Options?.GetValueOrDefault("sparx_power_settings", "0").ToString());
             _goal = (CompletionGoal)int.Parse(Client.Options?.GetValueOrDefault("goal", "0").ToString());
             _eggCountGoal = int.Parse(Client.Options?.GetValueOrDefault("egg_count", "0").ToString());
+            _sorceressDoorEggReq = int.Parse(Client.Options?.GetValueOrDefault("sorceress_door_requirement", "100").ToString());
+            _sbrDoorEggReq = int.Parse(Client.Options?.GetValueOrDefault("sbr_door_egg_requirement", "149").ToString());
+            _sbrDoorGemReq = int.Parse(Client.Options?.GetValueOrDefault("sbr_door_gem_requirement", "15000").ToString());
             _isWorldKeysOn = int.Parse(Client.Options?.GetValueOrDefault("enable_world_keys", "0").ToString());
             _sparxOption = (ProgressiveSparxHealthOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_progressive_sparx_health", "0").ToString());
             _levelLockOptions = (LevelLockOptions)int.Parse(Client.Options?.GetValueOrDefault("level_lock_option", "0").ToString());
@@ -791,6 +798,7 @@ public partial class App : Application
         
         LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
         byte currentSubarea = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentSubareaAddress));
+        GameStatus gameStatus = (GameStatus)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.GameStatus));
 
         if (_openWorld != 0 && currentLevel == LevelInGameIDs.SpookySwamp)
         {
@@ -957,7 +965,54 @@ public partial class App : Application
                 }
             }
         }
-        // TODO: Add SBR.
+        else if (
+            _easyChallenges.Contains("easy_skateboarding") &&
+            currentLevel == LevelInGameIDs.SuperBonusRound && currentSubarea == 2              // Skatepark
+        )
+        {
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SuperBonusRoundNitro), (short)1000);
+        }
+        else if (
+            currentLevel == LevelInGameIDs.MidnightMountain && gameStatus == GameStatus.InGame  // Protect this write carefully or it crashes warping to Midnight.
+        )
+        {
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SorceressDoorReq1), (short)_sorceressDoorEggReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SorceressDoorReq2), (short)_sorceressDoorEggReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SorceressDoorReq3), (short)_sorceressDoorEggReq);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SorceressDoorReqDisplay), (byte)_sorceressDoorEggReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq1), (short)_sbrDoorGemReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq2), (short)_sbrDoorGemReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq3), (short)_sbrDoorGemReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq4), (short)_sbrDoorGemReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq5), (short)_sbrDoorGemReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq6), (short)_sbrDoorGemReq);
+            if (_sbrDoorGemReq >= 9001)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SBRGemDisplayFirstDigit), (byte)0x1d);
+            }
+            else
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SBRGemDisplayFirstDigit), (byte)0x1c);
+            }
+            int sbrGemSecondDigit = (_sbrDoorGemReq + 999) / 1000;
+            if (sbrGemSecondDigit > 9)
+            {
+                sbrGemSecondDigit -= 10;
+            }
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SBRGemDisplaySecondDigit), (byte)(0x1c + sbrGemSecondDigit));
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBREggReq1), (short)_sbrDoorEggReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBREggReq2), (short)_sbrDoorEggReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBREggReq3), (short)_sbrDoorEggReq);
+        }
+        else if (
+            currentLevel == LevelInGameIDs.SuperBonusRound && gameStatus == GameStatus.InGame  // Protect this write carefully or it crashes warping to SBR.
+        )
+        {
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRSubsGemReq), (short)(_sbrDoorGemReq + 1000));
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRSkateboardingGemReq), (short)(_sbrDoorGemReq + 2000));
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRUFOsGemReq), (short)(_sbrDoorGemReq + 3500));
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SBRSorcGemReq), (short)(_sbrDoorGemReq + 5000));
+        }
     }
 
     private static bool HandleKeyUnlock(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
@@ -1778,6 +1833,9 @@ public partial class App : Application
         _slot = 0;
         _goal = CompletionGoal.NotLoaded;
         _eggCountGoal = 150;
+        _sorceressDoorEggReq = 150;
+        _sbrDoorEggReq = 150;
+        _sbrDoorGemReq = 20000;
         _slotData = null;
         _hintsList = null;
         _hasSubmittedGoal = false;
