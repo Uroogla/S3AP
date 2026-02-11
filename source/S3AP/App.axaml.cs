@@ -5,6 +5,7 @@ using Archipelago.Core.AvaloniaGUI.Views;
 using Archipelago.Core.GameClients;
 using Archipelago.Core.Models;
 using Archipelago.Core.Util;
+using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Archipelago.MultiClient.Net.Packets;
 using Avalonia;
@@ -72,6 +73,9 @@ public partial class App : Application
     private static Timer _gameLoopTimer { get; set; }
     private static Timer _minigamesTimer { get; set; }
     private static int _timerLoopCount { get; set; }
+    private static bool _justDied { get; set; }
+    private static bool _justReceivedDeathLink { get; set; }
+    private static DeathLinkService _deathLinkService { get; set; }
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -130,6 +134,70 @@ public partial class App : Application
             Log.Logger.Warning("You do not appear to be running this client as an administrator.");
             Log.Logger.Warning("This may result in errors or crashes when trying to connect to Duckstation.");
         }
+    }
+
+    private static void HandleDeathLink(DeathLink deathLink)
+    {
+        if (deathLink.Source == Client.CurrentSession.Players.ActivePlayer.Name)
+        {
+            return;
+        }
+        LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
+        LevelInGameIDs[] deathLinkLevels = [
+            LevelInGameIDs.SunriseSpring,
+            LevelInGameIDs.SunnyVilla,
+            LevelInGameIDs.CloudSpires,
+            LevelInGameIDs.MoltenCrater,
+            LevelInGameIDs.SeashellShore,
+            LevelInGameIDs.SheilasAlp,
+            LevelInGameIDs.BuzzsDungeon,
+            LevelInGameIDs.CrawdadFarm,
+            LevelInGameIDs.MiddayGardens,
+            LevelInGameIDs.IcyPeak,
+            LevelInGameIDs.EnchantedTowers,
+            LevelInGameIDs.SpookySwamp,
+            LevelInGameIDs.BambooTerrace,
+            LevelInGameIDs.SgtByrdsBase,
+            LevelInGameIDs.SpikesArena,
+            LevelInGameIDs.SpiderTown,
+            LevelInGameIDs.EveningLake,
+            LevelInGameIDs.FrozenAltars,
+            LevelInGameIDs.LostFleet,
+            LevelInGameIDs.FireworksFactory,
+            LevelInGameIDs.CharmedRidge,
+            LevelInGameIDs.BentleysOutpost,
+            LevelInGameIDs.ScorchsPit,
+            LevelInGameIDs.StarfishReef,
+            LevelInGameIDs.MidnightMountain,
+            LevelInGameIDs.CrystalIslands,
+            LevelInGameIDs.DesertRuins,
+            LevelInGameIDs.HauntedTomb,
+            LevelInGameIDs.DinoMines,
+            LevelInGameIDs.Agent9sLab,
+            LevelInGameIDs.SorceressLair,
+            LevelInGameIDs.BugbotFactory,
+            LevelInGameIDs.SuperBonusRound
+        ];
+        if (!deathLinkLevels.Contains(currentLevel))
+        {
+            string ignoreMessage = "Received DeathLink from " + deathLink.Source;
+            if (deathLink.Cause != null)
+            {
+                ignoreMessage = ignoreMessage + " - " + deathLink.Cause;
+            }
+            Log.Logger.Information(ignoreMessage);
+            Log.Logger.Information("Ignored the DeathLink to avoid softlock in current level.");
+            return;
+        }
+
+        _justReceivedDeathLink = true;
+        Memory.Write(Addresses.GetVersionAddress(Addresses.SpyroPositionZ), 1);
+        string message = "Received DeathLink from " + deathLink.Source;
+        if (deathLink.Cause != null)
+        {
+            message = message + " - " + deathLink.Cause;
+        }
+        Log.Logger.Information(message);
     }
 
     private void HandleCommand(string command)
@@ -732,7 +800,7 @@ public partial class App : Application
             {
                 sparxHealth = 0;
             }
-            if (currentHealth > sparxHealth)
+            if (currentHealth <= 128 && currentHealth > sparxHealth)
             {
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.PlayerHealth), sparxHealth);
             }
@@ -827,7 +895,126 @@ public partial class App : Application
                 }
             }
         }
-        
+
+        if (_deathLinkService != null && !_hasSubmittedGoal)
+        {
+            byte health = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealth));
+            bool isInSparxLevel = currentLevel == LevelInGameIDs.CrawdadFarm || 
+                currentLevel == LevelInGameIDs.SpiderTown || 
+                currentLevel == LevelInGameIDs.StarfishReef || 
+                currentLevel ==  LevelInGameIDs.BugbotFactory;
+            if (currentLevel == LevelInGameIDs.CrawdadFarm)
+            {
+                health = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealthCrawdad));
+            }
+            else if (currentLevel == LevelInGameIDs.SpiderTown)
+            {
+                health = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealthSpider));
+            }
+            else if (currentLevel == LevelInGameIDs.StarfishReef)
+            {
+                health = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealthStarfish));
+            }
+            else if (currentLevel == LevelInGameIDs.BugbotFactory)
+            {
+                health = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealthBugbot));
+            }
+            int animationLength = Memory.ReadInt(Addresses.GetVersionAddress(Addresses.PlayerAnimationLength));
+            int zPos = Memory.ReadInt(Addresses.GetVersionAddress(Addresses.SpyroPositionZ));
+            byte spyroState = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.SpyroState2));
+            byte spyroVelocityFlag = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerVelocityStatus));
+            LevelInGameIDs[] deathLinkLevels = [
+                LevelInGameIDs.SunriseSpring,
+                LevelInGameIDs.SunnyVilla,
+                LevelInGameIDs.CloudSpires,
+                LevelInGameIDs.MoltenCrater,
+                LevelInGameIDs.SeashellShore,
+                LevelInGameIDs.SheilasAlp,
+                LevelInGameIDs.BuzzsDungeon,
+                LevelInGameIDs.CrawdadFarm,
+                LevelInGameIDs.MiddayGardens,
+                LevelInGameIDs.IcyPeak,
+                LevelInGameIDs.EnchantedTowers,
+                LevelInGameIDs.SpookySwamp,
+                LevelInGameIDs.BambooTerrace,
+                LevelInGameIDs.SgtByrdsBase,
+                LevelInGameIDs.SpikesArena,
+                LevelInGameIDs.SpiderTown,
+                LevelInGameIDs.EveningLake,
+                LevelInGameIDs.FrozenAltars,
+                LevelInGameIDs.LostFleet,
+                LevelInGameIDs.FireworksFactory,
+                LevelInGameIDs.CharmedRidge,
+                LevelInGameIDs.BentleysOutpost,
+                LevelInGameIDs.ScorchsPit,
+                LevelInGameIDs.StarfishReef,
+                LevelInGameIDs.MidnightMountain,
+                LevelInGameIDs.CrystalIslands,
+                LevelInGameIDs.DesertRuins,
+                LevelInGameIDs.HauntedTomb,
+                LevelInGameIDs.DinoMines,
+                LevelInGameIDs.Agent9sLab,
+                LevelInGameIDs.SorceressLair,
+                LevelInGameIDs.BugbotFactory,
+                LevelInGameIDs.SuperBonusRound
+            ];
+
+            if (
+                !_justDied &&
+                Helpers.IsInGame() &&
+                Client.ItemState != null &&
+                Client.CurrentSession != null &&
+                deathLinkLevels.Contains(currentLevel) &&
+                gameStatus != GameStatus.Cutscene &&
+                gameStatus != GameStatus.Loading &&
+                gameStatus != GameStatus.TitleScreen &&
+                (
+                    !isInSparxLevel && health > 128 ||
+                    isInSparxLevel && health == 0 ||
+                    (spyroState == 3 && spyroVelocityFlag == 0x7f && 0x45 < animationLength) ||
+                    zPos > 10 && zPos < 0x400
+                )
+            )
+            {
+                _justDied = true;
+                string deathlinkCause = "Unknown";
+                if (!isInSparxLevel && health > 128)
+                {
+                    deathlinkCause = "Damage or drowning";
+                }
+                else if (isInSparxLevel && health == 0)
+                {
+                    deathlinkCause = "Damage in Sparx level";
+                }
+                else if (spyroState == 3 && spyroVelocityFlag == 0x7f && 0x45 < animationLength || zPos > 10 && zPos < 0x400)
+                {
+                    deathlinkCause = "Fell to death";
+                }
+                Log.Logger.Information($"Sending DeathLink. Cause: {deathlinkCause}");
+                if (deathlinkCause == "Unknown")
+                {
+                    deathlinkCause = Client.CurrentSession.Players.ActivePlayer.Name + " died in Spyro 3.";
+                }
+                else
+                {
+                    deathlinkCause = Client.CurrentSession.Players.ActivePlayer.Name + $" died in Spyro 3: {deathlinkCause}";
+                }
+                _deathLinkService.SendDeathLink(new DeathLink(Client.CurrentSession.Players.ActivePlayer.Name, cause: deathlinkCause));
+            }
+            else if (_justDied &&
+                !(
+                    !isInSparxLevel && health > 128 ||
+                    isInSparxLevel && health == 0 ||
+                    (spyroState == 3 && spyroVelocityFlag == 0x7f && 0x45 < animationLength) ||
+                    zPos > 10 && zPos < 0x400
+                )
+            )
+            {
+                _justDied = false;
+                _justReceivedDeathLink = false;
+            }
+        }
+
         // For some challenges, it makes more sense to adjust local adaptive difficulty than modify other values.
         if (
             _easyChallenges.Contains("easy_tunnels") &&
@@ -1394,6 +1581,12 @@ public partial class App : Application
         GameLocations = GameLocations.Where(x => x != null && !Client.CurrentSession.Locations.AllLocationsChecked.Contains(x.Id)).ToList();
         Client.MonitorLocations(GameLocations);
         _checkNames = true;
+        bool deathLink = int.Parse(Client.Options?.GetValueOrDefault("death_link", "0").ToString()) > 0;
+        if (deathLink)
+        {
+            _deathLinkService = Client.EnableDeathLink();
+            _deathLinkService.OnDeathLinkReceived += new DeathLinkService.DeathLinkReceivedHandler(HandleDeathLink);
+        }
 
         if (_moneybagsOption != MoneybagsOptions.Vanilla)
         {
@@ -1879,6 +2072,10 @@ public partial class App : Application
 
         Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America) releases of Spyro 3.");
 
+        if (_deathLinkService != null)
+        {
+            _deathLinkService = null;
+        }
         if (_loadGameTimer != null)
         {
             _loadGameTimer.Enabled = false;

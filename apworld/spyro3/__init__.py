@@ -2350,6 +2350,7 @@ class Spyro3World(World):
                 "enable_skillpoint_checks": self.options.enable_skillpoint_checks.value,
                 "enable_life_bottle_checks": self.options.enable_life_bottle_checks.value,
                 "sparx_power_settings": self.options.sparx_power_settings.value,
+                "death_link": self.options.death_link.value,
                 "moneybags_settings": self.options.moneybags_settings.value,
                 "enable_world_keys": self.options.enable_world_keys.value,
                 "enable_filler_extra_lives": self.options.enable_filler_extra_lives.value,

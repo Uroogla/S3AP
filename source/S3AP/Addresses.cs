@@ -13,6 +13,10 @@ namespace S3AP
         public const uint IsInDemoMode = 0x0006c758;
         public const uint GameStatus = 0x0006e424;
         public const uint SpyroState = 0x70450;
+        public const uint SpyroPositionZ = 0x70410;
+        public const uint SpyroState2 = 0x70458;
+        public const uint PlayerVelocityStatus = 0x70454;
+        public const uint PlayerAnimationLength = 0x7045c;
         public const uint NextWarpAddress = 0x0006c8a8;
         public const uint TransportMenuAddress = 0x0007023a; // Where the balloon/rocket will take Spyro.
         // The values at this and the following 3 bytes seem to be 0 only on reset.

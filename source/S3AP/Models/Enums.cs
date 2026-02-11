@@ -19,6 +19,7 @@
 
         public enum SpyroState
         {
+            Drowning = 30,
             Dying = 31
         }
 

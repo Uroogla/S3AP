@@ -155,7 +155,7 @@ class SBRDoorGemRequirement(Range):
     Gem requirements within Super Bonus Round are based on this number.
     NOTE: This only works if Duckstation is set to interpreter mode.
     The door displays will be inaccurate due to limitations in the Spyro 3 game code."""
-    display_name = "Eggs to Open Super Bonus Round"
+    display_name = "Gems to Open Super Bonus Round"
     range_start = 1
     range_end = 15000
     default = 15000
@@ -225,6 +225,12 @@ class SparxPowerSettings(Toggle):
     Instead, Sparx's ability to break baskets becomes 2 progressive items.
     The first allows breaking only wooden baskets; the second allows breaking vases as well."""
     display_name = "Sparx Power-sanity Settings"
+
+class EnableDeathLink(DeathLink):
+    """If enabled, Spyro will die when a DeathLink is received and will send them on his death.
+    This is a beta feature and does not fully support all edge cases yet - not every death will trigger a DeathLink,
+    and not every received DeathLink will kill Spyro."""
+    display_name = "DeathLink"
 
 class MoneybagsSettings(Choice):
     """Determines settings for Moneybags unlocks.
@@ -574,6 +580,7 @@ class Spyro3Option(PerGameCommonOptions):
     enable_skillpoint_checks: EnableSkillpointChecksOption
     enable_life_bottle_checks: EnableLifeBottleChecksOption
     sparx_power_settings: SparxPowerSettings
+    death_link: EnableDeathLink
     moneybags_settings: MoneybagsSettings
     enable_world_keys: EnableWorldKeys
     enable_filler_extra_lives: EnableFillerExtraLives
