@@ -305,6 +305,8 @@ namespace S3AP
         public const uint SBRUFOsGemReq = 0x1712a8;  // word
         public const uint SBRSorcGemReq = 0x170d04;  // word
 
+        // NOTE: This function has a logic error, since a 1.1 address may correspond to different 1.0 addresses
+        // in different levels.  In practice, none of the above addresses are affected.
         public static uint GetVersionAddress(uint greenLabelAddress)
         {
             // Avoid async issues where items or ItemState is processed prior to this populating correctly.

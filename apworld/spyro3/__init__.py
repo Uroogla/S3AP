@@ -46,7 +46,7 @@ class Spyro3World(World):
     base_id = 1230000
     required_client_version = (0, 5, 0)
     # TODO: Remember to update this!
-    ap_world_version = "1.2.3"
+    ap_world_version = "1.3.0"
     item_name_to_id = Spyro3Item.get_name_to_id()
     location_name_to_id = Spyro3Location.get_name_to_id()
     item_name_groups = item_name_groups

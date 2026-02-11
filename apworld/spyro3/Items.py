@@ -373,9 +373,7 @@ item_name_groups = {"Moneybags Unlocks": set(), "Level Unlocks": set(), "Gems": 
 for item in item_dictionary.keys():
     if "Moneybags Unlock" in item:
         item_name_groups["Moneybags Unlocks"].add(item)
-for item in item_dictionary.keys():
     if item.endswith(" Unlock"):
         item_name_groups["Level Unlocks"].add(item)
-for item in item_dictionary.keys():
     if item.endswith(" Gems"):
         item_name_groups["Gems"].add(item)
