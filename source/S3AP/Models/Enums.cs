@@ -19,6 +19,7 @@
 
         public enum SpyroState
         {
+            Drowning = 30,
             Dying = 31
         }
 
@@ -77,6 +78,12 @@
             RandomReqs = 3,
             AddReqs = 4,
             AddGemReqs = 5
+        }
+        public enum PowerupLockOptions
+        {
+            Vanilla = 0,
+            Type = 1,
+            Individual = 2
         }
 
         public enum LevelInGameIDs : byte

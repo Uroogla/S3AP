@@ -13,6 +13,10 @@ namespace S3AP
         public const uint IsInDemoMode = 0x0006c758;
         public const uint GameStatus = 0x0006e424;
         public const uint SpyroState = 0x70450;
+        public const uint SpyroPositionZ = 0x70410;
+        public const uint SpyroState2 = 0x70458;
+        public const uint PlayerVelocityStatus = 0x70454;
+        public const uint PlayerAnimationLength = 0x7045c;
         public const uint NextWarpAddress = 0x0006c8a8;
         public const uint TransportMenuAddress = 0x0007023a; // Where the balloon/rocket will take Spyro.
         // The values at this and the following 3 bytes seem to be 0 only on reset.
@@ -106,6 +110,8 @@ namespace S3AP
         public static readonly List<uint> SeashellAtlasZoeAddress = [0x00071c1c, 2];
         public static readonly List<uint> SeashellHoverZoeAddress = [0x00071c17, 3];
         public static readonly List<uint> SheilaControlsZoeAddress = [0x00071c56, 1];
+        public static readonly List<uint> MiddayFireballZoeAddress = [0x00071cbb, 0];
+        public static readonly List<uint> EveningInvincibilityZoeAddress = [0x00071dd8, 1];
 
         public const uint SheilaCutscene = 0x007166a;
         public const uint BuzzDefeated = 0x007166c;
@@ -169,6 +175,7 @@ namespace S3AP
         public const uint RedRocketCount = 0x000705f0;
         public const uint GreenRocketCount = 0x0015bf64;
         public const uint HasGreenRocketAddress = 0x0015bf68;
+        public const uint SuperBonusRoundNitro = 0x16ae84; // short
 
         public const uint SunriseGemMask = 0x00071b90;
         public const uint SunnyGemMask = 0x00071bb0;
@@ -278,8 +285,49 @@ namespace S3AP
 
         public const uint SpookyOpenWorldGem = 0x71D18;  // bit 0x80
 
+        public const uint SorceressDoorReq1 = 0x75844;  // Game code, short gives egg req.
+        public const uint SorceressDoorReq2 = 0x764c0;  // Game code, short gives egg req.
+        public const uint SorceressDoorReq3 = 0x799dc;  // Game code, short gives egg req.
+        public const uint SorceressDoorReqDisplay = 0x19b8dc;
+        public const uint SBRGemReq1 = 0x78000;  // Game code, short gives gem req.
+        public const uint SBRGemReq2 = 0x7835c;  // Game code, short gives gem req.
+        public const uint SBRGemReq3 = 0x786f0;  // Game code, short gives gem req.
+        public const uint SBRGemReq4 = 0x7f520;  // Game code, short gives gem req.
+        public const uint SBRGemReq5 = 0x7f5c0;  // Game code, short gives gem req.
+        public const uint SBRGemReq6 = 0x7f660;  // Game code, short gives gem req.
+        public const uint SBRGemDisplayFirstDigit = 0x7f4cc;  // Game code, byte - 0x1d for 1 or 0x1c for 0.
+        public const uint SBRGemDisplaySecondDigit = 0x7f4e0;  // Game code, byte - 0x1c for 0 through 0x25 for 9.
+        public const uint SBREggReq1 = 0x77fe8;  // Game code, short gives egg req.
+        public const uint SBREggReq2 = 0x78374;  // Game code, short gives egg req.
+        public const uint SBREggReq3 = 0x19beb4;
+        public const uint SBRSubsGemReq = 0x170cf4;  // word
+        public const uint SBRSkateboardingGemReq = 0x16f9e0;  // word
+        public const uint SBRUFOsGemReq = 0x1712a8;  // word
+        public const uint SBRSorcGemReq = 0x170d04;  // word
+
+        // All values are moby structs, so z position is 20 bytes in.
+        public const uint SunrisePowerup = 0x18f444;
+        public const uint CloudPowerup = 0x17db68;
+        public const uint MiddayPowerup = 0x192fac;
+        public const uint BambooPowerup = 0x16fab4;
+        public const uint EveningPowerup = 0x19374c;
+        public const uint FireworksPowerup = 0x1564c0;
+        public const uint LostFleetPowerup1 = 0x18f460; // Main area
+        public const uint LostFleetPowerup2 = 0x15a244;
+        public const uint LostFleetPowerup3 = 0x15a29c;
+        public const uint CharmedRidgePowerup = 0x18f570;
+        public const uint CrystalIslandsPowerup = 0x19463c;
+        public const uint SuperBonusRoundPowerup = 0x1691a4; // Locks 1225 gems
+
+        // NOTE: This function has a logic error, since a 1.1 address may correspond to different 1.0 addresses
+        // in different levels.  In practice, none of the above addresses are affected.
         public static uint GetVersionAddress(uint greenLabelAddress)
         {
+            // Avoid async issues where items or ItemState is processed prior to this populating correctly.
+            if (Helpers.gameVersion == "")
+            {
+                Helpers.IsCorrectVersion();
+            }
             if (Helpers.gameVersion == "1.0")
             {
                 // Moneybags unlocks, Sparx powerups, and skill points have a different offset than most other items.
@@ -367,7 +415,96 @@ namespace S3AP
                 {
                     return 0xf12f0;
                 }
-                // TODO: Level names from SBR through Sorceress' Lair have no offset.
+                if (greenLabelAddress == SuperBonusRoundNitro)
+                {
+                    return 0x16ade8;
+                }
+                if (greenLabelAddress == SBRGemReq4)
+                {
+                    return 0x7f428;
+                }
+                if (greenLabelAddress == SBRGemReq5)
+                {
+                    return 0x7f4c8;
+                }
+                if (greenLabelAddress == SBRGemReq6)
+                {
+                    return 0x7f568;
+                }
+                if (greenLabelAddress == SBRGemDisplayFirstDigit)
+                {
+                    return 0x7f3d4;
+                }
+                if (greenLabelAddress == SBRGemDisplaySecondDigit)
+                {
+                    return 0x7f3e8;
+                }
+                if (greenLabelAddress == SBRSubsGemReq)
+                {
+                    return 0x170c58;
+                }
+                if (greenLabelAddress == SBRSkateboardingGemReq)
+                {
+                    return 0x16f944;
+                }
+                if (greenLabelAddress == SBRUFOsGemReq)
+                {
+                    return 0x17120c;
+                }
+                if (greenLabelAddress == SBRSorcGemReq)
+                {
+                    return 0x170c68;
+                }
+                if (greenLabelAddress == SunrisePowerup)
+                {
+                    return 0x18f364;
+                }
+                if (greenLabelAddress == CloudPowerup)
+                {
+                    return 0x17d9a8;
+                }
+                if (greenLabelAddress == MiddayPowerup)
+                {
+                    return 0x192e7c;
+                }
+                if (greenLabelAddress == BambooPowerup)
+                {
+                    return 0x16f9d4;
+                }
+                if (greenLabelAddress == EveningPowerup)
+                {
+                    return 0x193394;
+                }
+                if (greenLabelAddress == FireworksPowerup)
+                {
+                    return 0x155be0;
+                }
+                if (greenLabelAddress == LostFleetPowerup1)
+                {
+                    return 0x18eb80;
+                }
+                if (greenLabelAddress == LostFleetPowerup2)
+                {
+                    return 0x15a164;
+                }
+                if (greenLabelAddress == LostFleetPowerup3)
+                {
+                    return 0x15a1bc;
+                }
+                if (greenLabelAddress == CharmedRidgePowerup)
+                {
+                    return 0x18f490;
+                }
+                if (greenLabelAddress == CrystalIslandsPowerup)
+                {
+                    return 0x19455c;
+                }
+                if (greenLabelAddress == SuperBonusRoundPowerup)
+                {
+                    return 0x169108;
+                }
+
+                // NOTE: Level names from SBR through Sorceress' Lair have no offset.
                 // Those after are greenLabelAddress - 0x4
                 if (
                     greenLabelAddress == SunnyVillaName ||

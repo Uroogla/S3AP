@@ -23,6 +23,11 @@ class MoneybagsOptions():
     # Reserve 2 for shuffling moneybags prices on companions
     MONEYBAGSSANITY = 3
 
+class PowerupLockOptions():
+    VANILLA = 0
+    TYPE = 1
+    INDIVIDUAL = 2
+
 class SparxUpgradeOptions():
     OFF = 0
     BLUE = 1
@@ -52,15 +57,14 @@ class LevelLockOptions():
 
 class GoalOption(Choice):
     """Lets the user choose the completion goal
-    Sorceress 1 - Beat the sorceress *and* obtain 100 eggs
+    Sorceress 1 - Beat the sorceress *and* obtain the specified number of eggs.
     Egg For Sale - Chase Moneybags after defeating the sorceress the first time.
-    Sorceress 2 - Beat the sorceress in Super Bonus Round
+    Sorceress 2 - Beat the sorceress in Super Bonus Round *and* obtain the specified number of eggs.
     All Skillpoints - Collect all 20 skill points in the game. Excluded locations are still required for this goal.
     Epilogue - Unlock the full epilogue by collecting all 20 skill points and defeating the sorceress. Excluded locations are still required for this goal.
-    Spike - Beat Spike with 36 eggs.
-    Scorch - Beat Scorch with 65 eggs.
-    Egg Hunt - Find a certain number of eggs to win. Portal requirements are reduced.  The Sorceress and SBR are
-         inaccessible."""
+    Spike - Beat Spike *and* obtain the specified number of eggs.
+    Scorch - Beat Scorch *and* obtain the specified number of eggs.
+    Egg Hunt - Find the specified number of eggs to win. Portal requirements are reduced."""
     display_name = "Completion Goal"
     default = GoalOptions.SORCERESS_ONE
     option_sorceress_1 = GoalOptions.SORCERESS_ONE
@@ -73,11 +77,12 @@ class GoalOption(Choice):
     option_egg_hunt = GoalOptions.EGG_HUNT
 
 class EggCount(Range):
-    """The number of eggs needed to win in Egg Hunt."""
-    display_name = "Eggs to Win Egg Hunt"
+    """The number of eggs needed to win when goal is Sorceress 1,
+    Sorceress 2, Spike, Scorch, and Egg Hunt."""
+    display_name = "Eggs to Win"
     range_start = 10
     range_end = 150
-    default = 50
+    default = 100
 
 class PercentExtraEggs(Range):
     """The percentage of extra eggs in the pool for Egg Hunt.
@@ -96,8 +101,8 @@ class GuaranteedItemsOption(ItemDict):
 class OpenWorldOption(Toggle):
     """Grants access to all 4 homeworlds from the start.
     End of level and boss eggs are removed as checks.
-    If you are in Sunrise when you unlock Molten or Seashell, you may need to enter another level and come back for
-    the unlock to take effect.
+    This removes 18 locations but not items from the pool,
+    so you may need to enable additional locations to use this option.
     Progressive Sparx Health Logic will be different
     If Moneybags is Vanilla, companion unlocks will be free.
     Disables world keys."""
@@ -132,6 +137,33 @@ class StartingLevels(Range):
     range_start = 1
     range_end = 20
     default = 2
+
+class SorceressDoorRequirement(Range):
+    """Determines how many eggs are required to open the door to the Sorceress
+    in Midnight Mountain. Due to technical limitations, this cannot exceed 100.
+    NOTE: This only works if Duckstation is set to interpreter mode."""
+    display_name = "Eggs to Open Sorceress Door"
+    range_start = 1
+    range_end = 100
+    default = 100
+
+class SBRDoorEggRequirement(Range):
+    """Determines how many eggs are required to open the door to Super Bonus Round.
+    NOTE: This only works if Duckstation is set to interpreter mode."""
+    display_name = "Eggs to Open Super Bonus Round"
+    range_start = 1
+    range_end = 149
+    default = 149
+
+class SBRDoorGemRequirement(Range):
+    """Determines how many gems are required to open the door to Super Bonus Round.
+    Gem requirements within Super Bonus Round are based on this number.
+    NOTE: This only works if Duckstation is set to interpreter mode.
+    The door displays will be inaccurate due to limitations in the Spyro 3 game code."""
+    display_name = "Gems to Open Super Bonus Round"
+    range_start = 1
+    range_end = 15000
+    default = 15000
 
 class Enable25PctGemChecksOption(Toggle):
     """Adds checks for getting 25% of the gems in a level"""
@@ -199,6 +231,12 @@ class SparxPowerSettings(Toggle):
     The first allows breaking only wooden baskets; the second allows breaking vases as well."""
     display_name = "Sparx Power-sanity Settings"
 
+class EnableDeathLink(DeathLink):
+    """If enabled, Spyro will die when a DeathLink is received and will send them on his death.
+    This is a beta feature and does not fully support all edge cases yet - not every death will trigger a DeathLink,
+    and not every received DeathLink will kill Spyro."""
+    display_name = "DeathLink"
+
 class MoneybagsSettings(Choice):
     """Determines settings for Moneybags unlocks.
     WARNING - It is very rarely possible to softlock based on the timing
@@ -211,6 +249,22 @@ class MoneybagsSettings(Choice):
     option_vanilla = MoneybagsOptions.VANILLA
     option_companionsanity = MoneybagsOptions.COMPANIONSANITY
     option_moneybagssanity = MoneybagsOptions.MONEYBAGSSANITY
+
+class PowerupLockSettings(Choice):
+    """Determines if powerup gates (such as superflame) require items to use.
+    Does not affect the invincibility filler item.
+    NOTE: The Sunrise Spring early level entry tricks assume you do not need the superfly
+      powerup to complete them!
+    Vanilla - Powerups are available at all times.
+    Type - Superfly, Fireball, and Invincibility Powerup items are added to the pool.
+      Fireworks Factory and Super Bonus Round's combo powerups require both Superfly and Fireball to unlock.
+    Individual: Each level's powerups are unlocked by a specific item.
+    """
+    display_name = "Powerup Lock Settings"
+    default = PowerupLockOptions.VANILLA
+    option_vanilla = PowerupLockOptions.VANILLA
+    option_type = PowerupLockOptions.TYPE
+    option_individual = PowerupLockOptions.INDIVIDUAL
 
 class EnableWorldKeys(Toggle):
     """If enabled, you will be unable to progress to the next homeworld without enough World Key items.
@@ -279,7 +333,7 @@ class EnableProgressiveSparxHealth(Choice):
 
 class ProgressiveSparxHealthLogic(Toggle):
     """Ensures that sufficient max Sparx health is in logic before various required checks.
-    Entering Crawdad Farm or any Midday level logically requires green Sparx.  Entering Fireworks Factory and
+    Entering Super Bonus Round, Crawdad Farm or any Midday level logically requires green Sparx.  Entering Fireworks Factory and
     Charmed Ridge logically requires blue Sparx, and entering Dino Mines and the Sorceress logically requires
     gold Sparx.  The Extra Health item/bonus from Starfish Reef is not considered for this logic.
     Note: This does nothing unless Enable Progressive Sparx Health Upgrades is set to blue, green, or Sparxless,"""
@@ -299,7 +353,8 @@ class RequireSparxForMaxGems(Choice):
     option_sparx_finder = SparxForGemsOptions.SPARX_FINDER
 
 class ZoeGivesHints(Range):
-    """Enables some or all of the 11 Tutorial Zoes across Sunrise Spring and its levels giving hints.
+    """Enables some or all of the 13 Tutorial Zoes giving hints.
+    There are 11 across Sunrise Spring, plus 1 each in Midday home and Evening home.
     Which Zoes give hints are random.  Those in Crawdad Farm never will, as this tutorial can be accessed only once.
     Hints fit into 3 categories, with hints evenly distributed between the categories:
     - Difficult or slow locations
@@ -307,21 +362,33 @@ class ZoeGivesHints(Range):
     - Joke hints."""
     display_name = "Number of Zoe Hints"
     range_start = 0
-    range_end = 11
+    range_end = 13
     default = 0
 
-class EasySkateboarding(Toggle):
-    """Makes most skateboarding challenges and skill points much easier.
-    Sunny Villa: Both eggs require only 1 lizard.  Skill point requires 1 trick. Lizards will remain after the eggs.
-    Enchanted Towers: Hunter cannot beat you.  Skill point requires 1 trick.
-    Lost Fleet and Super Bonus Round: Your have infinite turbo without doing tricks."""
-    # TODO: Implement Super Bonus Round
-    display_name = "Easy Skateboarding"
+class EasySkateboardingLizards(Toggle):
+    """Makes lizard skateboarding challenges in Sunny Villa much easier.
+    Sunny Villa: Both eggs require only 1 lizard."""
+    display_name = "Easy Skateboarding Lizards"
+
+class EasySkateboardingPoints(Toggle):
+    """Makes point-based skateboarding challenges much easier.
+    Sunny Villa: The skill point requires only 1 trick to obtain.
+    Enchanted Towers: Hunter cannot beat you. The skill point requires only 1 trick to obtain."""
+    display_name = "Easy Skateboarding Points"
+
+class EasySkateboardingLostFleet(Toggle):
+    """Makes the Lost Fleet skateboarding challenges much easier.
+    Lost Fleet: Your turbo cannot run out."""
+    display_name = "Easy Skateboarding Lost Fleet"
+
+class EasySkateboardingSuperBonusRound(Toggle):
+    """Makes the Super Bonus Round skateboarding challenge much easier.
+    Super Bonus Round: Your turbo cannot run out."""
+    display_name = "Easy Skateboarding Super Bonus Round"
 
 class EasySubs(Toggle):
     """Makes Lost Fleet submarine challenges much easier by removing all but 1 sub (behind and right of the ship).
     The HUD will incorrectly display 1/1."""
-    # TODO: Implement Super Bonus Round
     display_name = "Easy Subs"
 
 class EasyBoxing(Toggle):
@@ -500,11 +567,6 @@ class LogicDesertNoMoneybags(Toggle):
     This option only matters if Moneybagssanity is turned on."""
     display_name = "Complete Desert Ruins without Moneybags"
 
-class LogicHauntedAgent9Early(Toggle):
-    """Puts entering the Agent 9 sub-area of Haunted Tomb without completing Agent 9 into logic.
-    See https://www.youtube.com/watch?v=GAr-E1pha7c"""
-    display_name = "Enter Haunted Tomb Agent 9 Area Early"
-
 class LogicDinoAgent9Early(Toggle):
     """Puts entering the Agent 9 sub-area of Dino Mines without completing Agent 9 into logic.
     This can be done with a swim in air or getting on top of the level's terrain."""
@@ -526,6 +588,9 @@ class Spyro3Option(PerGameCommonOptions):
     open_world: OpenWorldOption
     level_lock_option: LevelLockOption
     starting_levels_count: StartingLevels
+    sorceress_door_requirement: SorceressDoorRequirement
+    sbr_door_egg_requirement: SBRDoorEggRequirement
+    sbr_door_gem_requirement: SBRDoorGemRequirement
     enable_25_pct_gem_checks: Enable25PctGemChecksOption
     enable_50_pct_gem_checks: Enable50PctGemChecksOption
     enable_75_pct_gem_checks: Enable75PctGemChecksOption
@@ -536,7 +601,9 @@ class Spyro3Option(PerGameCommonOptions):
     enable_skillpoint_checks: EnableSkillpointChecksOption
     enable_life_bottle_checks: EnableLifeBottleChecksOption
     sparx_power_settings: SparxPowerSettings
+    death_link: EnableDeathLink
     moneybags_settings: MoneybagsSettings
+    powerup_lock_settings: PowerupLockSettings
     enable_world_keys: EnableWorldKeys
     enable_filler_extra_lives: EnableFillerExtraLives
     enable_filler_invincibility: EnableFillerInvincibility
@@ -550,7 +617,10 @@ class Spyro3Option(PerGameCommonOptions):
     enable_progressive_sparx_logic: ProgressiveSparxHealthLogic
     require_sparx_for_max_gems: RequireSparxForMaxGems
     zoe_gives_hints: ZoeGivesHints
-    easy_skateboarding: EasySkateboarding
+    easy_skateboarding_lizards: EasySkateboardingLizards
+    easy_skateboarding_points: EasySkateboardingPoints
+    easy_skateboarding_lost_fleet: EasySkateboardingLostFleet
+    easy_skateboarding_super_bonus_round: EasySkateboardingSuperBonusRound
     easy_boxing: EasyBoxing
     easy_sheila_bombing: EasySheilaBombing
     easy_tanks: EasyTanks
@@ -586,7 +656,6 @@ class Spyro3Option(PerGameCommonOptions):
     logic_bentley_early: LogicBentleyEarly
     logic_crystal_no_moneybags: LogicCrystalNoMoneybags
     logic_desert_no_moneybags: LogicDesertNoMoneybags
-    logic_haunted_agent_9_early: LogicHauntedAgent9Early
     logic_dino_agent_9_early: LogicDinoAgent9Early
     logic_sorceress_early: LogicSorceressEarly
 
@@ -596,7 +665,10 @@ spyro_options_groups = [
     OptionGroup(
         "Game Difficulty",
         [
-            EasySkateboarding,
+            EasySkateboardingLizards,
+            EasySkateboardingPoints,
+            EasySkateboardingLostFleet,
+            EasySkateboardingSuperBonusRound,
             EasyBoxing,
             EasySheilaBombing,
             EasyTanks,
@@ -638,7 +710,6 @@ spyro_options_groups = [
             LogicBentleyEarly,
             LogicCrystalNoMoneybags,
             LogicDesertNoMoneybags,
-            LogicHauntedAgent9Early,
             LogicDinoAgent9Early,
             LogicSorceressEarly
         ],
