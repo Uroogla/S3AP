@@ -13,7 +13,7 @@ from .Items import Spyro3Item, Spyro3ItemCategory, item_dictionary, key_item_nam
 from .Locations import Spyro3Location, Spyro3LocationCategory, location_tables, location_dictionary, hint_locations, \
     location_name_groups
 from .Options import Spyro3Option, GoalOptions, LifeBottleOptions, MoneybagsOptions, SparxUpgradeOptions, \
-    SparxForGemsOptions, GemsanityOptions, LevelLockOptions, spyro_options_groups
+    SparxForGemsOptions, GemsanityOptions, LevelLockOptions, spyro_options_groups, PowerupLockOptions
 from .Hints import generateHints
 
 class Spyro3Web(WebWorld):
@@ -160,6 +160,7 @@ class Spyro3World(World):
         self.mushroom_region = "Sunrise Spring"
         self.country_region = "Midday Gardens"
         self.honey_region = "Evening Lake"
+        self.generation_options = dict()
 
     def generate_entry_requirements(self):
         if self.generation_options["level_lock_option"] in [LevelLockOptions.KEYS]:
@@ -371,6 +372,7 @@ class Spyro3World(World):
             self.generation_options["starting_levels_count"] = slot_data["options"]["starting_levels_count"]
             self.generation_options["open_world"] = slot_data["options"]["open_world"]
             self.generation_options["moneybags_settings"] = slot_data["options"]["moneybags_settings"]
+            self.generation_options["powerup_lock_settings"] = slot_data["options"]["powerup_lock_settings"]
             self.generation_options["enable_gemsanity"] = slot_data["options"]["enable_gemsanity"]
             self.generation_options["zoe_gives_hints"] = slot_data["options"]["zoe_gives_hints"]
             self.generation_options["goal"] = slot_data["options"]["goal"]
@@ -430,6 +432,7 @@ class Spyro3World(World):
             self.generation_options["starting_levels_count"] = self.options.starting_levels_count.value
             self.generation_options["open_world"] = self.options.open_world.value
             self.generation_options["moneybags_settings"] = self.options.moneybags_settings.value
+            self.generation_options["powerup_lock_settings"] = self.options.powerup_lock_settings.value
             self.generation_options["enable_gemsanity"] = self.options.enable_gemsanity.value
             self.generation_options["zoe_gives_hints"] = self.options.zoe_gives_hints.value
             self.generation_options["goal"] = self.options.goal.value
@@ -795,6 +798,8 @@ class Spyro3World(World):
                 item_classification = ItemClassification.useful
             else:
                 item_classification = ItemClassification.progression
+        elif item_dictionary[name].category in [Spyro3ItemCategory.INDIVIDUAL_POWERUP, Spyro3ItemCategory.TYPE_POWERUP]:
+            item_classification = ItemClassification.progression
         elif item_dictionary[name].category in useful_categories \
                 or not self.generation_options["enable_progressive_sparx_logic"] and name == 'Progressive Sparx Health Upgrade':
             item_classification = ItemClassification.useful
@@ -946,7 +951,11 @@ class Spyro3World(World):
                 if not is_boss_defeated(self, "Buzz", state) or \
                         (self.generation_options["enable_world_keys"] and not has_world_keys(self, 1, state)):
                     return 0
-                level_gems = 400
+                level_gems = 379
+                if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.VANILLA or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE and state.has("Fireball Powerup", self.player) or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL and state.has("Midday Fireball Powerup", self.player):
+                    level_gems = level_gems + 21
             elif level == 'Icy Peak':
                 if not is_boss_defeated(self, "Buzz", state) or \
                         (self.generation_options["enable_progressive_sparx_logic"] and not (has_sparx_health(self, 1, state) or is_glitched_logic(self, state))) or \
@@ -1009,7 +1018,11 @@ class Spyro3World(World):
             elif level == 'Evening Lake':
                 if not is_boss_defeated(self, 'Spike', state) or (self.generation_options["enable_world_keys"] and not has_world_keys(self, 2, state)):
                     return 0
-                level_gems = 400
+                level_gems = 352
+                if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.VANILLA or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE and state.has("Invincibility Powerup", self.player) or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL and state.has("Evening Invincibility Powerup", self.player):
+                    level_gems += 48
             elif level == 'Frozen Altars':
                 if not is_boss_defeated(self, "Spike", state) or \
                         (self.generation_options["enable_progressive_sparx_logic"] and not (has_sparx_health(self, 1, state) or is_glitched_logic(self, state))) or \
@@ -1027,7 +1040,11 @@ class Spyro3World(World):
                     return 0
                 # 100 gems in skateboarding area.  Of these, 11 are accessible easily without the skateboard.
                 # Roughly 19 require the skateboard, and the rest can be obtained with a medium difficulty jump onto the track, but these are not in logic.
-                level_gems = 511
+                level_gems = 330
+                if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.VANILLA or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE and state.has("Invincibility Powerup", self.player) or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL and state.has("Fleet Invincibility Powerup", self.player):
+                    level_gems += 181
                 if is_boss_defeated(self, 'Scorch', state) or is_glitched_logic(self, state):
                     level_gems += 89
             elif level == 'Fireworks Factory':
@@ -1038,7 +1055,11 @@ class Spyro3World(World):
                 if not can_enter_non_companion_portal(self, level, state, self.generation_options["logic_fireworks_early"]):
                     return 0
                 # 175 gems in the Agent 9 subarea.
-                level_gems = 425
+                level_gems = 414
+                if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.VANILLA or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE and state.has("Fireball Powerup", self.player) and state.has("Invincibility Powerup", self.player) or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL and state.has("Fireworks Combo Powerup", self.player):
+                    level_gems += 11
                 if is_level_completed(self, "Agent 9's Lab", state) or self.generation_options["logic_fireworks_agent_9_early"]:
                     level_gems += 175
             elif level == 'Charmed Ridge':
@@ -1051,7 +1072,11 @@ class Spyro3World(World):
                 # Moneybags blocks 472 gems.
                 level_gems = 128
                 if self.generation_options["open_world"] or self.generation_options["moneybags_settings"] != MoneybagsOptions.MONEYBAGSSANITY or self.generation_options["logic_charmed_no_moneybags"] or state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player):
-                    level_gems += 472
+                    level_gems += 470
+                    if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.VANILLA or \
+                        self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE and state.has("Fireball Powerup", self.player) or \
+                        self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL and state.has("Charmed Fireball Powerup", self.player):
+                        level_gems += 2
             elif level == 'Honey Speedway':
                 if not is_boss_defeated(self, "Spike", state) or \
                         (self.generation_options["enable_world_keys"] and not has_world_keys(self, 2, state)):
@@ -1086,7 +1111,11 @@ class Spyro3World(World):
                 # Moneybags locks 475 gems.
                 level_gems = 225
                 if self.generation_options["logic_crystal_no_moneybags"] or has_optional_moneybags_unlock(self, "Crystal Islands Bridge", state):
-                    level_gems += 475
+                    level_gems += 351
+                    if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.VANILLA or \
+                        self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE and state.has("Superfly Powerup", self.player) or \
+                        self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL and state.has("Crystal Superfly Powerup", self.player):
+                        level_gems += 124
             elif level == 'Desert Ruins':
                 if not is_boss_defeated(self, "Scorch", state) or \
                         (self.generation_options["enable_progressive_sparx_logic"] and not (has_sparx_health(self, 2, state) or is_glitched_logic(self, state))) or \
@@ -1140,7 +1169,11 @@ class Spyro3World(World):
             elif level == 'Super Bonus Round':
                 if not state.has("Egg", self.player, self.generation_options["sbr_door_egg_requirement"]) or not has_gems_for_sbr(self, state):
                     return 0
-                level_gems = 5000
+                level_gems = 3775
+                if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.VANILLA or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE and state.has("Fireball Powerup", self.player) and state.has("Superfly Powerup", self.player) or \
+                    self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL and state.has("Super Bonus Round Combo Powerup", self.player):
+                    level_gems += 1225
             if not are_gems_accessible(self, state) and not ignore_sparx_restrictions and not is_glitched_logic(self, state):
                 level_gems = int(level_gems * 0.75)
             return level_gems
@@ -1218,6 +1251,18 @@ class Spyro3World(World):
         # Most, if not all gems, in skateboarding areas can be collected without the skateboard, but leave out of base logic.
 
         # Sunrise Spring Rules
+        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+            set_rule(self.multiworld.get_location("Sunrise Spring Home: Fly through the cave. (Ami)", self.player),
+                     lambda state: state.has("Superfly Powerup", self.player))
+            if self.generation_options["enable_life_bottle_checks"] != LifeBottleOptions.OFF:
+                set_rule(self.multiworld.get_location("Sunrise Spring: Life Bottle By Sheila's Alp", self.player),
+                         lambda state: state.has("Superfly Powerup", self.player))
+        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+            set_rule(self.multiworld.get_location("Sunrise Spring Home: Fly through the cave. (Ami)", self.player),
+                     lambda state: state.has("Sunrise Superfly Powerup", self.player))
+            if self.generation_options["enable_life_bottle_checks"] != LifeBottleOptions.OFF:
+                set_rule(self.multiworld.get_location("Sunrise Spring: Life Bottle By Sheila's Alp", self.player),
+                         lambda state: state.has("Sunrise Superfly Powerup", self.player))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(142):
                 if len(self.chosen_gem_locations) == 0 or f"Sunrise Spring: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1282,7 +1327,14 @@ class Spyro3World(World):
             if not self.generation_options["open_world"]:
                 set_rule(self.multiworld.get_location("Cloud Spires: Turn on the cloud generator. (Henry)", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
             set_rule(self.multiworld.get_location("Cloud Spires: Plant the sun seeds. (LuLu)", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
-            set_rule(self.multiworld.get_location("Cloud Spires: Bell tower spirits. (Jake)", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
+            if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                set_rule(self.multiworld.get_location("Cloud Spires: Bell tower spirits. (Jake)", self.player),
+                         lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player) and state.has("Superfly Powerup", self.player))
+            elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                set_rule(self.multiworld.get_location("Cloud Spires: Bell tower spirits. (Jake)", self.player),
+                         lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player) and state.has("Cloud Superfly Powerup", self.player))
+            else:
+                set_rule(self.multiworld.get_location("Cloud Spires: Bell tower spirits. (Jake)", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
             set_rule(self.multiworld.get_location("Cloud Spires: Bell tower thief. (Bryan)", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
             set_rule(self.multiworld.get_location("Cloud Spires: Glide to the island. (Clare)", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
             if not self.generation_options["open_world"]:
@@ -1291,6 +1343,13 @@ class Spyro3World(World):
                 set_rule(self.multiworld.get_location("Cloud Spires: Life Bottle Past Whirlwind", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
             if Spyro3LocationCategory.HINT in self.enabled_location_categories and "Cloud Spires: Glide Zoe" in self.enabled_hint_locations:
                 set_rule(self.multiworld.get_location("Cloud Spires: Glide Zoe", self.player), lambda state: state.has("Moneybags Unlock - Cloud Spires Bellows", self.player))
+        else:
+            if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                set_rule(self.multiworld.get_location("Cloud Spires: Bell tower spirits. (Jake)", self.player),
+                         lambda state: state.has("Superfly Powerup", self.player))
+            elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                set_rule(self.multiworld.get_location("Cloud Spires: Bell tower spirits. (Jake)", self.player),
+                         lambda state: state.has("Cloud Superfly Powerup", self.player))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(148):
                 if len(self.chosen_gem_locations) == 0 or f"Cloud Spires: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1468,6 +1527,12 @@ class Spyro3World(World):
             set_indirect_rule(self, "Midday Gardens", lambda state: is_boss_defeated(self, "Buzz", state) and has_world_keys(self, 1, state))
         else:
             set_indirect_rule(self, "Midday Gardens", lambda state: is_boss_defeated(self, "Buzz", state))
+        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+            set_rule(self.multiworld.get_location("Midday Gardens Home: Superflame the flowerpots. (Matt)", self.player),
+                     lambda state: state.has("Fireball Powerup", self.player))
+        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+            set_rule(self.multiworld.get_location("Midday Gardens Home: Superflame the flowerpots. (Matt)", self.player),
+                     lambda state: state.has("Midday Fireball Powerup", self.player))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(123):
                 if len(self.chosen_gem_locations) == 0 or f"Midday Gardens: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1475,6 +1540,28 @@ class Spyro3World(World):
                         self.multiworld.get_location(f"Midday Gardens: Gem {i + 1}", self.player),
                         lambda state: are_gems_accessible(self, state)
                     )
+            # Bits of the gems, not accounting for empty bits
+            fireball_gems = [106, 123, 124, 125, 127, 128]
+            empty_bits = [72, 89, 90, 109, 126]
+            if self.generation_options["powerup_lock_settings"] != PowerupLockOptions.VANILLA:
+                for gem in fireball_gems:
+                    skipped_bits = 0
+                    for bit in empty_bits:
+                        if bit < gem:
+                            skipped_bits += 1
+                        else:
+                            break
+                    if len(self.chosen_gem_locations) == 0 or f"Midday Gardens: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
+                        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                            add_rule(
+                                self.multiworld.get_location(f"Midday Gardens: Gem {gem - skipped_bits}", self.player),
+                                lambda state: state.has("Fireball Powerup", self.player)
+                            )
+                        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                            add_rule(
+                                self.multiworld.get_location(f"Midday Gardens: Gem {gem - skipped_bits}", self.player),
+                                lambda state: state.has("Midday Fireball Powerup", self.player)
+                            )
 
 
         # Icy Peak Rules
@@ -1627,6 +1714,12 @@ class Spyro3World(World):
             set_rule(self.multiworld.get_location("Bamboo Terrace: Smash to the mountain top. (Brubeck)", self.player), lambda state: is_level_completed(self,"Bentley's Outpost", state))
             if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Bamboo Terrace: Life Bottle in Bentley Sub-Area", self.player), lambda state: is_level_completed(self, "Bentley's Outpost", state))
+        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+            set_rule(self.multiworld.get_location("Bamboo Terrace: Shoot from the boat. (Rusty)", self.player),
+                     lambda state: state.has("Fireball Powerup", self.player))
+        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+            set_rule(self.multiworld.get_location("Bamboo Terrace: Shoot from the boat. (Rusty)", self.player),
+                     lambda state: state.has("Bamboo Fireball Powerup", self.player))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(159):
                 if len(self.chosen_gem_locations) == 0 or f"Bamboo Terrace: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1715,6 +1808,22 @@ class Spyro3World(World):
             set_indirect_rule(self, "Evening Lake", lambda state: is_boss_defeated(self, "Spike", state) and has_world_keys(self, 2, state))
         else:
             set_indirect_rule(self, "Evening Lake", lambda state: is_boss_defeated(self, "Spike", state))
+        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+            set_rule(self.multiworld.get_location("Evening Lake Home: I'm invincible! (Stuart)", self.player),
+                     lambda state: state.has("Invincibility Powerup", self.player))
+            set_rule(self.multiworld.get_location("Evening Lake Home: On the bridge (Ted)", self.player),
+                lambda state: state.has("Invincibility Powerup", self.player))
+            if self.generation_options["enable_life_bottle_checks"] != LifeBottleOptions.OFF:
+                set_rule(self.multiworld.get_location("Evening Lake: Life Bottle on Upper Path", self.player),
+                         lambda state: state.has("Invincibility Powerup", self.player))
+        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+            set_rule(self.multiworld.get_location("Evening Lake Home: I'm invincible! (Stuart)", self.player),
+                     lambda state: state.has("Evening Invincibility Powerup", self.player))
+            set_rule(self.multiworld.get_location("Evening Lake Home: On the bridge (Ted)", self.player),
+                lambda state: state.has("Evening Invincibility Powerup", self.player))
+            if self.generation_options["enable_life_bottle_checks"] != LifeBottleOptions.OFF:
+                set_rule(self.multiworld.get_location("Evening Lake: Life Bottle on Upper Path", self.player),
+                         lambda state: state.has("Evening Invincibility Powerup", self.player))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(75):
                 if len(self.chosen_gem_locations) == 0 or f"Evening Lake: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1722,6 +1831,28 @@ class Spyro3World(World):
                         self.multiworld.get_location(f"Evening Lake: Gem {i + 1}", self.player),
                         lambda state: are_gems_accessible(self, state)
                     )
+            # Bits of the gems, not accounting for empty bits
+            invincibility_gems = [32, 33, 34, 35, 36, 51, 67, 68, 69, 70, 71, 72, 73, 77, 80]
+            empty_bits = [31, 37, 60, 61, 66]
+            if self.generation_options["powerup_lock_settings"] != PowerupLockOptions.VANILLA:
+                for gem in invincibility_gems:
+                    skipped_bits = 0
+                    for bit in empty_bits:
+                        if bit < gem:
+                            skipped_bits += 1
+                        else:
+                            break
+                    if len(self.chosen_gem_locations) == 0 or f"Evening Lake: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
+                        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                            add_rule(
+                                self.multiworld.get_location(f"Evening Lake: Gem {gem - skipped_bits}", self.player),
+                                lambda state: state.has("Invincibility Powerup", self.player)
+                            )
+                        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                            add_rule(
+                                self.multiworld.get_location(f"Evening Lake: Gem {gem - skipped_bits}", self.player),
+                                lambda state: state.has("Evening Invincibility Powerup", self.player)
+                            )
 
 
         # Frozen Altars Rules
@@ -1781,6 +1912,18 @@ class Spyro3World(World):
             set_rule(self.multiworld.get_location("Lost Fleet: Skateboard record time (Goal)", self.player), lambda state: is_boss_defeated(self, "Scorch", state) or is_glitched_logic(self, state))
         if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
             set_rule(self.multiworld.get_location("Lost Fleet: Life Bottle in Skateboarding Sub-Area", self.player), lambda state: is_boss_defeated(self, "Scorch", state) or is_glitched_logic(self, state))
+        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+            set_rule(self.multiworld.get_location("Lost Fleet: Swim through acid. (Chad)", self.player),
+                     lambda state: state.has("Invincibility Powerup", self.player))
+            if self.generation_options["enable_life_bottle_checks"] != LifeBottleOptions.OFF:
+                set_rule(self.multiworld.get_location("Lost Fleet: Life Bottle in Acid River", self.player),
+                         lambda state: state.has("Invincibility Powerup", self.player))
+        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+            set_rule(self.multiworld.get_location("Lost Fleet: Swim through acid. (Chad)", self.player),
+                     lambda state: state.has("Fleet Invincibility Powerup", self.player))
+            if self.generation_options["enable_life_bottle_checks"] != LifeBottleOptions.OFF:
+                set_rule(self.multiworld.get_location("Lost Fleet: Life Bottle in Acid River", self.player),
+                         lambda state: state.has("Fleet Invincibility Powerup", self.player))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(151):
                 if len(self.chosen_gem_locations) == 0 or f"Lost Fleet: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1791,6 +1934,11 @@ class Spyro3World(World):
             # Bits of the gems, not accounting for empty bits
             hunter_gems = [197, 198, 199, 200, 201, 202, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214,
                            215, 216, 217, 218, 219, 220, 222, 223, 224, 225, 228, 229, 230, 236, 237, 238]
+            invincibility_gems = [23, 24, 25, 42, 43, 44, 45, 56, 66, 67, 68, 70, 73, 74, 120, 121, 122, 123, 124,
+                                  125, 126, 127, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
+                                  160, 161, 162, 163, 164, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178,
+                                  179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195,
+                                  196]
             empty_bits = [41, 50, 52, 69, 78, 93, 165, 166, 167, 169, 221, 227, 231, 232, 233, 235]
             for gem in hunter_gems:
                 skipped_bits = 0
@@ -1804,6 +1952,24 @@ class Spyro3World(World):
                         self.multiworld.get_location(f"Lost Fleet: Gem {gem - skipped_bits}", self.player),
                         lambda state: is_boss_defeated(self, "Scorch", state) or is_glitched_logic(self, state)
                     )
+            for gem in invincibility_gems:
+                skipped_bits = 0
+                for bit in empty_bits:
+                    if bit < gem:
+                        skipped_bits += 1
+                    else:
+                        break
+                if len(self.chosen_gem_locations) == 0 or f"Lost Fleet: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
+                    if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                        add_rule(
+                            self.multiworld.get_location(f"Lost Fleet: Gem {gem - skipped_bits}", self.player),
+                            lambda state: state.has("Invincibility Powerup", self.player)
+                        )
+                    elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                        add_rule(
+                            self.multiworld.get_location(f"Lost Fleet: Gem {gem - skipped_bits}", self.player),
+                            lambda state: state.has("Fleet Invincibility Powerup", self.player)
+                        )
 
 
         # Fireworks Factory Rules
@@ -1829,6 +1995,12 @@ class Spyro3World(World):
                 set_rule(self.multiworld.get_location("Fireworks Factory: Find Agent 9's powerup (Goal)", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
             if Spyro3LocationCategory.LIFE_BOTTLE in self.enabled_location_categories:
                 set_rule(self.multiworld.get_location("Fireworks Factory: Life Bottle in Agent 9 Sub-Area", self.player), lambda state: is_level_completed(self, "Agent 9's Lab", state))
+        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+            set_rule(self.multiworld.get_location("Fireworks Factory: Bad dragon! (Evan)", self.player),
+                     lambda state: state.has("Fireball Powerup", self.player) and state.has("Superfly Powerup", self.player))
+        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+            set_rule(self.multiworld.get_location("Fireworks Factory: Bad dragon! (Evan)", self.player),
+                     lambda state: state.has("Fireworks Combo Powerup", self.player))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(233):
                 if len(self.chosen_gem_locations) == 0 or f"Fireworks Factory: Gem {i + 1}" in self.chosen_gem_locations:
@@ -1840,6 +2012,7 @@ class Spyro3World(World):
             agent_gems = [161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 178, 179,
                           180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198,
                           199, 200, 201]
+            combo_powerup_gems = [111, 112, 114, 115, 116]
             empty_bits = [14, 20, 46, 51, 77, 82, 97, 98, 104, 105, 106, 108, 141, 153, 155, 177]
             if not self.generation_options["logic_fireworks_agent_9_early"]:
                 for gem in agent_gems:
@@ -1853,6 +2026,24 @@ class Spyro3World(World):
                         add_rule(
                             self.multiworld.get_location(f"Fireworks Factory: Gem {gem - skipped_bits}", self.player),
                             lambda state: is_level_completed(self, "Agent 9's Lab", state)
+                        )
+            for gem in combo_powerup_gems:
+                skipped_bits = 0
+                for bit in empty_bits:
+                    if bit < gem:
+                        skipped_bits += 1
+                    else:
+                        break
+                if len(self.chosen_gem_locations) == 0 or f"Fireworks Factory: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
+                    if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                        add_rule(
+                            self.multiworld.get_location(f"Fireworks Factory: Gem {gem - skipped_bits}", self.player),
+                            lambda state: state.has("Fireball Powerup", self.player) and state.has("Superfly Powerup", self.player)
+                        )
+                    elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                        add_rule(
+                            self.multiworld.get_location(f"Fireworks Factory: Gem {gem - skipped_bits}", self.player),
+                            lambda state: state.has("Fireworks Combo Powerup", self.player)
                         )
 
 
@@ -1907,6 +2098,7 @@ class Spyro3World(World):
                               139, 140, 141, 142, 143, 148, 153, 154, 155, 156, 157, 158, 159, 160, 161, 163, 164, 165,
                               166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183,
                               184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197]
+            fireball_gems = [120, 121]
             empty_bits = [20, 21, 53, 58, 59, 60, 61, 66, 100, 101, 102, 129, 130, 136, 137, 144, 145, 146, 147, 150,
                           152, 162]
             if not self.generation_options["open_world"] and self.generation_options["moneybags_settings"] == MoneybagsOptions.MONEYBAGSSANITY and not self.generation_options["logic_charmed_no_moneybags"]:
@@ -1918,10 +2110,41 @@ class Spyro3World(World):
                         else:
                             break
                     if len(self.chosen_gem_locations) == 0 or f"Charmed Ridge: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
-                        add_rule(
-                            self.multiworld.get_location(f"Charmed Ridge: Gem {gem - skipped_bits}", self.player),
-                            lambda state: state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player)
-                        )
+                        if gem not in fireball_gems:
+                            add_rule(
+                                self.multiworld.get_location(f"Charmed Ridge: Gem {gem - skipped_bits}", self.player),
+                                lambda state: state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player)
+                            )
+                        else:
+                            if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                                add_rule(
+                                    self.multiworld.get_location(f"Charmed Ridge: Gem {gem - skipped_bits}", self.player),
+                                    lambda state: state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player) and state.has("Fireball Powerup", self.player)
+                                )
+                            elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                                add_rule(
+                                    self.multiworld.get_location(f"Charmed Ridge: Gem {gem - skipped_bits}", self.player),
+                                    lambda state: state.has("Moneybags Unlock - Charmed Ridge Stairs", self.player) and state.has("Charmed Fireball Powerup", self.player)
+                                )
+            else:
+                for gem in fireball_gems:
+                    skipped_bits = 0
+                    for bit in empty_bits:
+                        if bit < gem:
+                            skipped_bits += 1
+                        else:
+                            break
+                    if len(self.chosen_gem_locations) == 0 or f"Charmed Ridge: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
+                        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                            add_rule(
+                                self.multiworld.get_location(f"Charmed Ridge: Gem {gem - skipped_bits}", self.player),
+                                lambda state: state.has("Fireball Powerup", self.player)
+                            )
+                        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                            add_rule(
+                                self.multiworld.get_location(f"Charmed Ridge: Gem {gem - skipped_bits}", self.player),
+                                lambda state: state.has("Charmed Fireball Powerup", self.player)
+                            )
 
 
         # Honey Speedway Rules
@@ -2017,11 +2240,62 @@ class Spyro3World(World):
             # Moneybags locks 475 gems.
             set_rule(self.multiworld.get_location("Crystal Islands: Reach the crystal tower. (Lloyd)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
             set_rule(self.multiworld.get_location("Crystal Islands: Ride the slide. (Elloise)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
-            set_rule(self.multiworld.get_location("Crystal Islands: Fly to the hidden egg. (Grace)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
-            set_rule(self.multiworld.get_location("Crystal Islands: Catch the flying thief. (Max)", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
+            if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                set_rule(self.multiworld.get_location("Crystal Islands: Fly to the hidden egg. (Grace)", self.player),
+                         lambda state: ((self.generation_options["goal"] != GoalOptions.EGG_HUNT or
+                                        self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and
+                                        is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)) and
+                                        state.has("Superfly Powerup", self.player)
+                )
+                set_rule(self.multiworld.get_location("Crystal Islands: Catch the flying thief. (Max)", self.player),
+                         lambda state: ((self.generation_options["goal"] != GoalOptions.EGG_HUNT or
+                                        self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and
+                                        is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)) and
+                                        state.has("Superfly Powerup", self.player)
+                )
+            elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                set_rule(self.multiworld.get_location("Crystal Islands: Fly to the hidden egg. (Grace)", self.player),
+                         lambda state: ((self.generation_options["goal"] != GoalOptions.EGG_HUNT or
+                                        self.generation_options["egg_count"] > self.generation_options[
+                                            "sorceress_door_requirement"]) and
+                                       is_boss_defeated(self, "Sorceress", state) or state.has(
+                                        "Moneybags Unlock - Crystal Islands Bridge", self.player)) and
+                                       state.has("Crystal Superfly Powerup", self.player)
+                )
+                set_rule(self.multiworld.get_location("Crystal Islands: Catch the flying thief. (Max)", self.player),
+                         lambda state: ((self.generation_options["goal"] != GoalOptions.EGG_HUNT or
+                                        self.generation_options["egg_count"] > self.generation_options[
+                                            "sorceress_door_requirement"]) and
+                                       is_boss_defeated(self, "Sorceress", state) or state.has(
+                                        "Moneybags Unlock - Crystal Islands Bridge", self.player)) and
+                                       state.has("Crystal Superfly Powerup", self.player)
+                )
+            else:
+                set_rule(self.multiworld.get_location("Crystal Islands: Fly to the hidden egg. (Grace)", self.player),
+                         lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or
+                                        self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and
+                                       is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
+                set_rule(self.multiworld.get_location("Crystal Islands: Catch the flying thief. (Max)", self.player),
+                         lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or
+                                        self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and
+                                       is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
             set_rule(self.multiworld.get_location("Crystal Islands Complete", self.player), lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
             set_rule(self.multiworld.get_location("Crystal Islands: Whack a mole. (Hank)", self.player), lambda state: is_level_completed(self, "Bentley's Outpost", state) and ((self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)))
         else:
+            if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                set_rule(self.multiworld.get_location("Crystal Islands: Fly to the hidden egg. (Grace)", self.player),
+                         lambda state: state.has("Superfly Powerup", self.player)
+                )
+                set_rule(self.multiworld.get_location("Crystal Islands: Catch the flying thief. (Max)", self.player),
+                         lambda state: state.has("Superfly Powerup", self.player)
+                )
+            elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                set_rule(self.multiworld.get_location("Crystal Islands: Fly to the hidden egg. (Grace)", self.player),
+                         lambda state: state.has("Crystal Superfly Powerup", self.player)
+                )
+                set_rule(self.multiworld.get_location("Crystal Islands: Catch the flying thief. (Max)", self.player),
+                         lambda state: state.has("Crystal Superfly Powerup", self.player)
+                )
             set_rule(self.multiworld.get_location("Crystal Islands: Whack a mole. (Hank)", self.player), lambda state: is_level_completed(self,"Bentley's Outpost", state))
         if Spyro3LocationCategory.GEMSANITY in self.enabled_location_categories:
             for i in range(205):
@@ -2038,6 +2312,8 @@ class Spyro3World(World):
                               179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196,
                               197, 198, 199, 200, 205, 206, 207, 208, 209, 210, 211, 213, 214, 215, 226, 227, 228, 229,
                               230]
+            superfly_gems = [40, 42, 43, 44, 45, 46, 47, 48, 49, 54, 55, 56, 58, 59, 64, 70, 71, 72, 73, 74, 75, 76, 77,
+                             78]
             empty_bits = [26, 41, 50, 51, 60, 61, 62, 63, 69, 102, 201, 202, 203, 204, 212, 216, 217, 218, 219, 220,
                           221, 222, 223, 224, 225]
             if self.generation_options["moneybags_settings"] == MoneybagsOptions.MONEYBAGSSANITY and not self.generation_options["logic_crystal_no_moneybags"]:
@@ -2049,10 +2325,49 @@ class Spyro3World(World):
                         else:
                             break
                     if len(self.chosen_gem_locations) == 0 or f"Crystal Islands: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
-                        add_rule(
-                            self.multiworld.get_location(f"Crystal Islands: Gem {gem - skipped_bits}", self.player),
-                            lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)
-                        )
+                        if gem not in superfly_gems:
+                            add_rule(
+                                self.multiworld.get_location(f"Crystal Islands: Gem {gem - skipped_bits}", self.player),
+                                lambda state: (self.generation_options["goal"] != GoalOptions.EGG_HUNT or
+                                               self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and
+                                               is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player)
+                            )
+                        else:
+                            if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                                add_rule(
+                                    self.multiworld.get_location(f"Crystal Islands: Gem {gem - skipped_bits}", self.player),
+                                    lambda state: ((self.generation_options["goal"] != GoalOptions.EGG_HUNT or
+                                                   self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and
+                                                   is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
+                                                   and state.has("Superfly Powerup", self.player)
+                                )
+                            elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                                add_rule(
+                                    self.multiworld.get_location(f"Crystal Islands: Gem {gem - skipped_bits}", self.player),
+                                    lambda state: ((self.generation_options["goal"] != GoalOptions.EGG_HUNT or
+                                                   self.generation_options["egg_count"] > self.generation_options["sorceress_door_requirement"]) and
+                                                   is_boss_defeated(self, "Sorceress", state) or state.has("Moneybags Unlock - Crystal Islands Bridge", self.player))
+                                                   and state.has("Crystal Superfly Powerup", self.player)
+                                )
+            else:
+                for gem in superfly_gems:
+                    skipped_bits = 0
+                    for bit in empty_bits:
+                        if bit < gem:
+                            skipped_bits += 1
+                        else:
+                            break
+                    if len(self.chosen_gem_locations) == 0 or f"Crystal Islands: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
+                        if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+                            add_rule(
+                                self.multiworld.get_location(f"Crystal Islands: Gem {gem - skipped_bits}", self.player),
+                                lambda state: state.has("Superfly Powerup", self.player)
+                            )
+                        elif self.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+                            add_rule(
+                                self.multiworld.get_location(f"Crystal Islands: Gem {gem - skipped_bits}", self.player),
+                                lambda state: state.has("Crystal Superfly Powerup", self.player)
+                            )
 
 
         # Desert Ruins Rules
@@ -2251,6 +2566,11 @@ class Spyro3World(World):
                     "Super Bonus Round",
                     lambda state: state.has("Egg", self.player, self.generation_options["sbr_door_egg_requirement"]) and has_gems_for_sbr(self, state)
                 )
+            if self.generation_options["powerup_lock_settings"] != PowerupLockOptions.VANILLA:
+                set_rule(self.multiworld.get_location("Super Bonus Round: Woo, a secret egg. (Yin Yang)", self.player),
+                         lambda state: has_total_accessible_gems(self, state, self.generation_options["sbr_door_gem_requirement"] + 5000))
+                set_rule(self.multiworld.get_location("Super Bonus Round Complete", self.player),
+                         lambda state: has_total_accessible_gems(self, state, self.generation_options["sbr_door_gem_requirement"] + 5000))
 
         # Level Gem Count rules
         for level in self.all_levels:
@@ -2352,6 +2672,7 @@ class Spyro3World(World):
                 "sparx_power_settings": self.options.sparx_power_settings.value,
                 "death_link": self.options.death_link.value,
                 "moneybags_settings": self.options.moneybags_settings.value,
+                "powerup_lock_settings": self.options.powerup_lock_settings.value,
                 "enable_world_keys": self.options.enable_world_keys.value,
                 "enable_filler_extra_lives": self.options.enable_filler_extra_lives.value,
                 "enable_filler_invincibility": self.options.enable_filler_invincibility.value,

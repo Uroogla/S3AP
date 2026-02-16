@@ -745,14 +745,32 @@ location_dictionary: Dict[str, Spyro3LocationData] = {}
 for location_table in location_tables.values():
     location_dictionary.update({location_data.name: location_data for location_data in location_table})
 
-location_name_groups = {"Speedways": set(), "Sparx Levels": set()}
+location_name_groups = {"Speedways": set(), "Sparx Levels": set(), "Speedway Races": set(), "Skateboarding": set()}
 speedways = ["Mushroom Speedway", "Country Speedway", "Honey Speedway", "Harbor Speedway"]
 for location in location_dictionary.keys():
     for speedway in speedways:
         if location.startswith(speedway):
             location_name_groups["Speedways"].add(location)
+        if location.startswith(speedway) and "Race the" in location:
+            location_name_groups["Speedway Races"].add(location)
 sparx_levels = ["Crawdad Farm", "Spider Town", "Starfish Reef", "Bugbot Factory"]
 for location in location_dictionary.keys():
     for sparx_level in sparx_levels:
         if location.startswith(sparx_level):
             location_name_groups["Sparx Levels"].add(location)
+skateboarding_locations = [
+    "Sunny Villa: Lizard skating I. (Emily)",
+    "Sunny Villa: Lizard skating II. (Daisy)",
+    "Sunny Villa: Skateboard course record I (Skill Point)",
+    "Sunny Villa: Skateboard course record I (Goal)",
+    "Enchanted Towers: Trick skater I. (Caroline)",
+    "Enchanted Towers: Trick skater II. (Alex)",
+    "Enchanted Towers: Skateboard course record II (Skill Point)",
+    "Enchanted Towers: Skateboard course record II (Goal)",
+    "Lost Fleet: Skate race the rhynocs. (Oliver)",
+    "Lost Fleet: Skate race Hunter. (Aiden)",
+    "Lost Fleet: Skateboard record time (Skill Point)",
+    "Lost Fleet: Skateboard record time (Goal)"
+]
+for location in skateboarding_locations:
+    location_name_groups["Skateboarding"].add(location)

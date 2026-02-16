@@ -305,6 +305,20 @@ namespace S3AP
         public const uint SBRUFOsGemReq = 0x1712a8;  // word
         public const uint SBRSorcGemReq = 0x170d04;  // word
 
+        // All values are moby structs, so z position is 20 bytes in.
+        public const uint SunrisePowerup = 0x18f444;
+        public const uint CloudPowerup = 0x17db68;
+        public const uint MiddayPowerup = 0x192fac;
+        public const uint BambooPowerup = 0x16fab4;
+        public const uint EveningPowerup = 0x19374c;
+        public const uint FireworksPowerup = 0x1564c0;
+        public const uint LostFleetPowerup1 = 0x18f460; // Main area
+        public const uint LostFleetPowerup2 = 0x15a244;
+        public const uint LostFleetPowerup3 = 0x15a29c;
+        public const uint CharmedRidgePowerup = 0x18f570;
+        public const uint CrystalIslandsPowerup = 0x19463c;
+        public const uint SuperBonusRoundPowerup = 0x1691a4; // Locks 1225 gems
+
         // NOTE: This function has a logic error, since a 1.1 address may correspond to different 1.0 addresses
         // in different levels.  In practice, none of the above addresses are affected.
         public static uint GetVersionAddress(uint greenLabelAddress)
@@ -441,6 +455,55 @@ namespace S3AP
                 {
                     return 0x170c68;
                 }
+                if (greenLabelAddress == SunrisePowerup)
+                {
+                    return 0x18f364;
+                }
+                if (greenLabelAddress == CloudPowerup)
+                {
+                    return 0x17d9a8;
+                }
+                if (greenLabelAddress == MiddayPowerup)
+                {
+                    return 0x192e7c;
+                }
+                if (greenLabelAddress == BambooPowerup)
+                {
+                    return 0x16f9d4;
+                }
+                if (greenLabelAddress == EveningPowerup)
+                {
+                    return 0x193394;
+                }
+                if (greenLabelAddress == FireworksPowerup)
+                {
+                    return 0x155be0;
+                }
+                if (greenLabelAddress == LostFleetPowerup1)
+                {
+                    return 0x18eb80;
+                }
+                if (greenLabelAddress == LostFleetPowerup2)
+                {
+                    return 0x15a164;
+                }
+                if (greenLabelAddress == LostFleetPowerup3)
+                {
+                    return 0x15a1bc;
+                }
+                if (greenLabelAddress == CharmedRidgePowerup)
+                {
+                    return 0x18f490;
+                }
+                if (greenLabelAddress == CrystalIslandsPowerup)
+                {
+                    return 0x19455c;
+                }
+                if (greenLabelAddress == SuperBonusRoundPowerup)
+                {
+                    return 0x169108;
+                }
+
                 // NOTE: Level names from SBR through Sorceress' Lair have no offset.
                 // Those after are greenLabelAddress - 0x4
                 if (

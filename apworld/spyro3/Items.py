@@ -2,7 +2,7 @@ from enum import IntEnum
 import math
 from typing import NamedTuple
 from BaseClasses import Item
-from .Options import MoneybagsOptions, SparxUpgradeOptions, GemsanityOptions, GoalOptions, SparxForGemsOptions, LevelLockOptions
+from .Options import MoneybagsOptions, SparxUpgradeOptions, GemsanityOptions, GoalOptions, SparxForGemsOptions, LevelLockOptions, PowerupLockOptions
 from Options import OptionError
 
 
@@ -19,6 +19,8 @@ class Spyro3ItemCategory(IntEnum):
     SPARX_POWERUP = 13,
     WORLD_KEY = 14,
     LEVEL_KEY = 15,
+    TYPE_POWERUP = 16,
+    INDIVIDUAL_POWERUP = 17,
     UT_ITEM = 99  # Universal tracker
 
 
@@ -185,6 +187,20 @@ _all_items = [Spyro3ItemData(row[0], row[1], row[2]) for row in [
     ("Crystal Islands Unlock", 6018, Spyro3ItemCategory.LEVEL_KEY),
     ("Desert Ruins Unlock", 6019, Spyro3ItemCategory.LEVEL_KEY),
 
+    ("Superfly Powerup", 7000, Spyro3ItemCategory.TYPE_POWERUP),
+    ("Fireball Powerup", 7001, Spyro3ItemCategory.TYPE_POWERUP),
+    ("Invincibility Powerup", 7002, Spyro3ItemCategory.TYPE_POWERUP),
+    ("Sunrise Superfly Powerup", 7003, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+    ("Cloud Superfly Powerup", 7004, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+    ("Midday Fireball Powerup", 7005, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+    ("Bamboo Fireball Powerup", 7006, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+    ("Evening Invincibility Powerup", 7007, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+    ("Fireworks Combo Powerup", 7008, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+    ("Fleet Invincibility Powerup", 7009, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+    ("Charmed Fireball Powerup", 7010, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+    ("Crystal Superfly Powerup", 7011, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+    ("Super Bonus Round Combo Powerup", 7012, Spyro3ItemCategory.INDIVIDUAL_POWERUP),
+
     ("Glitched Item", 9000, Spyro3ItemCategory.UT_ITEM)
 ]]
 
@@ -317,6 +333,24 @@ def BuildItemPool(world, count, preplaced_eggs, options, locked_levels):
             else:
                 multiworld.push_precollected(world.create_item(f"{level} Unlock"))
 
+    if world.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
+        item_pool.append(item_dictionary["Superfly Powerup"])
+        item_pool.append(item_dictionary["Fireball Powerup"])
+        item_pool.append(item_dictionary["Invincibility Powerup"])
+        remaining_count = remaining_count - 3
+    elif world.generation_options["powerup_lock_settings"] == PowerupLockOptions.INDIVIDUAL:
+        item_pool.append(item_dictionary["Sunrise Superfly Powerup"])
+        item_pool.append(item_dictionary["Cloud Superfly Powerup"])
+        item_pool.append(item_dictionary["Midday Fireball Powerup"])
+        item_pool.append(item_dictionary["Bamboo Fireball Powerup"])
+        item_pool.append(item_dictionary["Evening Invincibility Powerup"])
+        item_pool.append(item_dictionary["Fireworks Combo Powerup"])
+        item_pool.append(item_dictionary["Fleet Invincibility Powerup"])
+        item_pool.append(item_dictionary["Charmed Fireball Powerup"])
+        item_pool.append(item_dictionary["Crystal Superfly Powerup"])
+        item_pool.append(item_dictionary["Super Bonus Round Combo Powerup"])
+        remaining_count = remaining_count - 10
+
     if world.generation_options["enable_world_keys"]:
         for i in range(3):
             item_pool.append(item_dictionary["World Key"])
@@ -369,7 +403,7 @@ def BuildItemPool(world, count, preplaced_eggs, options, locked_levels):
     multiworld.random.shuffle(item_pool)
     return item_pool
 
-item_name_groups = {"Moneybags Unlocks": set(), "Level Unlocks": set(), "Gems": set()}
+item_name_groups = {"Moneybags Unlocks": set(), "Level Unlocks": set(), "Gems": set(), "Powerups": set()}
 for item in item_dictionary.keys():
     if "Moneybags Unlock" in item:
         item_name_groups["Moneybags Unlocks"].add(item)
@@ -377,3 +411,5 @@ for item in item_dictionary.keys():
         item_name_groups["Level Unlocks"].add(item)
     if item.endswith(" Gems"):
         item_name_groups["Gems"].add(item)
+    if item.endswith(" Powerup"):
+        item_name_groups["Powerups"].add(item)

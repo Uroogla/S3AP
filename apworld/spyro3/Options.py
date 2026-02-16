@@ -23,6 +23,11 @@ class MoneybagsOptions():
     # Reserve 2 for shuffling moneybags prices on companions
     MONEYBAGSSANITY = 3
 
+class PowerupLockOptions():
+    VANILLA = 0
+    TYPE = 1
+    INDIVIDUAL = 2
+
 class SparxUpgradeOptions():
     OFF = 0
     BLUE = 1
@@ -96,8 +101,8 @@ class GuaranteedItemsOption(ItemDict):
 class OpenWorldOption(Toggle):
     """Grants access to all 4 homeworlds from the start.
     End of level and boss eggs are removed as checks.
-    If you are in Sunrise when you unlock Molten or Seashell, you may need to enter another level and come back for
-    the unlock to take effect.
+    This removes 18 locations but not items from the pool,
+    so you may need to enable additional locations to use this option.
     Progressive Sparx Health Logic will be different
     If Moneybags is Vanilla, companion unlocks will be free.
     Disables world keys."""
@@ -244,6 +249,22 @@ class MoneybagsSettings(Choice):
     option_vanilla = MoneybagsOptions.VANILLA
     option_companionsanity = MoneybagsOptions.COMPANIONSANITY
     option_moneybagssanity = MoneybagsOptions.MONEYBAGSSANITY
+
+class PowerupLockSettings(Choice):
+    """Determines if powerup gates (such as superflame) require items to use.
+    Does not affect the invincibility filler item.
+    NOTE: The Sunrise Spring early level entry tricks assume you do not need the superfly
+      powerup to complete them!
+    Vanilla - Powerups are available at all times.
+    Type - Superfly, Fireball, and Invincibility Powerup items are added to the pool.
+      Fireworks Factory and Super Bonus Round's combo powerups require both Superfly and Fireball to unlock.
+    Individual: Each level's powerups are unlocked by a specific item.
+    """
+    display_name = "Powerup Lock Settings"
+    default = PowerupLockOptions.VANILLA
+    option_vanilla = PowerupLockOptions.VANILLA
+    option_type = PowerupLockOptions.TYPE
+    option_individual = PowerupLockOptions.INDIVIDUAL
 
 class EnableWorldKeys(Toggle):
     """If enabled, you will be unable to progress to the next homeworld without enough World Key items.
@@ -582,6 +603,7 @@ class Spyro3Option(PerGameCommonOptions):
     sparx_power_settings: SparxPowerSettings
     death_link: EnableDeathLink
     moneybags_settings: MoneybagsSettings
+    powerup_lock_settings: PowerupLockSettings
     enable_world_keys: EnableWorldKeys
     enable_filler_extra_lives: EnableFillerExtraLives
     enable_filler_invincibility: EnableFillerInvincibility
