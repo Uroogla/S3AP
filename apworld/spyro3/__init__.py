@@ -1,12 +1,13 @@
 # world/spyro3/__init__.py
-from typing import Dict, Set, List
+from typing import Dict, Set, List, TextIO, Union, ClassVar
 import math
 
 from BaseClasses import MultiWorld, Region, Item, Entrance, Tutorial, ItemClassification
 
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import set_rule, add_rule, add_item_rule, forbid_item
-from Options import Accessibility, Range, Toggle
+from Options import Accessibility, Range, Toggle, OptionError
+from settings import Group, Bool
 
 from .Items import Spyro3Item, Spyro3ItemCategory, item_dictionary, key_item_names, item_descriptions, BuildItemPool, \
     item_name_groups
@@ -15,6 +16,15 @@ from .Locations import Spyro3Location, Spyro3LocationCategory, location_tables, 
 from .Options import Spyro3Option, GoalOptions, LifeBottleOptions, MoneybagsOptions, SparxUpgradeOptions, \
     SparxForGemsOptions, GemsanityOptions, LevelLockOptions, spyro_options_groups, PowerupLockOptions
 from .Hints import generateHints
+
+class Spyro3Settings(Group):
+
+    class AllowFullGemsanity(Bool):
+        """Permits full gemsanity options for multiplayer games.
+        Full gemsanity adds almost 4000 locations.  At a later date, it may add an equivalent number of progression
+        items. These future items might be local-only or spread across the multiworld."""
+
+    allow_full_gemsanity: Union[AllowFullGemsanity, bool] = False
 
 class Spyro3Web(WebWorld):
     bug_report_page = ""
@@ -46,7 +56,7 @@ class Spyro3World(World):
     base_id = 1230000
     required_client_version = (0, 5, 0)
     # TODO: Remember to update this!
-    ap_world_version = "1.3.0"
+    ap_world_version = "1.3.1"
     item_name_to_id = Spyro3Item.get_name_to_id()
     location_name_to_id = Spyro3Location.get_name_to_id()
     item_name_groups = item_name_groups
@@ -54,6 +64,7 @@ class Spyro3World(World):
     item_descriptions = item_descriptions
     glitches_item_name: str = "Glitched Item"  # UT Glitched Logic Support
     generation_options = dict()  # UT random option support
+    settings: ClassVar[Spyro3Settings]
 
     level_gems = {
         "Sunrise Spring": 400,
@@ -247,7 +258,7 @@ class Spyro3World(World):
         elif self.generation_options["level_lock_option"] == LevelLockOptions.ADD_REQS or \
                 self.generation_options["level_lock_option"] == LevelLockOptions.ADD_GEM_REQS and \
                 (self.generation_options["moneybags_settings"] != MoneybagsOptions.MONEYBAGSSANITY or \
-                self.generation_options["enable_gemsanity"] != GemsanityOptions.PARTIAL):
+                self.generation_options["enable_gemsanity"] == GemsanityOptions.OFF):
             # Vanilla requirements, plus numbers for levels without vanilla requirements.
             vanilla_reqs = [3, 6, 10, 14, 17, 20, 22, 25, 30, 35, 36, 44, 50, 58, 64, 65, 67, 70, 80, 90]
             random_reqs = []
@@ -300,7 +311,7 @@ class Spyro3World(World):
                         i = i + 1
         elif self.generation_options["level_lock_option"] == LevelLockOptions.ADD_GEM_REQS and \
                 self.generation_options["moneybags_settings"] == MoneybagsOptions.MONEYBAGSSANITY and \
-                self.generation_options["enable_gemsanity"] == GemsanityOptions.PARTIAL:
+                self.generation_options["enable_gemsanity"] != GemsanityOptions.OFF:
             # Vanilla requirements, plus numbers for levels without vanilla requirements.
             vanilla_egg_reqs = [3, 6, 10, 14, 17, 20, 22, 25, 30, 35, 36, 44, 50, 58, 64, 65, 67, 70, 80, 90]
             gem_reqs = [200, 400, 600, 800, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2800, 3100, 3400, 3700, 4100, 4500, 4900, 5400, 6000]
@@ -510,9 +521,16 @@ class Spyro3World(World):
             self.enabled_location_categories.add(Spyro3LocationCategory.LIFE_BOTTLE)
         if self.generation_options["enable_life_bottle_checks"] == LifeBottleOptions.HARD:
             self.enabled_location_categories.add(Spyro3LocationCategory.LIFE_BOTTLE_HARD)
+        if self.options.enable_gemsanity.value in [GemsanityOptions.FULL, GemsanityOptions.FULL_GLOBAL, GemsanityOptions.FULL_BUNDLES]:
+            if not self.settings.allow_full_gemsanity and self.multiworld.players > 1:
+                raise OptionError(f"Spyro 3: Player {self.player_name} has gemsanity set to full, which adds nearly 4000 "
+                                  f"locations to the world. This may skew item placement, and at a later date this may also "
+                                  f"add an equal number of progression items to the pool. "
+                                  f"They must either switch to partial gemsanity, or the "
+                                  f"host needs to enable allow_full_gemsanity in their host.yaml settings.")
         if self.generation_options["enable_gemsanity"] != GemsanityOptions.OFF:
             self.enabled_location_categories.add(Spyro3LocationCategory.GEMSANITY)
-        if self.generation_options["enable_gemsanity"] == GemsanityOptions.PARTIAL:
+        if self.generation_options["enable_gemsanity"] != GemsanityOptions.OFF:
             all_gem_locations = []
             for location in location_dictionary:
                 if location_dictionary[location].category == Spyro3LocationCategory.GEMSANITY:
@@ -523,7 +541,10 @@ class Spyro3World(World):
             if is_ut:
                 self.chosen_gem_locations = []
             else:
-                self.chosen_gem_locations = self.multiworld.random.sample(all_gem_locations, k=200)
+                if self.generation_options["enable_gemsanity"] == GemsanityOptions.PARTIAL:
+                    self.chosen_gem_locations = self.multiworld.random.sample(all_gem_locations, k=200)
+                else:
+                    self.chosen_gem_locations = []
         if self.generation_options["enable_gemsanity"] == GemsanityOptions.FULL:
             for itemname, item in item_dictionary.items():
                 if item.category == Spyro3ItemCategory.GEMSANITY:
@@ -697,8 +718,11 @@ class Spyro3World(World):
                 )
                 new_region.locations.append(new_location)
             elif location.category == Spyro3LocationCategory.EVENT and self.generation_options["open_world"] and \
-                    (location.name.endswith(" Complete") and location.name != "Super Bonus Round Complete" or
-                        location.name.endswith(" Defeated") and location.name != "Sorceress Defeated"):
+                    (
+                        location.name.endswith(" Complete") and
+                        location.name not in ["Crawdad Farm Complete", "Spider Town Complete", "Starfish Reef Complete", "Bugbot Factory Complete", "Midnight Mountain Home: Moneybags Chase Complete", "Super Bonus Round Complete"] or
+                        location.name.endswith(" Defeated") and location.name != "Sorceress Defeated"
+                    ):
                 event_item = self.create_item(location.default_item)
                 new_location = Spyro3Location(
                     self.player,
@@ -841,7 +865,7 @@ class Spyro3World(World):
             elif self.generation_options["level_lock_option"] in [LevelLockOptions.RANDOM_REQS, LevelLockOptions.ADD_REQS] or \
                     self.generation_options["level_lock_option"] == LevelLockOptions.ADD_GEM_REQS and (
                     self.generation_options["moneybags_settings"] != MoneybagsOptions.MONEYBAGSSANITY or
-                    self.generation_options["enable_gemsanity"] != GemsanityOptions.PARTIAL
+                    self.generation_options["enable_gemsanity"] == GemsanityOptions.OFF
             ):
                 return has_entrance_eggs(self, level, state)
             else:
@@ -2611,6 +2635,15 @@ class Spyro3World(World):
     @staticmethod
     def interpret_slot_data(slot_data):
         return slot_data
+
+    def write_spoiler(self, spoiler_handle: TextIO) -> None:
+        if self.generation_options["level_lock_option"] in [LevelLockOptions.RANDOM_REQS, LevelLockOptions.ADD_REQS, LevelLockOptions.ADD_GEM_REQS]:
+            spoiler_handle.write(f"\nLevel Unlock Requirements:\n")
+            for level in self.level_egg_requirements.keys():
+                if self.level_egg_requirements[level] != 0:
+                    spoiler_handle.write(f"{level}: {self.level_egg_requirements[level]} eggs\n")
+                elif self.level_gem_requirements[level] != 0:
+                    spoiler_handle.write(f"{level}: {self.level_egg_requirements[level]} gems\n")
 
     def fill_slot_data(self) -> Dict[str, object]:
         name_to_s3_code = {item.name: item.s3_code for item in item_dictionary.values()}

@@ -40,8 +40,9 @@
         {
             Off = 0,
             Partial = 1,
-            Full = 2,
-            FullGlobal = 3
+            FullBundles = 2,
+            Full = 3,
+            FullGlobal = 4
         }
 
         public enum SpyroColor : short
