@@ -400,3 +400,4 @@ FodyWeavers.xsd
 /apworld/spyro3.apworld
 /apworld.zip
 *.apworld
+/apworld/*.zip

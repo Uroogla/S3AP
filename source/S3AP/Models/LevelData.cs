@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using static S3AP.Models.Enums;
 
 namespace S3AP.Models
 {
@@ -7,6 +8,7 @@ namespace S3AP.Models
         public string Name { get; set; }
         public int EggCount { get; set; }
         public int LevelId { get; set; }
+        public LevelInGameIDs LevelInGameId { get; set; }
         public bool IsHomeworld { get; set; }
         public bool IsBoss { get; set; }
         public int GemCount { get; set; }
@@ -19,6 +21,7 @@ namespace S3AP.Models
         public LevelData(
             string name,
             int levelId,
+            LevelInGameIDs levelInGameId,
             int eggCount,
             bool isHomeworld,
             bool isBoss,
@@ -34,6 +37,7 @@ namespace S3AP.Models
             Name = name;
             EggCount = eggCount;
             LevelId = levelId;
+            LevelInGameId = levelInGameId;
             IsHomeworld = isHomeworld;
             IsBoss = isBoss;
             GemCount = gemCount;

@@ -236,7 +236,7 @@ def BuildItemPool(world, count, preplaced_eggs, options, locked_levels):
         item_pool.append(item_dictionary["Egg"])
     remaining_count = remaining_count - eggs_to_place
 
-    if world.generation_options["enable_gemsanity"] == GemsanityOptions.PARTIAL:
+    if world.generation_options["enable_gemsanity"] in [GemsanityOptions.PARTIAL, GemsanityOptions.FULL_BUNDLES]:
         for i in range(4):
             item_pool.append(item_dictionary["Crawdad Farm 50 Gems"])
             item_pool.append(item_dictionary["Spider Town 50 Gems"])

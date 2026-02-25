@@ -34,8 +34,8 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.3.0";
-    public static List<string> SupportedVersions = ["1.3.0"];
+    public static string Version = "1.3.1";
+    public static List<string> SupportedVersions = ["1.3.0", "1.3.1"];
     public static List<string> PartiallySupportedVersions = [];
 
     public static MainWindowViewModel Context;
@@ -76,6 +76,8 @@ public partial class App : Application
     private static Timer _minigamesTimer { get; set; }
     private static int _timerLoopCount { get; set; }
     private static bool _justDied { get; set; }
+    private static bool _handleGemsanity = false;
+    private static LevelInGameIDs _previousLevel { get; set; }
     private static bool _justReceivedDeathLink { get; set; }
     private static DeathLinkService _deathLinkService { get; set; }
     public override void Initialize()
@@ -130,6 +132,8 @@ public partial class App : Application
         _gemRequirements = new Dictionary<string, int>();
         _worldKeys = 0;
         _progressiveBasketBreaks = 0;
+        // No level ID set
+        _previousLevel = (LevelInGameIDs)255;
         Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America) releases of Spyro 3.");
         if (!IsRunningAsAdministrator())
         {
@@ -446,7 +450,7 @@ public partial class App : Application
             CheckGoalCondition();
         } catch (Exception ex)
         {
-            Log.Logger.Warning("Encountered an error while receiving an item.");
+            Log.Logger.Warning("Encountered an error while completing a location.");
             Log.Logger.Warning(ex.ToString());
             Log.Logger.Warning("This is not necessarily a problem if it happens during release or collect.");
         }
@@ -693,7 +697,7 @@ public partial class App : Application
             GameStatus status = (GameStatus)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.GameStatus));
             // Avoid inadvertantly messing with the Atlas and Options overlays when loaded in on the pause screen.
             // This can result in corrupted save files.
-            if (status == GameStatus.Paused)
+            if (status == GameStatus.Paused || status == GameStatus.LoadingWorld || status == GameStatus.LoadingHomeworld)
             {
                 return;
             }
@@ -927,6 +931,11 @@ public partial class App : Application
                     Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TotalGemAddress), (byte)(totalGemCount + 1));
                 }
             }
+        }
+
+        if (currentLevel != _previousLevel && _handleGemsanity)
+        {
+            Helpers.UpdateLocationList(currentLevel, Client);
         }
 
         if (_deathLinkService != null && !_hasSubmittedGoal)
@@ -1367,6 +1376,7 @@ public partial class App : Application
             Memory.Write(Addresses.GetVersionAddress(Addresses.SBRUFOsGemReq), (short)(_sbrDoorGemReq + 3500));
             Memory.Write(Addresses.GetVersionAddress(Addresses.SBRSorcGemReq), (short)(_sbrDoorGemReq + 5000));
         }
+        _previousLevel = currentLevel;
     }
 
     private static bool HandleKeyUnlock(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
@@ -1470,19 +1480,19 @@ public partial class App : Application
         int gems = CalculateCurrentGems();
         if (_levelLockOptions == LevelLockOptions.Vanilla)
         {
+            if (_openWorld != 0 && eggs >= Math.Floor(10 * multiplier))
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+            }
+            if (_openWorld != 0 && eggs >= Math.Floor(14 * multiplier))
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+            }
             if (currentLevel == LevelInGameIDs.SunriseSpring)
             {
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenEggReq), (byte)Math.Floor(10 * multiplier));
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellEggReq), (byte)Math.Floor(14 * multiplier));
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MushroomEggReq), (byte)Math.Floor(20 * multiplier));
-                if (_openWorld != 0 && eggs >= Math.Floor(10 * multiplier))
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
-                }
-                if (_openWorld != 0 && eggs >= Math.Floor(14 * multiplier))
-                {
-                    Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
-                }
             }
             else if (currentLevel == LevelInGameIDs.MiddayGardens)
             {
@@ -1698,7 +1708,7 @@ public partial class App : Application
         }
     }
 
-    private static void StartSpyroGame(object source, ElapsedEventArgs e)
+    private static async void StartSpyroGame(object source, ElapsedEventArgs e)
     {
         bool isInGame = Helpers.IsInGame();
         bool nullGameState = Client.ItemState == null;
@@ -1861,6 +1871,7 @@ public partial class App : Application
             Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), (short)0);
             Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), (short)0);
         }
+        LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
         if (_openWorld != 0)
         {
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunriseLevelsComplete), 1);
@@ -1902,7 +1913,6 @@ public partial class App : Application
                 }
             }
             // Ensure the rocket appears in Sunrise.
-            LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
             if (currentLevel == LevelInGameIDs.SunriseSpring)
             {
                 var currentLives = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.PlayerLives));
@@ -1910,6 +1920,10 @@ public partial class App : Application
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroState), (byte)SpyroState.Dying);
             }   
         }
+
+        await Task.Delay(5000);
+        Helpers.UpdateLocationList(currentLevel, Client);
+        _handleGemsanity = true;
 
         _loadGameTimer.Enabled = false;
     }
@@ -2134,6 +2148,16 @@ public partial class App : Application
         {
             Log.Logger.Error("Sending location while not in game - please report this error in the Discord.");
         }
+        foreach (long location in newCheckedLocations)
+        {
+            foreach (LevelInGameIDs levelID in Helpers.remainingGemsanityChecks.Keys)
+            {
+                if (Helpers.remainingGemsanityChecks[levelID].Keys.Contains((int)location))
+                {
+                    Helpers.remainingGemsanityChecks[levelID].Remove((int)location);
+                }
+            }
+        }
         var currentEggs = CalculateCurrentEggs();
         CheckGoalCondition();
 
@@ -2213,6 +2237,8 @@ public partial class App : Application
         _useQuietHints = true;
         _unlockedLevels = 0;
         _easyChallenges = new List<string>();
+        _handleGemsanity = false;
+        _previousLevel = (LevelInGameIDs)255;
         _worldKeys = 0;
         _progressiveBasketBreaks = 0;
         _levelLockOptions = LevelLockOptions.Vanilla;

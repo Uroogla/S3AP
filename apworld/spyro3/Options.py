@@ -43,8 +43,9 @@ class SparxForGemsOptions():
 class GemsanityOptions():
     OFF = 0
     PARTIAL = 1
-    FULL = 2
-    FULL_GLOBAL = 3
+    FULL_BUNDLES = 2
+    FULL = 3
+    FULL_GLOBAL = 4
 
 class LevelLockOptions():
     VANILLA = 0
@@ -198,14 +199,18 @@ class MaxTotalGemCheckOption(Range):
 class EnableGemsanityOption(Choice):
     """Adds checks for each individual gem.
     WARNING: To avoid logic issues, this setting is meant for Moneybagssanity only.  If Moneybagssanity is off,
+    WARNING: Full bundles require the host to edit allow_full_gemsanity
+        in their yaml file.
     all Moneybags prices will be set to 0 in game.
     Off: Individual gems are not checks.
     Partial: Every gem has a chance to be a check, but only 200 will be (chosen at random).  For every level with loose
-        gems, items giving 50 or 100 gems for that level will be added to the pool."""
+        gems, items giving 50 or 100 gems for that level will be added to the pool.
+    Full Bundles: Every gem is a check.  200 items giving 50 or 100 gems are added to the pool.  Adds many filler items."""
     display_name = "Enable Gemsanity"
     default = GemsanityOptions.OFF
     option_off = GemsanityOptions.OFF
     option_partial = GemsanityOptions.PARTIAL
+    option_full_bundles = GemsanityOptions.FULL_BUNDLES
 
 class EnableSkillpointChecksOption(Toggle):
     """Adds checks for getting skill points"""
