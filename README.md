@@ -108,10 +108,24 @@ If playing on a new save file, you will still need to get to the end of each lev
 - `showGoal` Show what your completion goal is.
 - `showUnlockedLevels` Show which levels you have received keys for, if level locks are set to keys.
 
-## Known Issues
+## Known Issues and Tentative Roadmap
 
-- Leaving the client and game open for extended periods of time may result in errors.
-- Receiving invincibility in a time attack stops the timer and doesn't automatically complete until invincibility runs out, you give up (which counts as victory), or crash (counts as victory)
+As of v1.3.1, 1 Mar 2026:
+### Known Issues
+- Receiving a life from fodder or a life bottle in midnight mountain home when your current life count is at least the sorceress 1 door egg requirement sets your lives to 99.  (Fixed for 1.4.0)
+- Loading into a save file in a homeworld or collecting a vanilla egg in a homeworld may let you temporarily access levels you don't have enough eggs for.  This only applies to vanilla level lock settings.
+- In Open World Mode with Vanilla Level Locks, receiving enough eggs to open Molten Crater or Seashell Shore while in Sunrise Spring Home requires exiting and re-entering the homeworld to unlock the levels.
+- Powerup symbols may or may not remain when a powerup is unavailable.  This is a visual bug only.
+
+### Current Roadmap:
+- Minor feature additions
+- Poptracker support
+- Client should inform user on disconnect
+- Support PAL releases
+- Support Mac and Linux
+- Client performance improvements
+
+For latest list of known issues and desired features, see https://github.com/Uroogla/S3AP/issues.  Reporting issues in the Archipelago Discord thread for Spyro 3 is preferred, but reports to this link will be read as well.
 
 ## Credits
 
