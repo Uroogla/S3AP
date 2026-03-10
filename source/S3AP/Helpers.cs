@@ -78,21 +78,11 @@ namespace S3AP
         {
             if (Memory.ReadString(Addresses.GreenLabelAtlasAddress, 5) == "Atlas")
             {
-                if (gameVersion != "1.1")
-                {
-                    Log.Logger.Information("You are playing on the NTSC-U 1.1 release of Spyro 3.");
-                }
                 gameVersion = "1.1";
                 return true;
             }
             else if (Memory.ReadString(Addresses.BlackLabelAtlasAddress, 5) == "Atlas")
             {
-                if (gameVersion != "1.0")
-                {
-                    Log.Logger.Warning("You are playing on the NTSC-U 1.0 release of Spyro 3.");
-                    Log.Logger.Warning("Support for this version is in beta.");
-                    Log.Logger.Warning("Please report any issues you encounter!");
-                }
                 gameVersion = "1.0";
                 return true;
             }

@@ -74,7 +74,7 @@ def generateHints(player_slot, number_of_hints, s3_world):
         "Zoe says that this might be a good spot to find some ingredients.",
         "Zoe says that you should pet the dog in The Witness' town.",
         "Zoe says that it is possible to crash Spyro 3 in many ways. Please use a memory card!",
-        "Zoe says that Zombie is when they game thinks Spyro is dead but the player retains control.",
+        "Zoe says that Zombie is when the game thinks Spyro is dead but the player retains control.",
         "Zoe says that walls in Sparx levels are just a suggestion.",
         "Zoe says that Aladdin for SNES would make an interesting Archipelago integration.",
         "Zoe says that Spyro shares no dialogue with the Sorceress in this game.",

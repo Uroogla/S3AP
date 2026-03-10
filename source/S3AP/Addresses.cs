@@ -285,9 +285,8 @@ namespace S3AP
 
         public const uint SpookyOpenWorldGem = 0x71D18;  // bit 0x80
 
-        public const uint SorceressDoorReq1 = 0x75844;  // Game code, short gives egg req.
-        public const uint SorceressDoorReq2 = 0x764c0;  // Game code, short gives egg req.
-        public const uint SorceressDoorReq3 = 0x799dc;  // Game code, short gives egg req.
+        public const uint SorceressDoorReq1 = 0x764c0;  // Game code, short gives egg req.
+        public const uint SorceressDoorReq2 = 0x799dc;  // Game code, short gives egg req.
         public const uint SorceressDoorReqDisplay = 0x19b8dc;
         public const uint SBRGemReq1 = 0x78000;  // Game code, short gives gem req.
         public const uint SBRGemReq2 = 0x7835c;  // Game code, short gives gem req.
