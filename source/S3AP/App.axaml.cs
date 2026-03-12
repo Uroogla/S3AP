@@ -2321,6 +2321,16 @@ public partial class App : Application
                 }
             }
         }
+        foreach (long location in newCheckedLocations)
+        {
+            foreach (LevelInGameIDs levelID in Helpers.remainingGemsanityChecks.Keys)
+            {
+                if (Helpers.remainingGemsanityChecks[levelID].Keys.Contains((int)location))
+                {
+                    Helpers.remainingGemsanityChecks[levelID].Remove((int)location);
+                }
+            }
+        }
         var currentEggs = CalculateCurrentEggs();
         CheckGoalCondition();
 
