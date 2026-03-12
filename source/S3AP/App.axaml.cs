@@ -1,4 +1,5 @@
 ﻿using Archipelago.Core;
+using Archipelago.Core.AvaloniaGUI.Logging;
 using Archipelago.Core.AvaloniaGUI.Models;
 using Archipelago.Core.AvaloniaGUI.ViewModels;
 using Archipelago.Core.AvaloniaGUI.Views;
@@ -7,6 +8,7 @@ using Archipelago.Core.Models;
 using Archipelago.Core.Util;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
+using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -16,9 +18,7 @@ using Newtonsoft.Json;
 using ReactiveUI;
 using S3AP.Models;
 using Serilog;
-using Silk.NET.OpenGL;
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,8 +34,8 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.3.1";
-    public static List<string> SupportedVersions = ["1.3.0", "1.3.1"];
+    public static string Version = "1.3.2";
+    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2"];
     public static List<string> PartiallySupportedVersions = [];
 
     public static MainWindowViewModel Context;
@@ -119,8 +119,7 @@ public partial class App : Application
         Context.CommandReceived += (e, a) =>
         {
             if (string.IsNullOrWhiteSpace(a.Command)) return;
-            Client?.SendMessage(a.Command);
-            HandleCommand(a.Command);
+            HandleCommand(a);
         };
         Context.ConnectButtonEnabled = true;
         Context.AutoscrollEnabled = true;
@@ -134,11 +133,12 @@ public partial class App : Application
         _progressiveBasketBreaks = 0;
         // No level ID set
         _previousLevel = (LevelInGameIDs)255;
-        Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America) releases of Spyro 3.");
+        Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America)\r\n" +
+            "releases of Spyro 3.");
         if (!IsRunningAsAdministrator())
         {
-            Log.Logger.Warning("You do not appear to be running this client as an administrator.");
-            Log.Logger.Warning("This may result in errors or crashes when trying to connect to Duckstation.");
+            Log.Logger.Warning("You do not appear to be running this client as an administrator.\r\n" +
+                "This may result in errors or crashes when trying to connect to Duckstation.");
         }
     }
 
@@ -189,10 +189,10 @@ public partial class App : Application
             string ignoreMessage = "Received DeathLink from " + deathLink.Source;
             if (deathLink.Cause != null)
             {
-                ignoreMessage = ignoreMessage + " - " + deathLink.Cause;
+                ignoreMessage = ignoreMessage + " - " + deathLink.Cause +
+                    "\r\nIgnored the DeathLink to avoid softlock in current level.";
             }
             Log.Logger.Information(ignoreMessage);
-            Log.Logger.Information("Ignored the DeathLink to avoid softlock in current level.");
             return;
         }
 
@@ -206,60 +206,142 @@ public partial class App : Application
         Log.Logger.Information(message);
     }
 
-    private void HandleCommand(string command)
+    private async void HandleCommand(ArchipelagoCommandEventArgs command)
     {
         if (Client == null || Client.ItemState == null || Client.CurrentSession == null) return;
-        switch (command)
+        string commandText = command.Command;
+        switch (commandText.ToLower())
         {
-            case "clearSpyroGameState":
-                Log.Logger.Information("Clearing the game state.  Please reconnect to the server while in game to refresh received items.");
+            case "!help":
+                // This is also a server command, so send the message after.
+                string commandsText = "";
+                // !help is covered by the server response.
+                // commandsText += "!help\r\n\tShow available commands.\r\n";
+                commandsText += "!goal\r\n\tShows your current goal and progress towards it.\r\n";
+                commandsText += "!options\r\n\tShows important options for your slot.\r\n";
+                commandsText += "!unlockedLevels\r\n\tWhen level locks are keys, shows the levels you have unlocked.\r\n";
+                commandsText += "!reloadItems\r\n\tIn case of a desync, sends all received AP Items again.\r\n\tRequires reconnecting.\r\n";
+                commandsText += "!quietHints\r\n\tMakes hints easier to read by hiding items you have already found.\r\n";
+                commandsText += "!verboseHints\r\n\tChanges hints to the default archipelago behavior,\r\n\tshowing items you have already found.\r\n";
+                commandsText += "!debugInfo\r\n\tPrints information about your game to the screen.\r\n\tYou may be asked to screenshot this if there is an error.\r\n";
+                Client?.SendMessage(command.Command);
+                await Task.Delay(200);
+                Log.Logger.Information(commandsText);
+                break;
+            case "!options":
+                List<CompletionGoal> eggRequirementGoals = new List<CompletionGoal>() {
+                    CompletionGoal.Sorceress1,
+                    CompletionGoal.Scorch,
+                    CompletionGoal.Spike,
+                    CompletionGoal.Sorceress2,
+                    CompletionGoal.EggHunt
+                };
+                string goalEggText = eggRequirementGoals.Contains(_goal) ? $" ({_eggCountGoal} eggs)" : "";
+                string worldSettings = _openWorld != 0 ? "Open World" : (_isWorldKeysOn != 0 ? "World Keys" : "Vanilla Progression");
+                string optionsString = $"\tGoal: {_goal}{goalEggText} - Use !goal for more info\r\n" +
+                    $"\tWorld Settings: {worldSettings}\r\n" +
+                    $"\tLevel Locks: {_levelLockOptions}\r\n" +
+                    $"\tMoneybagssanity: {_moneybagsOption}\r\n" +
+                    $"\tGemsanity: {_gemsanityOption}\r\n" +
+                    $"\tPowerup Locks: {_powerupLockOption}\r\n" +
+                    $"\tSorceress' Lair Requirement: {_sorceressDoorEggReq} egg(s)\r\n" +
+                    $"\tSuper Bonus Round Requirements: {_sbrDoorEggReq} egg(s) and {_sbrDoorGemReq} gem(s)\r\n";
+                Log.Logger.Information($"\r\n{command.Command}\r\n{optionsString}");
+                break;
+            case "!debuginfo":
+                _slotData.TryGetValue("apworldVersion", out var hostVersionValue);
+                LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
+                byte currentSubArea = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentSubareaAddress));
+                string debugString = $"\tGame Version: {Helpers.gameVersion}\r\n" +
+                    $"\tHost APWorld Version: {hostVersionValue}\r\n" +
+                    $"\tClient Version: {Version}\r\n" +
+                    $"\tCurrent Level: {currentLevel} - Sub-area {currentSubArea}\r\n";
+                // TODO: Add more information.
+                Log.Logger.Information($"\r\n{command.Command}\r\n{debugString}Screenshot this if requested to help debug issues.\r\n");
+                break;
+            case "clearspyrogamestate":
+            case "!reloaditems":
+                Log.Logger.Information($"\r\n{command.Command}\r\n" +
+                    "\tClearing the game state.  Please reconnect to the server while in game to refresh received items.\r\n");
                 Client.ForceReloadAllItems();
                 break;
-            case "useQuietHints":
-                Log.Logger.Information("Hints for found locations will not be displayed.  Type 'useVerboseHints' to show them.");
+            case "usequiethints":
+            case "!quiethints":
+                Log.Logger.Information($"\r\n{command.Command}\r\n" +
+                    "\tHints for found locations will not be displayed.  Type 'useVerboseHints' to show them.\r\n");
                 _useQuietHints = true;
                 break;
-            case "useVerboseHints":
-                Log.Logger.Information("Hints for found locations will be displayed.  Type 'useQuietHints' to show them.");
+            case "useverbosehints":
+            case "!verbosehints":
+                Log.Logger.Information($"\r\n{command.Command}\r\n" +
+                    "\tHints for found locations will be displayed.  Type 'useQuietHints' to show them.\r\n");
                 _useQuietHints = false;
                 break;
-            case "showUnlockedLevels":
+            case "showunlockedlevels":
+            case "!unlockedlevels":
+                Log.Logger.Information($"\r\n{command.Command}");
                 showUnlockedLevels();
                 break;
-            case "showGoal":
+            case "showgoal":
+            case "!goal":
+                Log.Logger.Information($"\r\n{command.Command}");
                 string goalText = "";
+                string progressText = "";
                 int eggsNeeded = int.Parse(Client.Options?.GetValueOrDefault("egg_count", 150).ToString());
+                int eggs = CalculateCurrentEggs();
+                string eggsNeededText = eggsNeeded == 1 ? $"{eggsNeeded} egg" : $"{eggsNeeded} eggs";
+                string eggsText = eggs == 1 ? $"{eggs} egg" : $"{eggs} eggs";
+                int skillPoints = CalculateCurrentSkillPoints();
+                string skillPointsText = skillPoints == 1 ? $"{skillPoints} Skill Point" : $"{skillPoints} Skill Points";
+                bool beatenSpike = Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Spike Defeated") ?? false;
+                bool beatenScorch = Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Scorch Defeated") ?? false;
+                bool beatenSorceress = Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Sorceress Defeated") ?? false;
+                bool beatenSorceressTwo = Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Super Bonus Round Complete") ?? false;
+                string defeatedSpikeText = beatenSpike ? "have defeated Spike" : "have not defeated Spike";
+                string defeatedScorchText = beatenScorch ? "have defeated Scorch" : "have not defeated Scorch";
+                string defeatedSorceressText = beatenSorceress ? "have defeated the Sorceress in her lair" : "have not defeated the Sorceress in her lair";
+                string defeatedSorceressTwoText = beatenSorceressTwo ? "have defeated the Sorceress in Super Bonus Round" : "have not defeated the Sorceress in Super Bonus Round";
                 switch (_goal)
                 {
                     case CompletionGoal.Sorceress1:
-                        goalText = $"Collect {eggsNeeded} eggs and defeat the Sorceress in Sorceress' Lair";
+                        goalText = $"Collect {eggsNeededText} and defeat the Sorceress in Sorceress' Lair";
+                        progressText = $"You have {eggsText} and {defeatedSorceressText}.";
                         break;
                     case CompletionGoal.EggForSale:
                         goalText = "Chase Moneybags in Midnight Mountain";
                         break;
                     case CompletionGoal.Sorceress2:
-                        goalText = $"Collect {eggsNeeded} eggs and defeat the Sorceress in Super Bonus Round";
+                        goalText = $"Collect {eggsNeededText} and defeat the Sorceress in Super Bonus Round";
+                        progressText = $"You have {eggsText} and {defeatedSorceressTwoText}.";
                         break;
                     case CompletionGoal.AllSkillPoints:
                         goalText = "Collect all 20 Skill Points";
+                        progressText = $"You have {skillPointsText}.";
                         break;
                     case CompletionGoal.Epilogue:
                         goalText = "Defeat the Sorceress in Sorceress' Lair and collect all 20 skill points";
+                        progressText = $"You have {skillPointsText} and {defeatedSorceressText}.";
                         break;
                     case CompletionGoal.Spike:
-                        goalText = $"Collect {eggsNeeded} eggs and defeat Spike in Spike's Arena";
+                        goalText = $"Collect {eggsNeededText} and defeat Spike in Spike's Arena";
+                        progressText = $"You have {eggsText} and {defeatedSpikeText}.";
                         break;
                     case CompletionGoal.Scorch:
-                        goalText = $"Collect {eggsNeeded} eggs and defeat Scorch in Scorch's Pit";
+                        goalText = $"Collect {eggsNeededText} and defeat Scorch in Scorch's Pit";
+                        progressText = $"You have {eggsText} and {defeatedScorchText}.";
                         break;
                     case CompletionGoal.EggHunt:
-                        goalText = $"Collect {eggsNeeded} eggs from a reduced egg pool";
+                        goalText = $"Collect {eggsNeededText} from a reduced egg pool";
+                        progressText = $"You have {eggsText}.";
                         break;
                     default:
-                        goalText = "Error finding your goal";
-                        break;
+                        Log.Logger.Error("Error finding your goal\r\n");
+                        return;
                 }
-                Log.Logger.Information($"Your goal is: {goalText}");
+                Log.Logger.Information($"\tYour goal is: {goalText}\r\n\t{progressText}\r\n");
+                break;
+            default:
+                Client?.SendMessage(command.Command);
                 break;
         }
     }
@@ -379,37 +461,31 @@ public partial class App : Application
             {
                 if (versionValue != null && SupportedVersions.Contains(versionValue.ToString().ToLower()))
                 {
-                    Log.Logger.Information($"The host's AP world version is {versionValue.ToString()} and the client version is {Version}.");
-                    Log.Logger.Information("These versions are known to be compatible.");
+                    Log.Logger.Information($"\r\nThe host's AP world version is {versionValue.ToString()} and the client version is {Version}.\r\n" +
+                        "These versions are known to be compatible.\r\n");
                 }
                 else if (versionValue != null && PartiallySupportedVersions.Contains(versionValue.ToString().ToLower()))
                 {
-                    Log.Logger.Warning($"The host's AP world version is {versionValue.ToString()} and the client version is {Version}.");
-                    Log.Logger.Warning("These versions are known to be mostly compatible but may bave some unexpected behavior.");
-                    Log.Logger.Warning("Please be sure to read the release notes to see what may break.");
+                    Log.Logger.Warning($"\r\nThe host's AP world version is {versionValue.ToString()} and the client version is {Version}.\r\n" +
+                        "These versions are known to be mostly compatible but may bave some unexpected behavior.\r\n" +
+                        "Please be sure to read the release notes to see what may break.\r\n");
                 }
                 else if (versionValue != null && versionValue.ToString().ToLower() != Version.ToLower())
                 {
-                    Log.Logger.Warning($"The host's AP world version is {versionValue.ToString()} but the client version is {Version}.");
-                    Log.Logger.Warning("Please ensure these are compatible before proceeding.");
+                    Log.Logger.Warning($"\r\nThe host's AP world version is {versionValue.ToString()} but the client version is {Version}.\r\n" +
+                        "Please ensure these are compatible before proceeding.\r\n");
                 }
                 else if (versionValue == null)
                 {
-                    Log.Logger.Error($"The host's AP world version predates 1.2.0, but the client version is {Version}.");
-                    Log.Logger.Error("This will almost certainly result in errors.");
+                    Log.Logger.Error($"\r\nThe host's AP world version predates 1.2.0, but the client version is {Version}.\r\n" +
+                        "This will almost certainly result in errors.\r\n");
                 }
             }
             else
             {
-                Log.Logger.Error($"The host's AP world version predates 1.2.0, but the client version is {Version}.");
-                Log.Logger.Error("This will almost certainly result in errors.");
+                Log.Logger.Error($"\r\nThe host's AP world version predates 1.2.0, but the client version is {Version}.\r\n" +
+                    "This will almost certainly result in errors.\r\n");
             }
-
-            int eggs = CalculateCurrentEggs();
-            int skillPoints = CalculateCurrentSkillPoints();
-            bool beatenSorceress = Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false;
-            string defeatedSorceressText = beatenSorceress ? "you have defeated the sorceress" : "you have not defeated the sorceress";
-            Log.Logger.Information($"You have {eggs} eggs, {skillPoints} skill points, and {defeatedSorceressText}.");
 
             _loadGameTimer = new Timer();
             _loadGameTimer.Elapsed += new ElapsedEventHandler(StartSpyroGame);
@@ -421,8 +497,8 @@ public partial class App : Application
             _cosmeticsTimer.Interval = 5000;
             _cosmeticsTimer.Enabled = true;
 
-            _progressiveBasketBreaks = (byte)(Client.ItemState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Basket Break").Count() ?? 0);
-            _worldKeys = (byte)(Client.ItemState?.ReceivedItems.Where(x => x.Name == "World Key").Count() ?? 0);
+            _progressiveBasketBreaks = (byte)(Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Progressive Sparx Basket Break").Count() ?? 0);
+            _worldKeys = (byte)(Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "World Key").Count() ?? 0);
 
             _gameLoopTimer = new Timer();
             _gameLoopTimer.Elapsed += new ElapsedEventHandler(ModifyGameLoop);
@@ -460,6 +536,7 @@ public partial class App : Application
     {
         if (Client.ItemState == null || Client.CurrentSession == null) return;
         Log.Logger.Debug($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
+        UpdateItemLog();
         // Give items a moment to update before printing values.
         await Task.Delay(200);
         try
@@ -580,6 +657,24 @@ public partial class App : Application
                     break;
                 case "World Key":
                     _worldKeys++;
+                    string prevWorld = "";
+                    string nextWorld = "";
+                    if (_worldKeys == 1)
+                    {
+                        prevWorld = "Sunrise Spring";
+                        nextWorld = "Midday Gardens";
+                    }
+                    else if (_worldKeys == 2)
+                    {
+                        prevWorld = "Midday Gardens";
+                        nextWorld = "Evening Lake";
+                    }
+                    else
+                    {
+                        prevWorld = "Evening Lake";
+                        nextWorld = "Midnight Mountain";
+                    }
+                    Log.Logger.Information($"You will have access to {nextWorld} after completing\r\nall end of level eggs and the boss of {prevWorld}");
                     break;
                 case "Increased Sparx Range":
                     Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRange), (short)3072);
@@ -618,15 +713,23 @@ public partial class App : Application
             }
         } catch (Exception ex)
         {
-            Log.Logger.Warning("Encountered an error while receiving an item.");
-            Log.Logger.Warning(ex.ToString());
-            Log.Logger.Warning("This is not necessarily a problem if it happens during release or collect.");
+            Log.Logger.Warning("Encountered an error while receiving an item.\r\n" +
+                ex.ToString() + "\r\n" +
+                "This is not necessarily a problem if it happens during release or collect.");
         }
     }
 
     private void showUnlockedLevels()
     {
-        List<Item> unlockedLevels = (Client.ItemState?.ReceivedItems.Where(x => x.Name.EndsWith(" Unlock")).ToList() ?? new List<Item>());
+        if (_levelLockOptions == LevelLockOptions.Vanilla)
+        {
+            Log.Logger.Information("Levels have their vanilla unlock requirements.");
+        }
+        else if(_levelLockOptions != LevelLockOptions.Keys)
+        {
+            Log.Logger.Information("Levels are not locked by keys. You can view unlock requirements in the atlas.");
+        }
+        List<ItemInfo> unlockedLevels = (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName.EndsWith(" Unlock")).ToList() ?? new List<ItemInfo>());
         if (unlockedLevels.Count > _unlockedLevels)
         {
             _unlockedLevels = unlockedLevels.Count;
@@ -635,26 +738,28 @@ public partial class App : Application
         {
             return;
         }
-        Log.Logger.Information("You have unlocked: ");
-        string unlockedLevelsString = "";
+        string unlockedLevelsString = "You have unlocked:";
         int levelCount = 0;
-        foreach (Item unlockedLevel in unlockedLevels)
+        foreach (ItemInfo unlockedLevel in unlockedLevels)
         {
-            string newLevel = unlockedLevel.Name.Split(" ")[0];
-            unlockedLevelsString += (newLevel + "; ");
+            string newLevel = unlockedLevel.ItemName.Split(" ")[0];
             levelCount++;
             // Print 6 per line so it is easier to read.
-            if (levelCount % 6 == 0)
+            if (levelCount % 6 == 1)
             {
-                Log.Logger.Information(unlockedLevelsString.Substring(0, unlockedLevelsString.Length - 2));
-                unlockedLevelsString = "";
+                unlockedLevelsString += "\r\n";
             }
+            unlockedLevelsString += (newLevel + "; ");
         }
-        if (unlockedLevelsString.Length > 0)
+        if (unlockedLevelsString != "You have unlocked:")
         {
             unlockedLevelsString = unlockedLevelsString.Substring(0, unlockedLevelsString.Length - 2);
-            Log.Logger.Information(unlockedLevelsString);
         }
+        else
+        {
+            unlockedLevelsString += "\r\nNo levels yet";
+        }
+        Log.Logger.Information($"{unlockedLevelsString}\r\n");
     }
 
     private static async void GetZoeHint(string hintName)
@@ -713,9 +818,9 @@ public partial class App : Application
             HandleMinigames(source, e);
         } catch (Exception ex)
         {
-            Log.Logger.Warning("Encountered an error while managing the game loop.");
-            Log.Logger.Warning(ex.ToString());
-            Log.Logger.Warning("This is not necessarily a problem if it happens during release or collect.");
+            Log.Logger.Warning("Encountered an error while managing the game loop.\r\n" +
+                ex.ToString() + "\r\n" +
+                "This is not necessarily a problem if it happens during release or collect.");
         }
     }
 
@@ -729,16 +834,20 @@ public partial class App : Application
         {
             LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
             byte transportWarpLocation = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.TransportMenuAddress));
-            if (currentLevel == LevelInGameIDs.BuzzsDungeon && _worldKeys < 1)
+            byte nextWarpAddress = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.NextWarpAddress));
+            if (currentLevel == LevelInGameIDs.BuzzsDungeon && _worldKeys < 1 && nextWarpAddress != (byte)LevelInGameIDs.SunriseSpring)
             {
+                Log.Logger.Warning("You will not be able to progress to Midday Gardens without a world key.");
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.NextWarpAddress), (byte)LevelInGameIDs.SunriseSpring);
             }
-            else if (currentLevel == LevelInGameIDs.SpikesArena && _worldKeys < 2)
+            else if (currentLevel == LevelInGameIDs.SpikesArena && _worldKeys < 2 && nextWarpAddress != (byte)LevelInGameIDs.MiddayGardens)
             {
+                Log.Logger.Warning("You will not be able to progress to Evening Lake without a second world key.");
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.NextWarpAddress), (byte)LevelInGameIDs.MiddayGardens);
             }
-            else if (currentLevel == LevelInGameIDs.ScorchsPit && _worldKeys < 3)
+            else if (currentLevel == LevelInGameIDs.ScorchsPit && _worldKeys < 3 && nextWarpAddress != (byte)LevelInGameIDs.EveningLake)
             {
+                Log.Logger.Warning("You will not be able to progress to Midnight Mountain without a third world key.");
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.NextWarpAddress), (byte)LevelInGameIDs.EveningLake);
             }
             if (transportWarpLocation == (byte)LevelInGameIDs.MiddayGardens && _worldKeys < 1)
@@ -746,6 +855,7 @@ public partial class App : Application
                 byte isBuzzDefeated = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.BuzzDefeated));
                 if (isBuzzDefeated == 1)
                 {
+                    Log.Logger.Warning("You will not be able to progress to Midday Gardens without a world key.");
                     Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TransportMenuAddress), (byte)LevelInGameIDs.SunriseSpring);
                 }
             }
@@ -754,6 +864,7 @@ public partial class App : Application
                 byte isSpikeDefeated = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.SpikeDefeated));
                 if (isSpikeDefeated == 1)
                 {
+                    Log.Logger.Warning("You will not be able to progress to Evening Lake without a second world key.");
                     Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TransportMenuAddress), (byte)LevelInGameIDs.MiddayGardens);
                 }
             }
@@ -762,6 +873,7 @@ public partial class App : Application
                 byte isScorchDefeated = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.ScorchDefeated));
                 if (isScorchDefeated == 1)
                 {
+                    Log.Logger.Warning("You will not be able to progress to Midnight Mountain without a third world key.");
                     Memory.WriteByte(Addresses.GetVersionAddress(Addresses.HunterRescuedCutscene), 1);
                     Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TransportMenuAddress), (byte)LevelInGameIDs.EveningLake);
                 }
@@ -778,9 +890,9 @@ public partial class App : Application
         if (_sparxPowerShuffle != 0)
         {
             // We need to override the powerups given by Zoe for completing a Sparx Level.
-            var extendedRange = Client.ItemState?.ReceivedItems.Where(x => x.Name == "Increased Sparx Range").Count() ?? 0;
-            var gemFinder = Client.ItemState?.ReceivedItems.Where(x => x.Name == "Sparx Gem Finder").Count() ?? 0;
-            var extraHitPoint = Client.ItemState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0;
+            var extendedRange = Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Increased Sparx Range").Count() ?? 0;
+            var gemFinder = Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Sparx Gem Finder").Count() ?? 0;
+            var extraHitPoint = Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Extra Hit Point").Count() ?? 0;
             if (extendedRange == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SparxRange), (short)2062);
@@ -815,7 +927,7 @@ public partial class App : Application
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SparxBreakBaskets), (byte)_progressiveBasketBreaks);
         }
 
-        byte sparxHealth = (byte)(Client.ItemState?.ReceivedItems.Where(x => x.Name == "Progressive Sparx Health Upgrade").Count() ?? 0);
+        byte sparxHealth = (byte)(Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Progressive Sparx Health Upgrade").Count() ?? 0);
         if (_sparxOption == ProgressiveSparxHealthOptions.Blue)
         {
             sparxHealth += 2;
@@ -828,8 +940,8 @@ public partial class App : Application
         {
             // TODO: Allow overheal to work for 15 seconds.
             byte currentHealth = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.PlayerHealth));
-            sparxHealth += (byte)(Client.ItemState?.ReceivedItems.Where(x => x.Name == "Extra Hit Point").Count() ?? 0);
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Starfish Reef Complete").Count() ?? 0) > 0 && _sparxPowerShuffle == 0)
+            sparxHealth += (byte)(Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Extra Hit Point").Count() ?? 0);
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Starfish Reef Complete").Count() ?? 0) > 0 && _sparxPowerShuffle == 0)
             {
                 sparxHealth++;
             }
@@ -1061,8 +1173,8 @@ public partial class App : Application
             if (currentLevel == LevelInGameIDs.SunriseSpring)
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Superfly Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Sunrise Superfly Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Superfly Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Sunrise Superfly Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.SunrisePowerup) + 20, 100000);
@@ -1071,8 +1183,8 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.CloudSpires && currentSubarea == 2)  // Bell tower sub area
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Superfly Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Cloud Superfly Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Superfly Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Cloud Superfly Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.CloudPowerup) + 20, 100000);
@@ -1081,8 +1193,8 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.MiddayGardens)
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Fireball Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Midday Fireball Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Fireball Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Midday Fireball Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.MiddayPowerup) + 20, 100000);
@@ -1091,8 +1203,8 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.BambooTerrace && currentSubarea == 1)  // Boat sub area
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Fireball Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Bamboo Fireball Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Fireball Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Bamboo Fireball Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.BambooPowerup) + 20, 100000);
@@ -1101,8 +1213,8 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.EveningLake)
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Invincibility Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Evening Invincibility Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Invincibility Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Evening Invincibility Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.EveningPowerup) + 20, 100000);
@@ -1111,9 +1223,9 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.FireworksFactory && currentSubarea == 1)  // Twin Dragons sub area
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Fireball Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Superfly Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Fireworks Combo Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Fireball Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Superfly Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Fireworks Combo Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.FireworksPowerup) + 20, 100000);
@@ -1122,8 +1234,8 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.LostFleet && currentSubarea == 0)  // Main area
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Invincibility Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Fleet Invincibility Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Invincibility Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Fleet Invincibility Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.LostFleetPowerup1) + 20, 100000);
@@ -1132,8 +1244,8 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.LostFleet && currentSubarea == 1)  // Subs
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Invincibility Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Fleet Invincibility Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Invincibility Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Fleet Invincibility Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.LostFleetPowerup2) + 20, 100000);
@@ -1143,8 +1255,8 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.CharmedRidge && currentSubarea == 0)  // Main area
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Fireball Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Charmed Fireball Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Fireball Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Charmed Fireball Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedRidgePowerup) + 20, 100000);
@@ -1153,8 +1265,8 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.CrystalIslands && currentSubarea == 0)  // Main area
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Superfly Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Crystal Superfly Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Superfly Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Crystal Superfly Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalIslandsPowerup) + 20, 100000);
@@ -1163,9 +1275,9 @@ public partial class App : Application
             else if (currentLevel == LevelInGameIDs.SuperBonusRound && currentSubarea == 0)  // Main area
             {
                 if (
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Fireball Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Type && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Superfly Powerup").Count() ?? 0) == 0 ||
-                    _powerupLockOption == PowerupLockOptions.Individual && (Client.ItemState?.ReceivedItems.Where(x => x.Name == "Super Bonus Round Combo Powerup").Count() ?? 0) == 0
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Fireball Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Type && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Superfly Powerup").Count() ?? 0) == 0 ||
+                    _powerupLockOption == PowerupLockOptions.Individual && (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Super Bonus Round Combo Powerup").Count() ?? 0) == 0
                 )
                 {
                     Memory.Write(Addresses.GetVersionAddress(Addresses.SuperBonusRoundPowerup) + 20, 100000);
@@ -1341,7 +1453,6 @@ public partial class App : Application
         {
             Memory.Write(Addresses.GetVersionAddress(Addresses.SorceressDoorReq1), (short)_sorceressDoorEggReq);
             Memory.Write(Addresses.GetVersionAddress(Addresses.SorceressDoorReq2), (short)_sorceressDoorEggReq);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SorceressDoorReq3), (short)_sorceressDoorEggReq);
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SorceressDoorReqDisplay), (byte)_sorceressDoorEggReq);
             Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq1), (short)_sbrDoorGemReq);
             Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq2), (short)_sbrDoorGemReq);
@@ -1381,7 +1492,7 @@ public partial class App : Application
 
     private static bool HandleKeyUnlock(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
     {
-        if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
+        if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == $"{levelName} Unlock").Count() ?? 0) > 0)
         {
             Memory.WriteByte(Addresses.GetVersionAddress(portalAddress), 6);
             return true;
@@ -1395,7 +1506,7 @@ public partial class App : Application
 
     private static bool HandleKeyName(string levelName, uint portalAddress, uint nameAddress, uint nameLength)
     {
-        if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == $"{levelName} Unlock").Count() ?? 0) > 0)
+        if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == $"{levelName} Unlock").Count() ?? 0) > 0)
         {
             WriteStringToMemory(
                 Addresses.GetVersionAddress(nameAddress),
@@ -1717,16 +1828,17 @@ public partial class App : Application
         {
             if (nullGameState || nullCurrentSession)
             {
-                Log.Logger.Warning("This client is not correctly connected to Archipelago.");
-                Log.Logger.Warning("If this warning persists, please restart the client and try again to connect.");
+                Log.Logger.Warning("This client is not correctly connected to Archipelago.\r\n" +
+                    "If this warning persists, please restart the client and try again to connect.");
             }
             else
             {
                 Log.Logger.Information("Player is not yet in control of Spyro.");
-                Log.Logger.Information("Please restart this client and Duckstation if incorrect.");
             }
             return;
         }
+        Log.Logger.Information("Player is in control of Spyro. Starting game!");
+        _loadGameTimer.Enabled = false;
         List<int> gemsanityIDs = new List<int>();
         if (_slotData.TryGetValue("gemsanity_ids", out var gemIDs))
         {
@@ -1748,7 +1860,7 @@ public partial class App : Application
 
         if (_moneybagsOption != MoneybagsOptions.Vanilla)
         {
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 20001);
             }
@@ -1757,7 +1869,7 @@ public partial class App : Application
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 65536);
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaCutscene), 1);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 20001);
             }
@@ -1766,7 +1878,7 @@ public partial class App : Application
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 65536);
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ByrdCutscene), 1);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 20001);
             }
@@ -1775,7 +1887,7 @@ public partial class App : Application
                 Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 65536);
                 Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BentleyCutscene), 1);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 20001);
             }
@@ -1787,7 +1899,7 @@ public partial class App : Application
         }
         if (_moneybagsOption == MoneybagsOptions.Moneybagssanity)
         {
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Cloud Spires Bellows").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Cloud Spires Bellows").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 20001);
             }
@@ -1796,7 +1908,7 @@ public partial class App : Application
                 // Special case this to just reduce the price to 0, since otherwise a rhynoc despawns.
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 0);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 20001);
             }
@@ -1804,7 +1916,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 65536);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Icy Peak Nancy Door").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Icy Peak Nancy Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 20001);
             }
@@ -1812,7 +1924,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 65536);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Molten Crater Thieves Door").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Molten Crater Thieves Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 20001);
             }
@@ -1820,7 +1932,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 65536);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Charmed Ridge Stairs").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Charmed Ridge Stairs").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 20001);
             }
@@ -1828,7 +1940,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 65536);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Desert Ruins Door").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Desert Ruins Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 20001);
             }
@@ -1836,7 +1948,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 65536);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Frozen Altars Cat Hockey Door").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Frozen Altars Cat Hockey Door").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 20001);
             }
@@ -1844,7 +1956,7 @@ public partial class App : Application
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 65536);
             }
-            if ((Client.ItemState?.ReceivedItems.Where(x => x.Name == "Moneybags Unlock - Crystal Islands Bridge").Count() ?? 0) == 0)
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Crystal Islands Bridge").Count() ?? 0) == 0)
             {
                 Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 20001);
             }
@@ -1921,11 +2033,8 @@ public partial class App : Application
             }   
         }
 
-        await Task.Delay(5000);
         Helpers.UpdateLocationList(currentLevel, Client);
         _handleGemsanity = true;
-
-        _loadGameTimer.Enabled = false;
     }
 
     private static void CheckGoalCondition()
@@ -1938,66 +2047,90 @@ public partial class App : Application
         var currentSkillPoints = CalculateCurrentSkillPoints();
         if (_goal == CompletionGoal.Sorceress1)
         {
-            if (currentEggs >= _eggCountGoal && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
+            if (currentEggs >= _eggCountGoal && (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Sorceress Defeated") ?? false))
             {
-                Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
+                Task.Run(async () =>
+                {
+                    Client.SendGoalCompletion();
+                });
             }
         }
         else if (_goal == CompletionGoal.EggForSale)
         {
-            if ((Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Moneybags Chase Complete") ?? false))
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Moneybags Chase Complete") ?? false))
             {
-                Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
+                Task.Run(async () =>
+                {
+                    Client.SendGoalCompletion();
+                });
             }
         }
         else if (_goal == CompletionGoal.Sorceress2)
         {
-            if (currentEggs >= _eggCountGoal && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Super Bonus Round Complete") ?? false))
+            if (currentEggs >= _eggCountGoal && (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Super Bonus Round Complete") ?? false))
             {
-                Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
+                Task.Run(async () =>
+                {
+                    Client.SendGoalCompletion();
+                });
             }
         }
         else if (_goal == CompletionGoal.AllSkillPoints)
         {
             if (currentSkillPoints >= 20)
             {
-                Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
+                Task.Run(async () =>
+                {
+                    Client.SendGoalCompletion();
+                });
             }
         }
         else if (_goal == CompletionGoal.Epilogue)
         {
-            if (currentSkillPoints >= 20 && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Sorceress Defeated") ?? false))
+            if (currentSkillPoints >= 20 && (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Sorceress Defeated") ?? false))
             {
-                Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
+                Task.Run(async () =>
+                {
+                    Client.SendGoalCompletion();
+                });
             }
         }
         else if (_goal == CompletionGoal.Spike)
         {
-            if (currentEggs >= _eggCountGoal && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Spike Defeated") ?? false))
+            if (currentEggs >= _eggCountGoal && (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Spike Defeated") ?? false))
             {
-                Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
+                Task.Run(async () =>
+                {
+                    Client.SendGoalCompletion();
+                });
             }
         }
         else if (_goal == CompletionGoal.Scorch)
         {
-            if (currentEggs >= _eggCountGoal && (Client.ItemState?.ReceivedItems.Any(x => x != null && x.Name == "Scorch Defeated") ?? false))
+            if (currentEggs >= _eggCountGoal && (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Scorch Defeated") ?? false))
             {
-                Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
+                Task.Run(async () =>
+                {
+                    Client.SendGoalCompletion();
+                });
             }
         }
         else if (_goal == CompletionGoal.EggHunt)
         {
             if (currentEggs >= _eggCountGoal)
             {
-                Client.SendGoalCompletion();
                 _hasSubmittedGoal = true;
+                Task.Run(async () =>
+                {
+                    Client.SendGoalCompletion();
+                });
             }
         }
     }
@@ -2069,21 +2202,50 @@ public partial class App : Application
         Log.Logger.Information("If you are in the same zone as Moneybags, you can talk to him to complete the unlock for free.");
     }
 
-    private static void LogItem(Item item)
+    private static void UpdateItemLog()
     {
-        // Not supported at this time.
-        /*var messageToLog = new LogListItem(new List<TextSpan>()
+        Dictionary<string, int> itemCount = new Dictionary<string, int>();
+        List<LogListItem> messagesToLog = new List<LogListItem>();
+        if (Client != null && Client.CurrentSession != null && Client.CurrentSession.Items != null)
+        {
+            foreach (ItemInfo item in Client.CurrentSession.Items.AllItemsReceived)
             {
-                new TextSpan(){Text = $"[{item.Id.ToString()}] -", TextColor = new SolidColorBrush(Color.FromRgb(255, 255, 255))},
-                new TextSpan(){Text = $"{item.Name}", TextColor = new SolidColorBrush(Color.FromRgb(200, 255, 200))}
+                string itemName = item.ItemName;
+                if (itemCount.ContainsKey(itemName))
+                {
+                    itemCount[itemName] = itemCount[itemName] + 1;
+                }
+                else
+                {
+                    itemCount[itemName] = 1;
+                }
+            }
+            RxApp.MainThreadScheduler.Schedule(() =>
+            {
+                List<string> sortedItems = itemCount.Keys.ToList();
+                sortedItems.Sort();
+                foreach (string item in sortedItems)
+                {
+                    messagesToLog.Add(new LogListItem(
+                        new List<TextSpan>() {
+                            new TextSpan() { Text = $"{item}: ", TextColor = new SolidColorBrush(Avalonia.Media.Color.FromRgb(200, 255, 200)) },
+                            new TextSpan() { Text = $"{itemCount[item]}", TextColor = new SolidColorBrush(Avalonia.Media.Color.FromRgb(200, 255, 200)) }
+                        }
+                    ));
+                }
             });
+        }
         lock (_lockObject)
         {
             RxApp.MainThreadScheduler.Schedule(() =>
             {
-                Context.ItemList.Add(messageToLog);
+                Context.ItemList.Clear();
+                foreach (LogListItem messageToLog in messagesToLog)
+                {
+                    Context.ItemList.Add(messageToLog);
+                }
             });
-        }*/
+        }
     }
 
     private void Client_MessageReceived(object? sender, MessageReceivedEventArgs e)
@@ -2129,7 +2291,7 @@ public partial class App : Application
         {
             RxApp.MainThreadScheduler.Schedule(() =>
             {
-                spans.Add(new TextSpan() { Text = part.Text, TextColor = new SolidColorBrush(Color.FromRgb(part.Color.R, part.Color.G, part.Color.B)) });
+                spans.Add(new TextSpan() { Text = part.Text, TextColor = new SolidColorBrush(Avalonia.Media.Color.FromRgb(part.Color.R, part.Color.G, part.Color.B)) });
             });
         }
         lock (_lockObject)
@@ -2146,7 +2308,18 @@ public partial class App : Application
         if (Client.ItemState == null || Client.CurrentSession == null) return;
         if (!Helpers.IsInGame())
         {
-            Log.Logger.Error("Sending location while not in game - please report this error in the Discord.");
+            Log.Logger.Error("Sending location while not in game.\r\n" +
+                "If this is not during item release, please report this error in the Discord.");
+        }
+        foreach (long location in newCheckedLocations)
+        {
+            foreach (LevelInGameIDs levelID in Helpers.remainingGemsanityChecks.Keys)
+            {
+                if (Helpers.remainingGemsanityChecks[levelID].Keys.Contains((int)location))
+                {
+                    Helpers.remainingGemsanityChecks[levelID].Remove((int)location);
+                }
+            }
         }
         foreach (long location in newCheckedLocations)
         {
@@ -2165,7 +2338,7 @@ public partial class App : Application
 
     private static int CalculateCurrentEggs()
     {
-        var count = Client.ItemState?.ReceivedItems.Where(x => x.Name == "Egg").Count() ?? 0;
+        var count = Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Egg").Count() ?? 0;
         count = Math.Min(count, 150);
         Memory.WriteByte(Addresses.GetVersionAddress(Addresses.TotalEggAddress), (byte)(count));
         return count;
@@ -2173,7 +2346,7 @@ public partial class App : Application
 
     private static int CalculateCurrentSkillPoints()
     {
-        return Client.ItemState?.ReceivedItems.Where(x => x.Name == "Skill Point").Count() ?? 0;
+        return Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Skill Point").Count() ?? 0;
     }
 
     private static int CalculateCurrentGems()
@@ -2190,8 +2363,8 @@ public partial class App : Application
             if (level.Name != "Super Bonus Round")
             {
                 string levelName = level.Name;
-                int levelGemCount = 50 * (Client.ItemState?.ReceivedItems?.Where(x => x != null && x.Name == $"{levelName} 50 Gems").Count() ?? 0) +
-                    100 * (Client.ItemState?.ReceivedItems?.Where(x => x != null && x.Name == $"{levelName} 100 Gems").Count() ?? 0);
+                int levelGemCount = 50 * (Client.CurrentSession?.Items.AllItemsReceived?.Where(x => x != null && x.ItemName == $"{levelName} 50 Gems").Count() ?? 0) +
+                    100 * (Client.CurrentSession?.Items.AllItemsReceived?.Where(x => x != null && x.ItemName == $"{levelName} 100 Gems").Count() ?? 0);
                 Memory.Write(levelGemCountAddress, levelGemCount);
                 totalGems += levelGemCount;
             }
@@ -2208,17 +2381,15 @@ public partial class App : Application
 
     private static void OnConnected(object sender, EventArgs args)
     {
-        Log.Logger.Information("Connected to Archipelago");
-        Log.Logger.Information($"Playing {Client.CurrentSession.ConnectionInfo.Game} as {Client.CurrentSession.Players.GetPlayerName(Client.CurrentSession.ConnectionInfo.Slot)}");
-
         // Repopulate hint list.  There is likely a better way to do this using the Get network protocol
         // with keys=[$"hints_{team}_{slot}"].
+        // Client.CurrentSession.ConnectionInfo has some of this information.
         Client?.SendMessage("!hint");
+        UpdateItemLog();
     }
 
     private static void OnDisconnected(object sender=null, EventArgs args=null)
     {
-        Log.Logger.Information("Disconnected from Archipelago");
         // Avoid ongoing timers and settings affecting a new game.
         _gemsanityOption = GemsanityOptions.Off;
         _moneybagsOption = MoneybagsOptions.Vanilla;
@@ -2244,8 +2415,6 @@ public partial class App : Application
         _levelLockOptions = LevelLockOptions.Vanilla;
         _eggRequirements = new Dictionary<string, int>();
         _gemRequirements = new Dictionary<string, int>();
-
-        Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America) releases of Spyro 3.");
 
         if (_deathLinkService != null)
         {

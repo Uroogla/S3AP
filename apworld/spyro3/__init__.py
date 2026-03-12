@@ -56,7 +56,7 @@ class Spyro3World(World):
     base_id = 1230000
     required_client_version = (0, 5, 0)
     # TODO: Remember to update this!
-    ap_world_version = "1.3.1"
+    ap_world_version = "1.3.2"
     item_name_to_id = Spyro3Item.get_name_to_id()
     location_name_to_id = Spyro3Location.get_name_to_id()
     item_name_groups = item_name_groups
@@ -105,6 +105,9 @@ class Spyro3World(World):
         "Bugbot Factory": 200,
         "Super Bonus Round": 5000
     }
+
+    # TODO: Remember to keep this False.
+    PRINT_GEM_REQS = False  # Prints out the logic for each gem on generating a seed. Not for production use.
 
 
     def __init__(self, multiworld: MultiWorld, player: int):
@@ -1322,7 +1325,7 @@ class Spyro3World(World):
             # Bits of the gems, not accounting for empty bits
             sheila_gems = [105, 106, 107, 108, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124,
                            125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
-                           144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 155, 156, 157, 158, 159, 160]
+                           144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 155, 156, 157, 158, 159, 160, 161]
             empty_bits = [13, 33, 34, 58, 109, 154, 172, 173, 174, 175, 193, 194, 195, 196, 197, 203, 205, 206, 213, 214,
                           216]
             if not self.generation_options["logic_sunny_sheila_early"]:
@@ -1333,6 +1336,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Sunny Villa: Gem {gem - skipped_bits} requires Sheila.")
                     if len(self.chosen_gem_locations) == 0 or f"Sunny Villa: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Sunny Villa: Gem {gem - skipped_bits}", self.player),
@@ -1396,6 +1401,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Cloud Spires: Gem {gem - skipped_bits} requires access beyond Moneybags.")
                     if len(self.chosen_gem_locations) == 0 or f"Cloud Spires: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Cloud Spires: Gem {gem - skipped_bits}", self.player),
@@ -1449,6 +1456,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Molten Crater: Gem {gem - skipped_bits} requires access beyond Moneybags.")
                     if len(self.chosen_gem_locations) == 0 or f"Molten Crater: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Molten Crater: Gem {gem - skipped_bits}", self.player),
@@ -1462,6 +1471,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Molten Crater: Gem {gem - skipped_bits} requires Sgt. Byrd.")
                     if len(self.chosen_gem_locations) == 0 or f"Molten Crater: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Molten Crater: Gem {gem - skipped_bits}", self.player),
@@ -1500,6 +1511,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Seashell Shore: Gem {gem - skipped_bits} requires Sheila.")
                     if len(self.chosen_gem_locations) == 0 or f"Seashell Shore: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Seashell Shore: Gem {gem - skipped_bits}", self.player),
@@ -1575,6 +1588,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Midday Gardens: Gem {gem - skipped_bits} requires the Fireball powerup.")
                     if len(self.chosen_gem_locations) == 0 or f"Midday Gardens: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
                             add_rule(
@@ -1653,6 +1668,8 @@ class Spyro3World(World):
                         skipped_bits += 1
                     else:
                         break
+                if self.PRINT_GEM_REQS:
+                    print(f"Enchanted Towers: Gem {gem - skipped_bits} requires Sgt. Byrd.")
                 if len(self.chosen_gem_locations) == 0 or f"Enchanted Towers: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                     add_rule(
                         self.multiworld.get_location(f"Enchanted Towers: Gem {gem - skipped_bits}", self.player),
@@ -1713,6 +1730,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Spooky Swamp: Gem {gem - skipped_bits} requires access past Moneybags.")
                     if len(self.chosen_gem_locations) == 0 or f"Spooky Swamp: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Spooky Swamp: Gem {gem - skipped_bits}", self.player),
@@ -1765,6 +1784,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Bamboo Terrace: Gem {gem - skipped_bits} requires Bentley.")
                     if len(self.chosen_gem_locations) == 0 or f"Bamboo Terrace: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Bamboo Terrace: Gem {gem - skipped_bits}", self.player),
@@ -1866,6 +1887,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Evening Lake: Gem {gem - skipped_bits} requires the Invincibility powerup.")
                     if len(self.chosen_gem_locations) == 0 or f"Evening Lake: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
                             add_rule(
@@ -1971,6 +1994,8 @@ class Spyro3World(World):
                         skipped_bits += 1
                     else:
                         break
+                if self.PRINT_GEM_REQS:
+                    print(f"Lost Fleet: Gem {gem - skipped_bits} requires Hunter access (Scorch defeated).")
                 if len(self.chosen_gem_locations) == 0 or f"Lost Fleet: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                     add_rule(
                         self.multiworld.get_location(f"Lost Fleet: Gem {gem - skipped_bits}", self.player),
@@ -1983,6 +2008,8 @@ class Spyro3World(World):
                         skipped_bits += 1
                     else:
                         break
+                if self.PRINT_GEM_REQS:
+                    print(f"Lost Fleet: Gem {gem - skipped_bits} requires the Invincibility powerup.")
                 if len(self.chosen_gem_locations) == 0 or f"Lost Fleet: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                     if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
                         add_rule(
@@ -2046,6 +2073,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Fireworks Factory: Gem {gem - skipped_bits} requires Agent 9.")
                     if len(self.chosen_gem_locations) == 0 or f"Fireworks Factory: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Fireworks Factory: Gem {gem - skipped_bits}", self.player),
@@ -2058,6 +2087,8 @@ class Spyro3World(World):
                         skipped_bits += 1
                     else:
                         break
+                if self.PRINT_GEM_REQS:
+                    print(f"Fireworks Factory: Gem {gem - skipped_bits} requires combo superfly and fireball powerup access.")
                 if len(self.chosen_gem_locations) == 0 or f"Fireworks Factory: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                     if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
                         add_rule(
@@ -2133,6 +2164,11 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        if gem not in fireball_gems:
+                            print(f"Charmed Ridge: Gem {gem - skipped_bits} requires access past Moneybags.")
+                        else:
+                            print(f"Charmed Ridge: Gem {gem - skipped_bits} requires access past Moneybags and the Fireball powerup.")
                     if len(self.chosen_gem_locations) == 0 or f"Charmed Ridge: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         if gem not in fireball_gems:
                             add_rule(
@@ -2158,6 +2194,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Charmed Ridge: Gem {gem - skipped_bits} requires the Fireball powerup.")
                     if len(self.chosen_gem_locations) == 0 or f"Charmed Ridge: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
                             add_rule(
@@ -2348,6 +2386,11 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        if gem not in superfly_gems:
+                            print(f"Crystal Islands: Gem {gem - skipped_bits} requires access past Moneybags.")
+                        else:
+                            print(f"Crystal Islands: Gem {gem - skipped_bits} requires access past Moneybags and the Superfly powerup.")
                     if len(self.chosen_gem_locations) == 0 or f"Crystal Islands: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         if gem not in superfly_gems:
                             add_rule(
@@ -2381,6 +2424,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Crystal Islands: Gem {gem - skipped_bits} requires the Superfly powerup.")
                     if len(self.chosen_gem_locations) == 0 or f"Crystal Islands: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         if self.generation_options["powerup_lock_settings"] == PowerupLockOptions.TYPE:
                             add_rule(
@@ -2443,6 +2488,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Desert Ruins: Gem {gem - skipped_bits} requires access past Moneybags.")
                     if len(self.chosen_gem_locations) == 0 or f"Desert Ruins: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Desert Ruins: Gem {gem - skipped_bits}", self.player),
@@ -2516,6 +2563,8 @@ class Spyro3World(World):
                             skipped_bits += 1
                         else:
                             break
+                    if self.PRINT_GEM_REQS:
+                        print(f"Dino Mines: Gem {gem - skipped_bits} requires Agent 9.")
                     if len(self.chosen_gem_locations) == 0 or f"Dino Mines: Gem {gem - skipped_bits}" in self.chosen_gem_locations:
                         add_rule(
                             self.multiworld.get_location(f"Dino Mines: Gem {gem - skipped_bits}", self.player),
