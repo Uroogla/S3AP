@@ -107,7 +107,7 @@ class Spyro3World(World):
     }
 
     # TODO: Remember to keep this False.
-    PRINT_GEM_REQS = True  # Prints out the logic for each gem on generating a seed. Not for production use.
+    PRINT_GEM_REQS = False  # Prints out the logic for each gem on generating a seed. Not for production use.
 
 
     def __init__(self, multiworld: MultiWorld, player: int):
