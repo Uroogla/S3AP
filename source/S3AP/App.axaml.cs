@@ -356,7 +356,10 @@ public partial class App : Application
             Client.ItemReceived -= ItemReceived;
             Client.MessageReceived -= Client_MessageReceived;
             Client.LocationCompleted -= Client_LocationCompleted;
-            Client.CurrentSession.Locations.CheckedLocationsUpdated -= Locations_CheckedLocationsUpdated;
+            if (Client.CurrentSession != null)
+            {
+                Client.CurrentSession.Locations.CheckedLocationsUpdated -= Locations_CheckedLocationsUpdated;
+            }
         }
         DuckstationClient? client = null;
         try
