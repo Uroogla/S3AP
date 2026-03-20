@@ -34,8 +34,8 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.3.2";
-    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2"];
+    public static string Version = "1.3.3";
+    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2", "1.3.3"];
     public static List<string> PartiallySupportedVersions = [];
 
     public static MainWindowViewModel Context;
@@ -51,6 +51,7 @@ public partial class App : Application
     private static int _worldKeys { get; set; }
     private static int _progressiveBasketBreaks { get; set; }
     private static bool _checkNames { get; set; }
+    private static bool _deathlinkImmunity { get; set; }
     // AP Options and slot data
     private static int _slot { get; set; }
     private static Dictionary<string, object> _slotData { get; set; }
@@ -78,7 +79,6 @@ public partial class App : Application
     private static bool _justDied { get; set; }
     private static bool _handleGemsanity = false;
     private static LevelInGameIDs _previousLevel { get; set; }
-    private static bool _justReceivedDeathLink { get; set; }
     private static DeathLinkService _deathLinkService { get; set; }
     public override void Initialize()
     {
@@ -196,8 +196,16 @@ public partial class App : Application
             return;
         }
 
-        _justReceivedDeathLink = true;
-        Memory.Write(Addresses.GetVersionAddress(Addresses.SpyroPositionZ), 1);
+        if (!_deathlinkImmunity)
+        {
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SpyroPositionZ), 1);
+            Task.Run(async () =>
+            {
+                _deathlinkImmunity = true;
+                await Task.Delay(6000);
+                _deathlinkImmunity = false;
+            });
+        }
         string message = "Received DeathLink from " + deathLink.Source;
         if (deathLink.Cause != null)
         {
@@ -280,7 +288,7 @@ public partial class App : Application
             case "showunlockedlevels":
             case "!unlockedlevels":
                 Log.Logger.Information($"\r\n{command.Command}");
-                showUnlockedLevels();
+                showUnlockedLevels(true);
                 break;
             case "showgoal":
             case "!goal":
@@ -384,7 +392,7 @@ public partial class App : Application
         Client.Connected += OnConnected;
         Client.Disconnected += OnDisconnected;
 
-        await Client.Connect(e.Host, "Spyro 3", "save1");
+        await Client.Connect(e.Host.Trim(), "Spyro 3", "save1");
         if (!Client.IsConnected)
         {
             Log.Logger.Error("Your host seems to be invalid.  Please confirm that you have entered it correctly.");
@@ -396,7 +404,8 @@ public partial class App : Application
         Client.MessageReceived += Client_MessageReceived;
         Client.ItemReceived += ItemReceived;
         Client.EnableLocationsCondition = () => Helpers.IsInGame();
-        await Client.Login(e.Slot, !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
+        // Password may start or end with whitepace, so do not trim it.
+        await Client.Login(e.Slot.Trim(), !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
         if (Client.Options?.Count > 0)
         {
             _gemsanityOption = (GemsanityOptions)int.Parse(Client.Options?.GetValueOrDefault("enable_gemsanity", "0").ToString());
@@ -714,12 +723,11 @@ public partial class App : Application
         } catch (Exception ex)
         {
             Log.Logger.Warning("Encountered an error while receiving an item.\r\n" +
-                ex.ToString() + "\r\n" +
-                "This is not necessarily a problem if it happens during release or collect.");
+                ex.ToString() + "\r\n");
         }
     }
 
-    private void showUnlockedLevels()
+    private void showUnlockedLevels(bool alwaysShow = false)
     {
         if (_levelLockOptions == LevelLockOptions.Vanilla)
         {
@@ -730,7 +738,7 @@ public partial class App : Application
             Log.Logger.Information("Levels are not locked by keys. You can view unlock requirements in the atlas.");
         }
         List<ItemInfo> unlockedLevels = (Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName.EndsWith(" Unlock")).ToList() ?? new List<ItemInfo>());
-        if (unlockedLevels.Count > _unlockedLevels)
+        if (alwaysShow || unlockedLevels.Count > _unlockedLevels)
         {
             _unlockedLevels = unlockedLevels.Count;
         }
@@ -1127,7 +1135,8 @@ public partial class App : Application
                     isInSparxLevel && health == 0 ||
                     (spyroState == 3 && spyroVelocityFlag == 0x7f && 0x45 < animationLength) ||
                     zPos > 10 && zPos < 0x400
-                )
+                ) &&
+                !_deathlinkImmunity
             )
             {
                 _justDied = true;
@@ -1165,7 +1174,6 @@ public partial class App : Application
             )
             {
                 _justDied = false;
-                _justReceivedDeathLink = false;
             }
         }
         if (_powerupLockOption != PowerupLockOptions.Vanilla)
