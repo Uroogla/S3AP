@@ -27,7 +27,11 @@ using System.Reflection;
 using System.Security.Principal;
 using System.Threading.Tasks;
 using System.Timers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using static S3AP.Models.Enums;
+using System.IO;
+using Silk.NET.Maths;
 
 namespace S3AP;
 
@@ -111,6 +115,18 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
+    public static Dictionary<String, String> GetLastConnectionDetails()
+    {
+        string connectionDetails = File.ReadAllText(@"./connection.json");
+        return System.Text.Json.JsonSerializer.Deserialize<Dictionary<String, String>>(connectionDetails);
+    }
+
+    public static void SaveLastConnectionDetails(Dictionary<String, String> lastConnectionDetails)
+    {
+        string json = System.Text.Json.JsonSerializer.Serialize(lastConnectionDetails);
+        File.WriteAllText(@"./connection.json", json);
+    }
+
     public void Start()
     {
         Context = new MainWindowViewModel("0.6.1 or later");
@@ -121,6 +137,28 @@ public partial class App : Application
             if (string.IsNullOrWhiteSpace(a.Command)) return;
             HandleCommand(a);
         };
+        Dictionary<String, String> lastConnectionDetails = new Dictionary<string, string>();
+        lastConnectionDetails["slot"] = "";
+        lastConnectionDetails["host"] = "";
+        // Don't save password.
+        try
+        {
+            lastConnectionDetails = GetLastConnectionDetails();
+            if (!lastConnectionDetails.ContainsKey("slot"))
+            {
+                lastConnectionDetails["slot"] = "";
+            }
+            if (!lastConnectionDetails.ContainsKey("host"))
+            {
+                lastConnectionDetails["host"] = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Verbose($"Could not load connection details file.\r\n{ex.ToString()}");
+        }
+        Context.Host = lastConnectionDetails["host"];
+        Context.Slot = lastConnectionDetails["slot"];
         Context.ConnectButtonEnabled = true;
         Context.AutoscrollEnabled = true;
         _hintsList = null;
@@ -2389,6 +2427,17 @@ public partial class App : Application
         // Client.CurrentSession.ConnectionInfo has some of this information.
         Client?.SendMessage("!hint");
         UpdateItemLog();
+        Dictionary<String, String> lastConnectionDetails = new Dictionary<string, string>();
+        lastConnectionDetails["slot"] = Context.Slot;
+        lastConnectionDetails["host"] = Context.Host;
+        try
+        {
+            SaveLastConnectionDetails(lastConnectionDetails);
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Verbose($"Failed to write connection details\r\n{ex.ToString()}");
+        }
     }
 
     private static void OnDisconnected(object sender=null, EventArgs args=null)
