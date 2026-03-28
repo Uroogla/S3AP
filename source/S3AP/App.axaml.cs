@@ -38,8 +38,8 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.3.3";
-    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2", "1.3.3"];
+    public static string Version = "1.3.4";
+    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2", "1.3.3", "1.3.4"];
     public static List<string> PartiallySupportedVersions = [];
 
     public static MainWindowViewModel Context;
