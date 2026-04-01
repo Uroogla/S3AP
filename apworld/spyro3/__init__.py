@@ -30,6 +30,59 @@ class Spyro3Web(WebWorld):
     bug_report_page = ""
     theme = "stone"
     option_groups = spyro_options_groups
+    
+    # Option presets for different player styles
+    options_presets = {
+        "Beginner": {
+            # Simplified settings for new players
+            "goal": "sorceress_1",
+            "egg_count": 50,
+            "open_world": True,
+            "level_lock_option": "vanilla",
+            "moneybags_settings": "vanilla",
+            "enable_gemsanity": "off",
+            "zoe_gives_hints": 5,
+            "easy_skateboarding_lizards": True,
+            "easy_skateboarding_points": True,
+            "easy_boxing": True,
+        },
+        "Standard": {
+            # Standard play experience
+            "goal": "sorceress_1",
+            "egg_count": 100,
+            "level_lock_option": "vanilla",
+            "moneybags_settings": "vanilla",
+            "enable_25_pct_gem_checks": True,
+            "enable_50_pct_gem_checks": True,
+            "zoe_gives_hints": 3,
+        },
+        "Advanced": {
+            # More challenging settings
+            "goal": "sorceress_2",
+            "egg_count": 120,
+            "level_lock_option": "keys",
+            "starting_levels_count": 3,
+            "moneybags_settings": "moneybagssanity",
+            "enable_gemsanity": "partial",
+            "enable_skillpoint_checks": True,
+            "enable_world_keys": True,
+        },
+        "Completionist": {
+            # All checks enabled for 100% completion
+            "goal": "epilogue",
+            "egg_count": 150,
+            "level_lock_option": "vanilla",
+            "enable_25_pct_gem_checks": True,
+            "enable_50_pct_gem_checks": True,
+            "enable_75_pct_gem_checks": True,
+            "enable_gem_checks": True,
+            "enable_total_gem_checks": True,
+            "enable_skillpoint_checks": True,
+            "enable_life_bottle_checks": "normal",
+            "sparx_power_settings": True,
+        },
+    }
+    
     setup_en = Tutorial(
         "Multiworld Setup Guide",
         "A guide to setting up the Archipelago Spyro 3 randomizer on your computer.",
