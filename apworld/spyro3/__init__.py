@@ -40,6 +40,24 @@ class Spyro3Web(WebWorld):
     )
     game_info_languages = ["en"]
     tutorials = [setup_en]
+    options_presets = {
+        "New Player": {
+            "goal": "sorceress_1",
+            "egg_count": 100,
+            "open_world": False,
+            "level_lock_option": "vanilla",
+            "moneybags_settings": "vanilla",
+            "enable_25_pct_gem_checks": True,
+            "enable_gemsanity": "off",
+            "enable_filler_extra_lives": True,
+            "enable_filler_invincibility": True,
+            "enable_filler_color_change": True,
+            "enable_filler_big_head_mode": True,
+            "enable_filler_heal_sparx": True,
+            "zoe_gives_hints": 13,
+            "easy_boxing": True,
+        },
+    }
 
 
 class Spyro3World(World):
@@ -56,7 +74,7 @@ class Spyro3World(World):
     base_id = 1230000
     required_client_version = (0, 5, 0)
     # TODO: Remember to update this!
-    ap_world_version = "1.3.3"
+    ap_world_version = "1.3.4"
     item_name_to_id = Spyro3Item.get_name_to_id()
     location_name_to_id = Spyro3Location.get_name_to_id()
     item_name_groups = item_name_groups
@@ -171,9 +189,6 @@ class Spyro3World(World):
             "Dino Mines": 0,
             "Harbor Speedway": 0,
         }
-        self.mushroom_region = "Sunrise Spring"
-        self.country_region = "Midday Gardens"
-        self.honey_region = "Evening Lake"
         self.generation_options = dict()
 
     def generate_entry_requirements(self):
@@ -242,16 +257,10 @@ class Spyro3World(World):
                 ]
                 mushroom_index = self.multiworld.random.randint(0, 1)
                 random_levels[mushroom_index].append("Mushroom Speedway")
-                if mushroom_index == 1:
-                    self.mushroom_region = "Midday Gardens"
                 country_index = self.multiworld.random.randint(1, 2)
                 random_levels[country_index].append("Country Speedway")
-                if country_index == 2:
-                    self.country_region = "Evening Lake"
                 honey_index = self.multiworld.random.randint(2, 3)
                 random_levels[honey_index].append("Honey Speedway")
-                if honey_index == 3:
-                    self.honey_region = "Midnight Mountain"
                 i = 0
                 for level_set in random_levels:
                     self.multiworld.random.shuffle(level_set)
@@ -296,15 +305,10 @@ class Spyro3World(World):
                 # Don't group Mushroom with other Sunrise levels to ensure a proper Sunrise level is unlocked.
                 mushroom_index = 1
                 random_levels[mushroom_index].append("Mushroom Speedway")
-                self.mushroom_region = "Midday Gardens"
                 country_index = self.multiworld.random.randint(1, 2)
                 random_levels[country_index].append("Country Speedway")
-                if country_index == 2:
-                    self.country_region = "Evening Lake"
                 honey_index = self.multiworld.random.randint(2, 3)
                 random_levels[honey_index].append("Honey Speedway")
-                if honey_index == 3:
-                    self.honey_region = "Midnight Mountain"
                 i = 0
                 for level_set in random_levels:
                     self.multiworld.random.shuffle(level_set)
@@ -356,15 +360,10 @@ class Spyro3World(World):
                 # Don't group Mushroom with other Sunrise levels to ensure a proper Sunrise level is unlocked.
                 mushroom_index = 1
                 random_levels[mushroom_index].append("Mushroom Speedway")
-                self.mushroom_region = "Midday Gardens"
                 country_index = self.multiworld.random.randint(1, 2)
                 random_levels[country_index].append("Country Speedway")
-                if country_index == 2:
-                    self.country_region = "Evening Lake"
                 honey_index = self.multiworld.random.randint(2, 3)
                 random_levels[honey_index].append("Honey Speedway")
-                if honey_index == 3:
-                    self.honey_region = "Midnight Mountain"
                 i = 0
                 for level_set in random_levels:
                     self.multiworld.random.shuffle(level_set)
@@ -504,8 +503,6 @@ class Spyro3World(World):
         self.enabled_location_categories.add(Spyro3LocationCategory.EVENT)
         if self.generation_options["zoe_gives_hints"] != 0:
             self.enabled_location_categories.add(Spyro3LocationCategory.HINT)
-            # Randomly select which Zoes give hints.
-            self.enabled_hint_locations = self.multiworld.random.sample(hint_locations, self.generation_options["zoe_gives_hints"])
         if self.generation_options["goal"] in [GoalOptions.ALL_SKILLPOINTS, GoalOptions.EPILOGUE]:
             self.enabled_location_categories.add(Spyro3LocationCategory.SKILLPOINT_GOAL)
         if self.generation_options["enable_25_pct_gem_checks"]:
@@ -569,8 +566,12 @@ class Spyro3World(World):
             self.key_locked_levels = self.multiworld.re_gen_passthrough["Spyro 3"]["key_locked_levels"]
             self.level_egg_requirements = self.multiworld.re_gen_passthrough["Spyro 3"]["level_egg_requirements"]
             self.level_gem_requirements = self.multiworld.re_gen_passthrough["Spyro 3"]["level_gem_requirements"]
+            self.enabled_hint_locations = self.multiworld.re_gen_passthrough["Spyro 3"]["enabled_hint_locations"]
         else:
             self.generate_entry_requirements()
+            if self.generation_options["zoe_gives_hints"] != 0:
+                # Randomly select which Zoes give hints.
+                self.enabled_hint_locations = self.multiworld.random.sample(hint_locations, self.generation_options["zoe_gives_hints"])
 
         # Prevent restrictive starts.
         if self.generation_options["moneybags_settings"] == MoneybagsOptions.MONEYBAGSSANITY and not self.generation_options["logic_cloud_backwards"]:
@@ -608,9 +609,7 @@ class Spyro3World(World):
         create_connection("Sunrise Spring", "Cloud Spires")
         create_connection("Sunrise Spring", "Molten Crater")
         create_connection("Sunrise Spring", "Seashell Shore")
-        # When egg requirements are randomized and speedways are grouped with a later world,
-        # generation can prioritize it over true progression.  Use this trick to prevent the problem.
-        create_connection(self.mushroom_region, "Mushroom Speedway")
+        create_connection("Sunrise Spring", "Mushroom Speedway")
         create_connection("Sunrise Spring", "Sheila's Alp")
              
         create_connection("Sunrise Spring", "Buzz")
@@ -621,7 +620,7 @@ class Spyro3World(World):
         create_connection("Midday Gardens", "Enchanted Towers")
         create_connection("Midday Gardens", "Spooky Swamp")
         create_connection("Midday Gardens", "Bamboo Terrace")
-        create_connection(self.country_region, "Country Speedway")
+        create_connection("Midday Gardens", "Country Speedway")
         create_connection("Midday Gardens", "Sgt. Byrd's Base")
 
         create_connection("Midday Gardens", "Spike")
@@ -632,7 +631,7 @@ class Spyro3World(World):
         create_connection("Evening Lake", "Lost Fleet")
         create_connection("Evening Lake", "Fireworks Factory")
         create_connection("Evening Lake", "Charmed Ridge")
-        create_connection(self.honey_region, "Honey Speedway")
+        create_connection("Evening Lake", "Honey Speedway")
         create_connection("Evening Lake", "Bentley's Outpost")
 
         create_connection("Evening Lake", "Scorch")
@@ -1389,7 +1388,7 @@ class Spyro3World(World):
             # Bits of the gems, not accounting for empty bits
             moneybags_gems = [1, 3, 9, 10, 11, 12, 13, 14, 15, 16, 17, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 48, 49,
                               50, 51, 52, 53, 54, 59, 60, 61, 62, 74, 75, 76, 77, 79, 80, 82, 83, 85, 98, 99, 101, 107,
-                              110, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
+                              112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
                               130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 146, 147, 148,
                               149, 150, 151, 152]
             empty_bits = [2, 81, 92, 145]
@@ -2815,6 +2814,7 @@ class Spyro3World(World):
             "key_locked_levels": self.key_locked_levels,
             "level_egg_requirements": self.level_egg_requirements,
             "level_gem_requirements": self.level_gem_requirements,
+            "enabled_hint_locations": self.enabled_hint_locations,
             "seed": self.multiworld.seed_name,  # to verify the server's multiworld
             "slot": self.multiworld.player_name[self.player],  # to connect to server
             "base_id": self.base_id,  # to merge location and items lists

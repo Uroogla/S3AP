@@ -27,15 +27,19 @@ using System.Reflection;
 using System.Security.Principal;
 using System.Threading.Tasks;
 using System.Timers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using static S3AP.Models.Enums;
+using System.IO;
+using Silk.NET.Maths;
 
 namespace S3AP;
 
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.3.3";
-    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2", "1.3.3"];
+    public static string Version = "1.3.4";
+    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2", "1.3.3", "1.3.4"];
     public static List<string> PartiallySupportedVersions = [];
 
     public static MainWindowViewModel Context;
@@ -44,6 +48,7 @@ public partial class App : Application
     private static readonly object _lockObject = new object();
     private static ConcurrentQueue<string> _cosmeticEffects { get; set; }
     private static Dictionary<string, string> _hintsList { get; set; }
+    private static bool _shownControlMessage { get; set; }
     private static bool _hasSubmittedGoal { get; set; }
     private static bool _useQuietHints { get; set; }
     private static int _unlockedLevels { get; set; }
@@ -111,6 +116,18 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
+    public static Dictionary<String, String> GetLastConnectionDetails()
+    {
+        string connectionDetails = File.ReadAllText(@"./connection.json");
+        return System.Text.Json.JsonSerializer.Deserialize<Dictionary<String, String>>(connectionDetails);
+    }
+
+    public static void SaveLastConnectionDetails(Dictionary<String, String> lastConnectionDetails)
+    {
+        string json = System.Text.Json.JsonSerializer.Serialize(lastConnectionDetails);
+        File.WriteAllText(@"./connection.json", json);
+    }
+
     public void Start()
     {
         Context = new MainWindowViewModel("0.6.1 or later");
@@ -121,10 +138,33 @@ public partial class App : Application
             if (string.IsNullOrWhiteSpace(a.Command)) return;
             HandleCommand(a);
         };
+        Dictionary<String, String> lastConnectionDetails = new Dictionary<string, string>();
+        lastConnectionDetails["slot"] = "";
+        lastConnectionDetails["host"] = "";
+        // Don't save password.
+        try
+        {
+            lastConnectionDetails = GetLastConnectionDetails();
+            if (!lastConnectionDetails.ContainsKey("slot"))
+            {
+                lastConnectionDetails["slot"] = "";
+            }
+            if (!lastConnectionDetails.ContainsKey("host"))
+            {
+                lastConnectionDetails["host"] = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Verbose($"Could not load connection details file.\r\n{ex.ToString()}");
+        }
+        Context.Host = lastConnectionDetails["host"];
+        Context.Slot = lastConnectionDetails["slot"];
         Context.ConnectButtonEnabled = true;
         Context.AutoscrollEnabled = true;
         _hintsList = null;
         _hasSubmittedGoal = false;
+        _shownControlMessage = false;
         _useQuietHints = true;
         _easyChallenges = new List<string>();
         _eggRequirements = new Dictionary<string, int>();
@@ -364,7 +404,10 @@ public partial class App : Application
             Client.ItemReceived -= ItemReceived;
             Client.MessageReceived -= Client_MessageReceived;
             Client.LocationCompleted -= Client_LocationCompleted;
-            Client.CurrentSession.Locations.CheckedLocationsUpdated -= Locations_CheckedLocationsUpdated;
+            if (Client.CurrentSession != null)
+            {
+                Client.CurrentSession.Locations.CheckedLocationsUpdated -= Locations_CheckedLocationsUpdated;
+            }
         }
         DuckstationClient? client = null;
         try
@@ -498,7 +541,7 @@ public partial class App : Application
 
             _loadGameTimer = new Timer();
             _loadGameTimer.Elapsed += new ElapsedEventHandler(StartSpyroGame);
-            _loadGameTimer.Interval = 5000;
+            _loadGameTimer.Interval = 250;
             _loadGameTimer.Enabled = true;
 
             _cosmeticsTimer = new Timer();
@@ -799,6 +842,201 @@ public partial class App : Application
         }
     }
 
+    /**
+     * Given the player's inventory, sets Moneybags unlocks and prices.
+     */
+    private static async void SetMoneybagsLocks()
+    {
+        if (_moneybagsOption != MoneybagsOptions.Vanilla)
+        {
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 65536);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaCutscene), 1);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 65536);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ByrdCutscene), 1);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 65536);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BentleyCutscene), 1);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 65536);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.Agent9Cutscene), 1);
+            }
+        }
+        if (_moneybagsOption == MoneybagsOptions.Moneybagssanity)
+        {
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Cloud Spires Bellows").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 20001);
+            }
+            else
+            {
+                // Special case this to just reduce the price to 0, since otherwise a rhynoc despawns.
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 0);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 65536);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Icy Peak Nancy Door").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 65536);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Molten Crater Thieves Door").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 65536);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Charmed Ridge Stairs").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 65536);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Desert Ruins Door").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 65536);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Frozen Altars Cat Hockey Door").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 65536);
+            }
+            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Crystal Islands Bridge").Count() ?? 0) == 0)
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 20001);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 65536);
+            }
+        }
+        if (_moneybagsOption == MoneybagsOptions.Vanilla && (_gemsanityOption != GemsanityOptions.Off || _openWorld != 0))
+        {
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), (short)0);
+        }
+        if (_moneybagsOption == MoneybagsOptions.Companionsanity && _gemsanityOption != GemsanityOptions.Off)
+        {
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), (short)0);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), (short)0);
+        }
+    }
+
+    /**
+     * Starts open world mode by modifying save data.
+     * Runs in a loop in case the player starts a new save file.
+     */
+    private static async void PrepareOpenWorld()
+    {
+        LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
+        // Test a subset of the save data to ensure open world mode is properly set.
+        byte sunriseComplete = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.SunriseLevelsComplete));
+        byte middayComplete = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.MiddayLevelsComplete));
+        byte eveningComplete = Memory.ReadByte(Addresses.GetVersionAddress(Addresses.EveningLevelsComplete));
+        if (_openWorld != 0 && !(sunriseComplete == 1 && middayComplete == 1 && eveningComplete == 1))
+        {
+            Log.Logger.Information("Setting up Open World mode.");
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunriseLevelsComplete), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MiddayLevelsComplete), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningLevelsComplete), 1);
+            // Mark level as entered in atlas, which changes transport behavior.
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunriseAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BuzzAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MiddayAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MidnightAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ScorchAtlasUnlock), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpikeAtlasUnlock), 1);
+            // Triggered when getting end of level eggs in sunrise.
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunnyCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CloudCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellCompletedFlags), 2);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaCompletedFlags), 2);
+
+
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BuzzDefeated), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpikeDefeated), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ScorchDefeated), 1);
+            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningBianca), 1);
+            if (_levelLockOptions != LevelLockOptions.Vanilla)
+            {
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
+            }
+            uint eggAddress = Addresses.GetVersionAddress(Addresses.EggStartAddress);
+            // Mark as collected the end of level eggs for the 15 "progression" levels and first 3 bosses.
+            List<uint> collectedEggLevels = new List<uint> { 1, 2, 3, 4, 6, 7, 10, 11, 12, 13, 15, 16, 19, 20, 21, 22, 24, 25 };
+            for (uint i = 0; i < 26; i++)
+            {
+                if (collectedEggLevels.Contains(i))
+                {
+                    Memory.WriteBit(eggAddress + i, 0, true);
+                }
+            }
+            // Ensure the rocket appears in Sunrise.
+            if (currentLevel == LevelInGameIDs.SunriseSpring)
+            {
+                Log.Logger.Information("Killing Spyro to spawn the rocket.\r\nThis will not trigger Deathlink.");
+                var currentLives = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.PlayerLives));
+                Memory.Write(Addresses.GetVersionAddress(Addresses.PlayerLives), (short)(Math.Min(99, currentLives + 1)));
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroState), (byte)SpyroState.Dying);
+            }
+        }
+    }
+
     private static async void ModifyGameLoop(object source, ElapsedEventArgs e)
     {
         if (!Helpers.IsInGame() || Client.ItemState == null || Client.CurrentSession == null)
@@ -814,11 +1052,13 @@ public partial class App : Application
             {
                 return;
             }
-            _timerLoopCount = (_timerLoopCount + 1) % 5;
+            _timerLoopCount = (_timerLoopCount + 1) % 10;
             if (_timerLoopCount == 1)
             {
-                HandleSparxPowers(source, e);
+                SetMoneybagsLocks();
+                PrepareOpenWorld();
             }
+            HandleSparxPowers(source, e);
             CalculateCurrentEggs();
             CalculateCurrentGems();
             HandleWorldKeys(source, e);
@@ -1459,8 +1699,7 @@ public partial class App : Application
             currentLevel == LevelInGameIDs.MidnightMountain && gameStatus == GameStatus.InGame  // Protect this write carefully or it crashes warping to Midnight.
         )
         {
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SorceressDoorReq1), (short)_sorceressDoorEggReq);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SorceressDoorReq2), (short)_sorceressDoorEggReq);
+            Memory.Write(Addresses.GetVersionAddress(Addresses.SorceressDoorReq), (short)_sorceressDoorEggReq);
             Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SorceressDoorReqDisplay), (byte)_sorceressDoorEggReq);
             Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq1), (short)_sbrDoorGemReq);
             Memory.Write(Addresses.GetVersionAddress(Addresses.SBRGemReq2), (short)_sbrDoorGemReq);
@@ -1839,9 +2078,10 @@ public partial class App : Application
                 Log.Logger.Warning("This client is not correctly connected to Archipelago.\r\n" +
                     "If this warning persists, please restart the client and try again to connect.");
             }
-            else
+            else if (!_shownControlMessage)
             {
                 Log.Logger.Information("Player is not yet in control of Spyro.");
+                _shownControlMessage = true;
             }
             return;
         }
@@ -1866,181 +2106,7 @@ public partial class App : Application
             _deathLinkService.OnDeathLinkReceived += new DeathLinkService.DeathLinkReceivedHandler(HandleDeathLink);
         }
 
-        if (_moneybagsOption != MoneybagsOptions.Vanilla)
-        {
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Sheila").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), 65536);
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaCutscene), 1);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Sgt. Byrd").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), 65536);
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ByrdCutscene), 1);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Bentley").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), 65536);
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BentleyCutscene), 1);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Agent 9").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), 65536);
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.Agent9Cutscene), 1);
-            }
-        }
-        if (_moneybagsOption == MoneybagsOptions.Moneybagssanity)
-        {
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Cloud Spires Bellows").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 20001);
-            }
-            else
-            {
-                // Special case this to just reduce the price to 0, since otherwise a rhynoc despawns.
-                Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), 0);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Spooky Swamp Door").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), 65536);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Icy Peak Nancy Door").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), 65536);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Molten Crater Thieves Door").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), 65536);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Charmed Ridge Stairs").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), 65536);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Desert Ruins Door").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), 65536);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Frozen Altars Cat Hockey Door").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), 65536);
-            }
-            if ((Client.CurrentSession?.Items.AllItemsReceived.Where(x => x.ItemName == "Moneybags Unlock - Crystal Islands Bridge").Count() ?? 0) == 0)
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 20001);
-            }
-            else
-            {
-                Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), 65536);
-            }
-        }
-        if (_moneybagsOption == MoneybagsOptions.Vanilla && (_gemsanityOption != GemsanityOptions.Off || _openWorld != 0))
-        {
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SheilaUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SgtByrdUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.BentleyUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.Agent9Unlock), (short)0);
-        }
-        if (_moneybagsOption == MoneybagsOptions.Companionsanity && _gemsanityOption != GemsanityOptions.Off)
-        {
-            Memory.Write(Addresses.GetVersionAddress(Addresses.CloudBellowsUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.SpookyDoorUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.IcyNancyUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.MoltenThievesUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.CharmedStairsUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.DesertDoorUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.FrozenHockeyUnlock), (short)0);
-            Memory.Write(Addresses.GetVersionAddress(Addresses.CrystalBridgeUnlock), (short)0);
-        }
         LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
-        if (_openWorld != 0)
-        {
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunriseLevelsComplete), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MiddayLevelsComplete), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningLevelsComplete), 1);
-            // Mark level as entered in atlas, which changes transport behavior.
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningAtlasUnlock), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunriseAtlasUnlock), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BuzzAtlasUnlock), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MiddayAtlasUnlock), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MidnightAtlasUnlock), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ScorchAtlasUnlock), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpikeAtlasUnlock), 1);
-            // Triggered when getting end of level eggs in sunrise.
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SunnyCompletedFlags), 2);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.CloudCompletedFlags), 2);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenCompletedFlags), 2);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellCompletedFlags), 2);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SheilaCompletedFlags), 2);
-
-
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.BuzzDefeated), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpikeDefeated), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.ScorchDefeated), 1);
-            Memory.WriteByte(Addresses.GetVersionAddress(Addresses.EveningBianca), 1);
-            if (_levelLockOptions != LevelLockOptions.Vanilla)
-            {
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MoltenUnlocked), 1);
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SeashellUnlocked), 1);
-            }
-            uint eggAddress = Addresses.GetVersionAddress(Addresses.EggStartAddress);
-            // Mark as collected the end of level eggs for the 15 "progression" levels and first 3 bosses.
-            List<uint> collectedEggLevels = new List<uint> { 1, 2, 3, 4, 6, 7, 10, 11, 12, 13, 15, 16, 19, 20, 21, 22, 24, 25 };
-            for (uint i = 0; i < 26; i++)
-            {
-                if (collectedEggLevels.Contains(i))
-                {
-                    Memory.WriteBit(eggAddress + i, 0, true);
-                }
-            }
-            // Ensure the rocket appears in Sunrise.
-            if (currentLevel == LevelInGameIDs.SunriseSpring)
-            {
-                var currentLives = Memory.ReadShort(Addresses.GetVersionAddress(Addresses.PlayerLives));
-                Memory.Write(Addresses.GetVersionAddress(Addresses.PlayerLives), (short)(Math.Min(99, currentLives + 1)));
-                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.SpyroState), (byte)SpyroState.Dying);
-            }   
-        }
-
         Helpers.UpdateLocationList(currentLevel, Client);
         _handleGemsanity = true;
     }
@@ -2394,6 +2460,17 @@ public partial class App : Application
         // Client.CurrentSession.ConnectionInfo has some of this information.
         Client?.SendMessage("!hint");
         UpdateItemLog();
+        Dictionary<String, String> lastConnectionDetails = new Dictionary<string, string>();
+        lastConnectionDetails["slot"] = Context.Slot;
+        lastConnectionDetails["host"] = Context.Host;
+        try
+        {
+            SaveLastConnectionDetails(lastConnectionDetails);
+        }
+        catch (Exception ex)
+        {
+            Log.Logger.Verbose($"Failed to write connection details\r\n{ex.ToString()}");
+        }
     }
 
     private static void OnDisconnected(object sender=null, EventArgs args=null)
@@ -2407,6 +2484,7 @@ public partial class App : Application
         _slot = 0;
         _goal = CompletionGoal.NotLoaded;
         _eggCountGoal = 150;
+        _shownControlMessage = false;
         _sorceressDoorEggReq = 150;
         _sbrDoorEggReq = 150;
         _sbrDoorGemReq = 20000;
