@@ -40,6 +40,24 @@ class Spyro3Web(WebWorld):
     )
     game_info_languages = ["en"]
     tutorials = [setup_en]
+    options_presets = {
+        "New Player": {
+            "goal": "sorceress_1",
+            "egg_count": 100,
+            "open_world": False,
+            "level_lock_option": "vanilla",
+            "moneybags_settings": "vanilla",
+            "enable_25_pct_gem_checks": True,
+            "enable_gemsanity": "off",
+            "enable_filler_extra_lives": True,
+            "enable_filler_invincibility": True,
+            "enable_filler_color_change": True,
+            "enable_filler_big_head_mode": True,
+            "enable_filler_heal_sparx": True,
+            "zoe_gives_hints": 13,
+            "easy_boxing": True,
+        },
+    }
 
 
 class Spyro3World(World):
@@ -1370,7 +1388,7 @@ class Spyro3World(World):
             # Bits of the gems, not accounting for empty bits
             moneybags_gems = [1, 3, 9, 10, 11, 12, 13, 14, 15, 16, 17, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 48, 49,
                               50, 51, 52, 53, 54, 59, 60, 61, 62, 74, 75, 76, 77, 79, 80, 82, 83, 85, 98, 99, 101, 107,
-                              110, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
+                              112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129,
                               130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 146, 147, 148,
                               149, 150, 151, 152]
             empty_bits = [2, 81, 92, 145]
