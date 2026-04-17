@@ -38,8 +38,8 @@ namespace S3AP;
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.3.4";
-    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2", "1.3.3", "1.3.4"];
+    public static string Version = "1.3.5";
+    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2", "1.3.3", "1.3.4", "1.3.5"];
     public static List<string> PartiallySupportedVersions = [];
 
     public static MainWindowViewModel Context;
@@ -341,8 +341,8 @@ public partial class App : Application
                 string eggsText = eggs == 1 ? $"{eggs} egg" : $"{eggs} eggs";
                 int skillPoints = CalculateCurrentSkillPoints();
                 string skillPointsText = skillPoints == 1 ? $"{skillPoints} Skill Point" : $"{skillPoints} Skill Points";
-                bool beatenSpike = Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Spike Defeated") ?? false;
-                bool beatenScorch = Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Scorch Defeated") ?? false;
+                bool beatenSpike = (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Spike Defeated") ?? false) || _openWorld != 0;
+                bool beatenScorch = (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Scorch Defeated") ?? false) || _openWorld != 0;
                 bool beatenSorceress = Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Sorceress Defeated") ?? false;
                 bool beatenSorceressTwo = Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Super Bonus Round Complete") ?? false;
                 string defeatedSpikeText = beatenSpike ? "have defeated Spike" : "have not defeated Spike";
@@ -2176,7 +2176,12 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.Spike)
         {
-            if (currentEggs >= _eggCountGoal && (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Spike Defeated") ?? false))
+            if (currentEggs >= _eggCountGoal && 
+                (
+                    (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Spike Defeated") ?? false) ||
+                    _openWorld != 0
+                )
+            )
             {
                 _hasSubmittedGoal = true;
                 Task.Run(async () =>
@@ -2187,7 +2192,12 @@ public partial class App : Application
         }
         else if (_goal == CompletionGoal.Scorch)
         {
-            if (currentEggs >= _eggCountGoal && (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Scorch Defeated") ?? false))
+            if (currentEggs >= _eggCountGoal &&
+               (
+                   (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Scorch Defeated") ?? false) ||
+                   _openWorld != 0
+               )
+            )
             {
                 _hasSubmittedGoal = true;
                 Task.Run(async () =>
