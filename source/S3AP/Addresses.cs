@@ -13,6 +13,8 @@ namespace S3AP
         public const uint IsInDemoMode = 0x0006c758;
         public const uint GameStatus = 0x0006e424;
         public const uint SpyroState = 0x70450;
+        public const uint SpyroPositionX = 0x70408;
+        public const uint SpyroPositionY = 0x7040C;
         public const uint SpyroPositionZ = 0x70410;
         public const uint SpyroState2 = 0x70458;
         public const uint PlayerVelocityStatus = 0x70454;
@@ -156,6 +158,9 @@ namespace S3AP
         public static readonly List<uint> DesertOutsideLifeBottleAddress = [0x00071f32, 3];
         public static readonly List<uint> HauntedLifeBottleAddress = [0x00071f50, 6];
         public static readonly List<uint> DinoLifeBottleAddress = [0x00071f75, 0];
+        public static readonly List<uint> MidnightFirstLifeBottleAddress = [0x71ef6, 0];
+        public static readonly List<uint> MidnightSecondLifeBottleAddress = [0x71ef6, 1];
+        public static readonly List<uint> MidnightThirdLifeBottleAddress = [0x71ef6, 2];
 
         public const uint SunnyLizardsCount = 0x001865ec; // byte
         public const uint SunnySkateScore = 0x001876e4; // short
@@ -316,6 +321,10 @@ namespace S3AP
         public const uint CharmedRidgePowerup = 0x18f570;
         public const uint CrystalIslandsPowerup = 0x19463c;
         public const uint SuperBonusRoundPowerup = 0x1691a4; // Locks 1225 gems
+
+        public const uint MidnightWhirlwindPos = 0x1972C8;
+        public const uint MidnightWhirlwindZRot = 0x197302;
+        public const uint MidnightWhirlwindHeight = 0x19BEC0;
 
         // NOTE: This function has a logic error, since a 1.1 address may correspond to different 1.0 addresses
         // in different levels.  In practice, none of the above addresses are affected.

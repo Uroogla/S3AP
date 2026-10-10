@@ -376,14 +376,14 @@ namespace S3AP
                     Log.Logger.Verbose($"Adding {remainingGemsanityChecks[level].Values.Count} locations");
                     foreach (Location gemsanityCheck in remainingGemsanityChecks[level].Values)
                     {
-                        await client.AddLocationAsync(gemsanityCheck);
+                        client.LocationManager.AddLocation(gemsanityCheck);
                     }
                 }
                 else
                 {
                     foreach (Location gemsanityCheck in remainingGemsanityChecks[level].Values)
                     {
-                        await client.RemoveLocationAsync(gemsanityCheck);
+                        client.LocationManager.RemoveLocation(gemsanityCheck);
                     }
                 }
             }
@@ -420,7 +420,7 @@ namespace S3AP
                 new LevelData("Bentley's Outpost", 25, LevelInGameIDs.BentleysOutpost, 3, false, false, 600, ["Push box off the cliff"], [], [], Addresses.GetVersionAddress(Addresses.BentleyGemMask), 109, [7, 38, 39, 43, 59, 60, 62, 72, 90, 96, 104]),
                 new LevelData("Scorch", 26, LevelInGameIDs.ScorchsPit, 1, false, true, 0, [], [], []),
                 new LevelData("Starfish Reef", 27, LevelInGameIDs.StarfishReef, 1, false, false, 200, [], [], [], Addresses.GetVersionAddress(Addresses.StarfishGemMask), 53, [1, 2, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 25, 26, 27, 28, 29, 36, 38, 39, 40, 41, 42, 43, 44, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 69, 70, 71, 72, 73, 74, 75, 76, 78, 79, 80, 81, 82, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 110, 111, 113, 114, 115, 116, 117, 118, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 143, 145, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 175, 176, 177, 178, 179, 180, 181, 182, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 215, 216, 218, 219, 220]),
-                new LevelData("Midnight Mountain", 28, LevelInGameIDs.MidnightMountain, 6, true, false, 400, [], [], [], Addresses.GetVersionAddress(Addresses.MidnightGemMask), 105, [10, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 67, 68, 69, 70, 100]),
+                new LevelData("Midnight Mountain", 28, LevelInGameIDs.MidnightMountain, 6, true, false, 400, [], [Addresses.MidnightFirstLifeBottleAddress, Addresses.MidnightSecondLifeBottleAddress, Addresses.MidnightThirdLifeBottleAddress], [], Addresses.GetVersionAddress(Addresses.MidnightGemMask), 105, [10, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 67, 68, 69, 70, 100]),
                 new LevelData("Crystal Islands", 29, LevelInGameIDs.CrystalIslands, 6, false, false, 700, [], [], [], Addresses.GetVersionAddress(Addresses.CrystalGemMask), 205, [26, 41, 50, 51, 60, 61, 62, 63, 69, 102, 201, 202, 203, 204, 212, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225]),
                 new LevelData("Desert Ruins", 30, LevelInGameIDs.DesertRuins, 6, false, false, 700, ["Destroy all seaweed"], [Addresses.DesertInsideLifeBottleAddress, Addresses.DesertOutsideLifeBottleAddress], [], Addresses.GetVersionAddress(Addresses.DesertGemMask), 144, [15, 20, 21, 50, 56, 63, 83, 89, 90, 91, 92, 93, 103, 104, 106, 107, 108, 109, 123, 124, 125, 126, 150, 151, 152, 153, 154, 155, 156, 157, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181]),
                 new LevelData("Haunted Tomb", 31, LevelInGameIDs.HauntedTomb, 6, false, false, 700, ["Swim into the dark hole"], [Addresses.HauntedLifeBottleAddress], [], Addresses.GetVersionAddress(Addresses.HauntedGemMask), 115, [7, 85, 90, 97, 102, 106, 111, 116, 117, 123, 125]),

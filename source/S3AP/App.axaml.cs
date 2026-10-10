@@ -3,9 +3,10 @@ using Archipelago.Core.AvaloniaGUI.Logging;
 using Archipelago.Core.AvaloniaGUI.Models;
 using Archipelago.Core.AvaloniaGUI.ViewModels;
 using Archipelago.Core.AvaloniaGUI.Views;
-using Archipelago.Core.GameClients;
+using Archipelago.Core.Helpers;
 using Archipelago.Core.Models;
 using Archipelago.Core.Util;
+using Archipelago.Core.Util.PlatformMemory;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
 using Archipelago.MultiClient.Net.Models;
@@ -18,29 +19,29 @@ using Newtonsoft.Json;
 using ReactiveUI;
 using S3AP.Models;
 using Serilog;
+using Silk.NET.Maths;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reflection;
 using System.Security.Principal;
-using System.Threading.Tasks;
-using System.Timers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
+using System.Timers;
 using static S3AP.Models.Enums;
-using System.IO;
-using Silk.NET.Maths;
 
 namespace S3AP;
 
 public partial class App : Application
 {
     // TODO: Remember to set this in S3AP.Desktop as well.
-    public static string Version = "1.3.5";
-    public static List<string> SupportedVersions = ["1.3.0", "1.3.1", "1.3.2", "1.3.3", "1.3.4", "1.3.5"];
-    public static List<string> PartiallySupportedVersions = [];
+    public static string Version = "1.4.0";
+    public static List<string> SupportedVersions = ["1.4.0"];
+    public static List<string> PartiallySupportedVersions = ["1.3.0", "1.3.1", "1.3.2", "1.3.3", "1.3.4", "1.3.5"];
 
     public static MainWindowViewModel Context;
     public static ArchipelagoClient Client { get; set; }
@@ -71,6 +72,7 @@ public partial class App : Application
     private static CompletionGoal _goal { get; set; }
     private static ProgressiveSparxHealthOptions _sparxOption { get; set; }
     private static int _eggCountGoal { get; set; }
+    private static int _enableMidnightWhirlwind { get; set; }
     private static int _sorceressDoorEggReq { get; set; }
     private static int _sbrDoorEggReq { get; set; }
     private static int _sbrDoorGemReq { get; set; }
@@ -88,12 +90,6 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
-    }
-    private static bool IsRunningAsAdministrator()
-    {
-        var identity = WindowsIdentity.GetCurrent();
-        var principal = new WindowsPrincipal(identity);
-        return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
 
     public override void OnFrameworkInitializationCompleted()
@@ -130,7 +126,7 @@ public partial class App : Application
 
     public void Start()
     {
-        Context = new MainWindowViewModel("0.6.1 or later");
+        Context = new MainWindowViewModel("0.6.6 or later");
         Context.ClientVersion = Assembly.GetEntryAssembly().GetName().Version.ToString();
         Context.ConnectClicked += Context_ConnectClicked;
         Context.CommandReceived += (e, a) =>
@@ -175,11 +171,6 @@ public partial class App : Application
         _previousLevel = (LevelInGameIDs)255;
         Log.Logger.Information("This Archipelago Client is compatible only with the NTSC-U (North America)\r\n" +
             "releases of Spyro 3.");
-        if (!IsRunningAsAdministrator())
-        {
-            Log.Logger.Warning("You do not appear to be running this client as an administrator.\r\n" +
-                "This may result in errors or crashes when trying to connect to Duckstation.");
-        }
     }
 
     private static void HandleDeathLink(DeathLink deathLink)
@@ -256,7 +247,7 @@ public partial class App : Application
 
     private async void HandleCommand(ArchipelagoCommandEventArgs command)
     {
-        if (Client == null || Client.ItemState == null || Client.CurrentSession == null) return;
+        if (Client == null || Client.ItemManager == null || Client.CurrentSession == null || Client.CurrentSession == null) return;
         string commandText = command.Command;
         switch (commandText.ToLower())
         {
@@ -311,7 +302,7 @@ public partial class App : Application
             case "!reloaditems":
                 Log.Logger.Information($"\r\n{command.Command}\r\n" +
                     "\tClearing the game state.  Please reconnect to the server while in game to refresh received items.\r\n");
-                Client.ForceReloadAllItems();
+                await Client.ItemManager.ResetItems();
                 break;
             case "usequiethints":
             case "!quiethints":
@@ -398,21 +389,22 @@ public partial class App : Application
     {
         if (Client != null)
         {
-            Client.CancelMonitors();
+            Client.LocationManager?.CancelMonitors();
+            Client.ItemManager?.StopReceiving();
             Client.Connected -= OnConnected;
             Client.Disconnected -= OnDisconnected;
-            Client.ItemReceived -= ItemReceived;
+            Client.ItemManager?.ItemReceived -= ItemReceived;
             Client.MessageReceived -= Client_MessageReceived;
-            Client.LocationCompleted -= Client_LocationCompleted;
+            Client.LocationManager?.LocationCompleted -= Client_LocationCompleted;
             if (Client.CurrentSession != null)
             {
                 Client.CurrentSession.Locations.CheckedLocationsUpdated -= Locations_CheckedLocationsUpdated;
             }
         }
-        DuckstationClient? client = null;
+        GameClient? client = null;
         try
         {
-            client = new DuckstationClient();
+            client = new GameClient("duckstation");
         }
         catch (ArgumentException ex)
         {
@@ -428,25 +420,19 @@ public partial class App : Application
             return;
         }
         Client = new ArchipelagoClient(client);
-        Client.ShouldSaveStateOnItemReceived = false;
 
         Memory.GlobalOffset = Memory.GetDuckstationOffset();
 
         Client.Connected += OnConnected;
         Client.Disconnected += OnDisconnected;
 
-        await Client.Connect(e.Host.Trim(), "Spyro 3", "save1");
+        await Client.Connect(e.Host.Trim(), "Spyro 3");
         if (!Client.IsConnected)
         {
             Log.Logger.Error("Your host seems to be invalid.  Please confirm that you have entered it correctly.");
             return;
         }
         _cosmeticEffects = new ConcurrentQueue<string>();
-        Client.LocationCompleted += Client_LocationCompleted;
-        Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
-        Client.MessageReceived += Client_MessageReceived;
-        Client.ItemReceived += ItemReceived;
-        Client.EnableLocationsCondition = () => Helpers.IsInGame();
         // Password may start or end with whitepace, so do not trim it.
         await Client.Login(e.Slot.Trim(), !string.IsNullOrWhiteSpace(e.Password) ? e.Password : null);
         if (Client.Options?.Count > 0)
@@ -458,6 +444,7 @@ public partial class App : Application
             _sparxPowerShuffle = int.Parse(Client.Options?.GetValueOrDefault("sparx_power_settings", "0").ToString());
             _goal = (CompletionGoal)int.Parse(Client.Options?.GetValueOrDefault("goal", "0").ToString());
             _eggCountGoal = int.Parse(Client.Options?.GetValueOrDefault("egg_count", "0").ToString());
+            _enableMidnightWhirlwind = int.Parse(Client.Options?.GetValueOrDefault("enable_midnight_whirlwind", "0").ToString());
             _sorceressDoorEggReq = int.Parse(Client.Options?.GetValueOrDefault("sorceress_door_requirement", "100").ToString());
             _sbrDoorEggReq = int.Parse(Client.Options?.GetValueOrDefault("sbr_door_egg_requirement", "149").ToString());
             _sbrDoorGemReq = int.Parse(Client.Options?.GetValueOrDefault("sbr_door_gem_requirement", "15000").ToString());
@@ -557,6 +544,11 @@ public partial class App : Application
             _gameLoopTimer.Interval = 100;
             _gameLoopTimer.Enabled = true;
 
+            Client.ItemManager.ItemReceived += ItemReceived;
+            Client.LocationManager.LocationCompleted += Client_LocationCompleted;
+            Client.CurrentSession.Locations.CheckedLocationsUpdated += Locations_CheckedLocationsUpdated;
+            Client.MessageReceived += Client_MessageReceived;
+            Client.LocationManager.EnableLocationsCondition = () => Helpers.IsInGame();
             CheckGoalCondition();
         }
         else
@@ -569,7 +561,7 @@ public partial class App : Application
     {
         try
         {
-            if (Client.ItemState == null || Client.CurrentSession == null) return;
+            if (Client.ItemManager == null || Client.CurrentSession == null) return;
             var currentEggs = CalculateCurrentEggs();
             if (_gemsanityOption != GemsanityOptions.Off)
             {
@@ -586,7 +578,7 @@ public partial class App : Application
 
     private async void ItemReceived(object? o, ItemReceivedEventArgs args)
     {
-        if (Client.ItemState == null || Client.CurrentSession == null) return;
+        if (Client.ItemManager == null || Client.CurrentSession == null) return;
         Log.Logger.Debug($"Item Received: {JsonConvert.SerializeObject(args.Item)}");
         UpdateItemLog();
         // Give items a moment to update before printing values.
@@ -1039,7 +1031,7 @@ public partial class App : Application
 
     private static async void ModifyGameLoop(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame() || Client.ItemState == null || Client.CurrentSession == null)
+        if (!Helpers.IsInGame() || Client.ItemManager == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -1074,7 +1066,7 @@ public partial class App : Application
 
     private static async void HandleWorldKeys(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame() || Client.ItemState == null || Client.CurrentSession == null)
+        if (!Helpers.IsInGame() || Client.ItemManager == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -1131,7 +1123,7 @@ public partial class App : Application
 
     private static async void HandleSparxPowers(object source, ElapsedEventArgs e)
     {
-        if (!Helpers.IsInGame() || Client.ItemState == null || Client.CurrentSession == null)
+        if (!Helpers.IsInGame() || Client.ItemManager == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -1269,7 +1261,7 @@ public partial class App : Application
     private static void HandleMinigames(object source, ElapsedEventArgs e)
     {
         // NOTE: Be very careful here, as writing to the wrong address or at the wrong time can crash the game.
-        if (!Helpers.IsInGame(false) || Client.ItemState == null || Client.CurrentSession == null)
+        if (!Helpers.IsInGame(false) || Client.ItemManager == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -1364,7 +1356,8 @@ public partial class App : Application
             if (
                 !_justDied &&
                 Helpers.IsInGame() &&
-                Client.ItemState != null &&
+                Client.ItemManager != null &&
+                Client.CurrentSession.Items != null &&
                 Client.CurrentSession != null &&
                 deathLinkLevels.Contains(currentLevel) &&
                 gameStatus != GameStatus.Cutscene &&
@@ -1724,6 +1717,32 @@ public partial class App : Application
             Memory.Write(Addresses.GetVersionAddress(Addresses.SBREggReq1), (short)_sbrDoorEggReq);
             Memory.Write(Addresses.GetVersionAddress(Addresses.SBREggReq2), (short)_sbrDoorEggReq);
             Memory.Write(Addresses.GetVersionAddress(Addresses.SBREggReq3), (short)_sbrDoorEggReq);
+
+            // Restore Whirlwind Functionality
+            int xPos = Memory.ReadInt(Addresses.GetVersionAddress(Addresses.SpyroPositionX));
+            int yPos = Memory.ReadInt(Addresses.GetVersionAddress(Addresses.SpyroPositionY));
+            if (
+                _enableMidnightWhirlwind != 0 &&
+                (Client.CurrentSession?.Items.AllItemsReceived.Any(x => x != null && x.ItemName == "Sorceress Defeated") ?? false) &&
+                Math.Pow(Math.Pow(Math.Abs(xPos - 79960), 2) + Math.Pow(Math.Abs(yPos - 102590), 2), 0.5) <= 19400
+            )
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindPos), 79960);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindPos) + 4, 102590);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindPos) + 8, 18690);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindZRot), (byte)(256 - 69));
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindHeight), 31450);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindHeight) + 4, 700);
+            }
+            else
+            {
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindPos), 46182);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindPos) + 4, 114412);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindPos) + 8, 13599);
+                Memory.WriteByte(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindZRot), (byte)(256 - 36));
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindHeight), 5120);
+                Memory.Write(Addresses.GetVersionAddress(Addresses.MidnightWhirlwindHeight) + 4, 1536);
+            }
         }
         else if (
             currentLevel == LevelInGameIDs.SuperBonusRound && gameStatus == GameStatus.InGame  // Protect this write carefully or it crashes warping to SBR.
@@ -2028,7 +2047,7 @@ public partial class App : Application
     {
         // Avoid overwhelming the game when many cosmetic effects are received at once by processing only 1
         // every 5 seconds.  This also lets the user see effects when logging in asynchronously.
-        if (Client.ItemState == null || Client.CurrentSession == null) return;
+        if (Client.ItemManager == null || Client.CurrentSession == null) return;
         if (Memory.ReadShort(Addresses.GetVersionAddress(Addresses.GameStatus)) != (short)GameStatus.InGame) return;
         if (_cosmeticEffects.Count > 0 && _cosmeticEffects.TryDequeue(out string? effect))
         {
@@ -2069,7 +2088,7 @@ public partial class App : Application
     private static async void StartSpyroGame(object source, ElapsedEventArgs e)
     {
         bool isInGame = Helpers.IsInGame();
-        bool nullGameState = Client.ItemState == null;
+        bool nullGameState = Client.ItemManager == null;
         bool nullCurrentSession = Client.CurrentSession == null;
         if (!isInGame || nullGameState || nullCurrentSession)
         {
@@ -2097,7 +2116,6 @@ public partial class App : Application
         }
         GameLocations = Helpers.BuildLocationList(includeGemsanity: _gemsanityOption != GemsanityOptions.Off, gemsanityIDs: gemsanityIDs);
         GameLocations = GameLocations.Where(x => x != null && !Client.CurrentSession.Locations.AllLocationsChecked.Contains(x.Id)).ToList();
-        Client.MonitorLocations(GameLocations);
         _checkNames = true;
         bool deathLink = int.Parse(Client.Options?.GetValueOrDefault("death_link", "0").ToString()) > 0;
         if (deathLink)
@@ -2107,13 +2125,16 @@ public partial class App : Application
         }
 
         LevelInGameIDs currentLevel = (LevelInGameIDs)Memory.ReadByte(Addresses.GetVersionAddress(Addresses.CurrentLevelAddress));
-        Helpers.UpdateLocationList(currentLevel, Client);
         _handleGemsanity = true;
+        // Infinite loop in another thread, so intentionally do not await. This would block things we must do after.
+        Client.MonitorLocationsAsync(GameLocations);
+        Helpers.UpdateLocationList(currentLevel, Client);
+        await Client.ReceiveReady();
     }
 
     private static void CheckGoalCondition()
     {
-        if (_hasSubmittedGoal || Client.ItemState == null || Client.CurrentSession == null)
+        if (_hasSubmittedGoal || Client.ItemManager == null || Client.CurrentSession == null)
         {
             return;
         }
@@ -2389,7 +2410,7 @@ public partial class App : Application
 
     private static void Locations_CheckedLocationsUpdated(System.Collections.ObjectModel.ReadOnlyCollection<long> newCheckedLocations)
     {
-        if (Client.ItemState == null || Client.CurrentSession == null) return;
+        if (Client.ItemManager == null || Client.CurrentSession == null) return;
         if (!Helpers.IsInGame())
         {
             Log.Logger.Error("Sending location while not in game.\r\n" +
@@ -2495,6 +2516,7 @@ public partial class App : Application
         _goal = CompletionGoal.NotLoaded;
         _eggCountGoal = 150;
         _shownControlMessage = false;
+        _enableMidnightWhirlwind = 0;
         _sorceressDoorEggReq = 150;
         _sbrDoorEggReq = 150;
         _sbrDoorGemReq = 20000;
